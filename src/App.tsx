@@ -21,6 +21,7 @@ import CatalogsPage from "@/pages/app/CatalogsPage";
 import AdsPage from "@/pages/app/AdsPage";
 import ImagesPage from "@/pages/app/ImagesPage";
 import HistoryPage from "@/pages/app/HistoryPage";
+import PromptLibraryPage from "@/pages/app/PromptLibraryPage";
 
 // Admin pages
 import AdminDashboard from "@/pages/admin/AdminDashboard";
@@ -47,6 +48,7 @@ const App = () => (
           {/* App Dashboard */}
           <Route path="/app" element={<AppLayout />}>
             <Route index element={<WelcomeDashboard />} />
+            <Route path="prompts" element={<PromptLibraryPage />} />
             <Route path="catalogs" element={<CatalogsPage />} />
             <Route path="ads" element={<AdsPage />} />
             <Route path="images" element={<ImagesPage />} />

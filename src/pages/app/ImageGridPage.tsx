@@ -50,9 +50,9 @@ export default function ImageGridPage({ title, description, defaultFilter, mockD
     : images.filter((img) => img.tool === activeFilter);
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">{title}</h1>
+        <h1 className="text-xl sm:text-2xl font-bold text-foreground">{title}</h1>
         <p className="text-sm text-muted-foreground mt-1">{description}</p>
       </div>
 
@@ -63,7 +63,7 @@ export default function ImageGridPage({ title, description, defaultFilter, mockD
             variant="ghost"
             size="sm"
             onClick={() => setActiveFilter(f)}
-            className={`glass rounded-lg text-sm h-8 ${
+            className={`glass rounded-lg text-xs sm:text-sm h-8 ${
               activeFilter === f ? "bg-primary/10 text-primary border-primary" : ""
             }`}
           >
@@ -78,7 +78,7 @@ export default function ImageGridPage({ title, description, defaultFilter, mockD
           <p className="text-muted-foreground">No images yet. Start generating!</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
           {filtered.map((img) => (
             <div
               key={img.id}
@@ -88,24 +88,24 @@ export default function ImageGridPage({ title, description, defaultFilter, mockD
                 className="aspect-square flex items-center justify-center relative"
                 style={{ background: img.gradient }}
               >
-                <ImageIcon className="h-10 w-10 text-foreground/15" />
+                <ImageIcon className="h-8 w-8 sm:h-10 sm:w-10 text-foreground/15" />
                 <div className="absolute inset-0 bg-background/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                  <Button size="icon" variant="ghost" className="h-9 w-9 glass rounded-lg">
+                  <Button size="icon" variant="ghost" className="h-8 w-8 sm:h-9 sm:w-9 glass rounded-lg">
                     <Download className="h-4 w-4" />
                   </Button>
-                  <Button size="icon" variant="ghost" className="h-9 w-9 glass rounded-lg">
+                  <Button size="icon" variant="ghost" className="h-8 w-8 sm:h-9 sm:w-9 glass rounded-lg">
                     <RefreshCw className="h-4 w-4" />
                   </Button>
-                  <Button size="icon" variant="ghost" className="h-9 w-9 glass rounded-lg">
+                  <Button size="icon" variant="ghost" className="h-8 w-8 sm:h-9 sm:w-9 glass rounded-lg">
                     <Edit3 className="h-4 w-4" />
                   </Button>
                 </div>
               </div>
-              <div className="p-3 flex items-center justify-between gap-2">
-                <p className="text-xs text-muted-foreground truncate">{img.prompt}</p>
+              <div className="p-2 sm:p-3 flex items-center justify-between gap-2">
+                <p className="text-[10px] sm:text-xs text-muted-foreground truncate">{img.prompt}</p>
                 <Badge variant="secondary" className="text-[10px] shrink-0">{img.tool}</Badge>
               </div>
-              <div className="px-3 pb-2">
+              <div className="px-2 sm:px-3 pb-2">
                 <p className="text-[10px] text-muted-foreground/60">{img.date}</p>
               </div>
             </div>
