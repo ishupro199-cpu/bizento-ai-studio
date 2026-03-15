@@ -48,6 +48,7 @@ const App = () => (
           {/* App Dashboard */}
           <Route path="/app" element={<AppLayout />}>
             <Route index element={<WelcomeDashboard />} />
+            <Route path="prompts" element={<PromptLibraryPage />} />
             <Route path="catalogs" element={<CatalogsPage />} />
             <Route path="ads" element={<AdsPage />} />
             <Route path="images" element={<ImagesPage />} />
