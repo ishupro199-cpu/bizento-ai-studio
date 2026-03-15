@@ -1,7 +1,6 @@
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app/AppSidebar";
 import { TopNavbar } from "@/components/app/TopNavbar";
-import { PromptBar } from "@/components/app/PromptBar";
 import { Outlet } from "react-router-dom";
 
 export function AppLayout() {
