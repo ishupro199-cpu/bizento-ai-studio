@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Sparkles, Camera, Clapperboard, LayoutGrid, Megaphone, ArrowRight } from "lucide-react";
 import { StyleSelector } from "@/components/app/StyleSelector";
 import { GenerationLoading } from "@/components/app/GenerationLoading";
