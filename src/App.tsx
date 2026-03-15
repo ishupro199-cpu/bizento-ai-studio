@@ -21,6 +21,7 @@ import CatalogsPage from "@/pages/app/CatalogsPage";
 import AdsPage from "@/pages/app/AdsPage";
 import ImagesPage from "@/pages/app/ImagesPage";
 import HistoryPage from "@/pages/app/HistoryPage";
+import PromptLibraryPage from "@/pages/app/PromptLibraryPage";
 
 // Admin pages
 import AdminDashboard from "@/pages/admin/AdminDashboard";
