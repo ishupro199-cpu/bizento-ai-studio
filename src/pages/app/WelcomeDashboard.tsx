@@ -21,6 +21,7 @@ const tools = [
 
 export default function WelcomeDashboard() {
   const gen = useGenerationState();
+  const [inputPrompt, setInputPrompt] = useState("");
 
   const isGenerating = gen.phase === "uploading" || gen.phase === "generating";
 
