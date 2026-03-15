@@ -99,9 +99,9 @@ export default function WelcomeDashboard() {
       </div>
 
       <PromptBar
-        prompt={gen.prompt}
-        onPromptChange={(v) => gen.startGeneration("") || gen.reset() || gen.setSelectedStyle(gen.selectedStyle)}
-        onGenerate={() => gen.startGeneration(gen.prompt)}
+        prompt={inputPrompt}
+        onPromptChange={setInputPrompt}
+        onGenerate={() => gen.startGeneration(inputPrompt)}
         disabled={false}
       />
     </div>
