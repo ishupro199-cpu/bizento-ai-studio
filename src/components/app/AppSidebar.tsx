@@ -1,6 +1,6 @@
 import {
   Sparkles, FolderOpen, Megaphone, Image, Clock,
-  CreditCard, Receipt, Coins, Settings, User
+  CreditCard, Receipt, Coins, Settings, User, BookOpen, X
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -18,9 +18,11 @@ import {
 } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
 
 const navItems = [
   { title: "Generate", url: "/app", icon: Sparkles },
+  { title: "Prompt Library", url: "/app/prompts", icon: BookOpen },
   { title: "My Catalogs", url: "/app/catalogs", icon: FolderOpen },
   { title: "My Ads", url: "/app/ads", icon: Megaphone },
   { title: "Images", url: "/app/images", icon: Image },
@@ -34,22 +36,34 @@ const accountItems = [
 ];
 
 export function AppSidebar() {
-  const { state } = useSidebar();
+  const { state, isMobile, setOpenMobile } = useSidebar();
   const collapsed = state === "collapsed";
   const location = useLocation();
 
   return (
     <Sidebar collapsible="icon" className="border-r-0">
       <SidebarContent className="bg-sidebar">
-        {/* Logo */}
-        <div className="flex items-center gap-2.5 px-4 py-5">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary">
-            <Sparkles className="h-4 w-4 text-primary-foreground" />
+        {/* Logo + Close button */}
+        <div className="flex items-center justify-between px-4 py-5">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary">
+              <Sparkles className="h-4 w-4 text-primary-foreground" />
+            </div>
+            {!collapsed && (
+              <span className="text-lg font-bold tracking-tight text-foreground">
+                Bizento <span className="text-primary">AI</span>
+              </span>
+            )}
           </div>
-          {!collapsed && (
-            <span className="text-lg font-bold tracking-tight text-foreground">
-              Bizento <span className="text-primary">AI</span>
-            </span>
+          {isMobile && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-muted-foreground hover:text-foreground"
+              onClick={() => setOpenMobile(false)}
+            >
+              <X className="h-4 w-4" />
+            </Button>
           )}
         </div>
 
