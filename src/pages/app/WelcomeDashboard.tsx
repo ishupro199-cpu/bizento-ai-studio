@@ -1,10 +1,12 @@
 import { useState } from "react";
-import { Sparkles, Camera, Clapperboard, LayoutGrid, Megaphone, ArrowRight } from "lucide-react";
+import { Sparkles, Camera, Clapperboard, LayoutGrid, Megaphone, ArrowRight, AlertTriangle } from "lucide-react";
 import { StyleSelector } from "@/components/app/StyleSelector";
 import { GenerationLoading } from "@/components/app/GenerationLoading";
 import { GenerationResults } from "@/components/app/GenerationResults";
 import { useGenerationState } from "@/hooks/useGenerationState";
 import { PromptBar } from "@/components/app/PromptBar";
+import { useAppContext } from "@/contexts/AppContext";
+import { Button } from "@/components/ui/button";
 
 const demoSteps = [
   { label: "Product Photo", icon: Camera, desc: "Upload your raw product image" },
@@ -21,6 +23,7 @@ const tools = [
 
 export default function WelcomeDashboard() {
   const gen = useGenerationState();
+  const { canGenerate, creditCost, setShowUpgradeModal } = useAppContext();
   const [inputPrompt, setInputPrompt] = useState("");
 
   const isGenerating = gen.phase === "uploading" || gen.phase === "generating";
@@ -31,12 +34,7 @@ export default function WelcomeDashboard() {
         <div className="flex-1 overflow-auto">
           <GenerationResults results={gen.results} onRegenerate={gen.reset} />
         </div>
-        <PromptBar
-          prompt={gen.prompt}
-          onPromptChange={() => {}}
-          onGenerate={gen.reset}
-          disabled
-        />
+        <PromptBar prompt={gen.prompt} onPromptChange={() => {}} onGenerate={gen.reset} disabled />
       </div>
     );
   }
@@ -47,9 +45,19 @@ export default function WelcomeDashboard() {
 
   return (
     <div className="flex flex-col h-full">
+      {/* Zero credits banner */}
+      {!canGenerate && (
+        <div className="mx-4 mt-4 glass rounded-xl p-3 flex items-center justify-between border-destructive/30">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4 text-destructive" />
+            <span className="text-sm text-foreground">You've reached your generation limit.</span>
+          </div>
+          <Button size="sm" className="text-xs h-7" onClick={() => setShowUpgradeModal(true)}>Upgrade</Button>
+        </div>
+      )}
+
       <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-6">
         <div className="max-w-3xl w-full text-center space-y-6 sm:space-y-8">
-          {/* Hero */}
           <div className="space-y-3 animate-fade-in">
             <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight">
               Welcome to <span className="text-gradient">Bizento AI</span>
@@ -57,9 +65,9 @@ export default function WelcomeDashboard() {
             <p className="text-base sm:text-lg text-muted-foreground max-w-xl mx-auto">
               Turn your product photos into professional catalog images and ads with AI.
             </p>
+            <p className="text-xs text-muted-foreground">Cost: {creditCost} credit{creditCost > 1 ? "s" : ""} per generation</p>
           </div>
 
-          {/* Demo Flow */}
           <div className="flex items-center justify-center gap-3 sm:gap-4 flex-wrap animate-fade-in" style={{ animationDelay: "0.1s" }}>
             {demoSteps.map((step, i) => (
               <div key={step.label} className="flex items-center gap-3 sm:gap-4">
@@ -77,12 +85,10 @@ export default function WelcomeDashboard() {
             ))}
           </div>
 
-          {/* Style Selector */}
           <div className="animate-fade-in text-left" style={{ animationDelay: "0.15s" }}>
             <StyleSelector selected={gen.selectedStyle} onSelect={gen.setSelectedStyle} />
           </div>
 
-          {/* Tools Grid */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 animate-fade-in" style={{ animationDelay: "0.2s" }}>
             {tools.map((tool) => (
               <button
@@ -102,7 +108,7 @@ export default function WelcomeDashboard() {
         prompt={inputPrompt}
         onPromptChange={setInputPrompt}
         onGenerate={() => gen.startGeneration(inputPrompt)}
-        disabled={false}
+        disabled={!canGenerate}
       />
     </div>
   );

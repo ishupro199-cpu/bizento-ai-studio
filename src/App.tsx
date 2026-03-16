@@ -22,10 +22,16 @@ import AdsPage from "@/pages/app/AdsPage";
 import ImagesPage from "@/pages/app/ImagesPage";
 import HistoryPage from "@/pages/app/HistoryPage";
 import PromptLibraryPage from "@/pages/app/PromptLibraryPage";
+import CreditsPage from "@/pages/app/CreditsPage";
+import PlanPage from "@/pages/app/PlanPage";
 
 // Admin pages
 import AdminDashboard from "@/pages/admin/AdminDashboard";
 import AdminPlaceholder from "@/pages/admin/AdminPlaceholder";
+import AdminUsersPage from "@/pages/admin/AdminUsersPage";
+import AdminModerationPage from "@/pages/admin/AdminModerationPage";
+import AdminAnalyticsPage from "@/pages/admin/AdminAnalyticsPage";
+import AdminSystemPage from "@/pages/admin/AdminSystemPage";
 
 import NotFound from "@/pages/NotFound";
 
@@ -53,18 +59,20 @@ const App = () => (
             <Route path="ads" element={<AdsPage />} />
             <Route path="images" element={<ImagesPage />} />
             <Route path="history" element={<HistoryPage />} />
+            <Route path="credits" element={<CreditsPage />} />
+            <Route path="plan" element={<PlanPage />} />
           </Route>
 
           {/* Admin Panel */}
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<AdminDashboard />} />
-            <Route path="users" element={<AdminPlaceholder title="Users" />} />
+            <Route path="users" element={<AdminUsersPage />} />
             <Route path="credits" element={<AdminPlaceholder title="Credits" />} />
             <Route path="billing" element={<AdminPlaceholder title="Billing" />} />
-            <Route path="analytics" element={<AdminPlaceholder title="AI Analytics" />} />
-            <Route path="moderation" element={<AdminPlaceholder title="Catalog Moderation" />} />
+            <Route path="analytics" element={<AdminAnalyticsPage />} />
+            <Route path="moderation" element={<AdminModerationPage />} />
             <Route path="support" element={<AdminPlaceholder title="Support" />} />
-            <Route path="system" element={<AdminPlaceholder title="System Monitoring" />} />
+            <Route path="system" element={<AdminSystemPage />} />
           </Route>
 
           <Route path="*" element={<NotFound />} />
