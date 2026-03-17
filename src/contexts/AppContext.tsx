@@ -1,4 +1,6 @@
-import { createContext, useContext, useState, useCallback, ReactNode } from "react";
+import { createContext, useContext, useState, useCallback, useEffect, ReactNode } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useUserProfile, useGenerations } from "@/hooks/useFirestore";
 
 export type PlanId = "free" | "starter" | "pro";
 export type ModelId = "flash" | "pro";
@@ -22,7 +24,7 @@ export const PLANS: Record<PlanId, PlanConfig> = {
 export const CREDIT_COSTS: Record<ModelId, number> = { flash: 1, pro: 2 };
 
 export interface GenerationRecord {
-  id: number;
+  id: string;
   prompt: string;
   tool: string;
   style: string;
@@ -48,7 +50,7 @@ interface AppContextType {
   setSelectedModel: (model: ModelId) => boolean;
   generations: GenerationRecord[];
   addGeneration: (record: Omit<GenerationRecord, "id" | "creditsConsumed">) => void;
-  deleteGeneration: (id: number) => void;
+  deleteGeneration: (id: string) => void;
   catalogs: GenerationRecord[];
   ads: GenerationRecord[];
   allImages: GenerationRecord[];
@@ -57,6 +59,7 @@ interface AppContextType {
   switchPlan: (plan: PlanId) => void;
   canGenerate: boolean;
   creditCost: number;
+  firestoreLoading: boolean;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -67,20 +70,48 @@ export function useAppContext() {
   return ctx;
 }
 
+const DEFAULT_USER: UserProfile = {
+  name: "User",
+  email: "",
+  plan: "free",
+  creditsRemaining: 3,
+  creditsUsed: 0,
+  flashGenerations: 0,
+  proGenerations: 0,
+};
+
 export function AppProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<UserProfile>({
-    name: "John Doe",
-    email: "john@example.com",
-    plan: "pro",
-    creditsRemaining: 50,
-    creditsUsed: 0,
-    flashGenerations: 0,
-    proGenerations: 0,
-  });
+  const { user: authUser } = useAuth();
+  const { profile, updateCredits, switchPlan: firestoreSwitchPlan } = useUserProfile();
+  const { generations: firestoreGens, addGeneration: firestoreAdd, removeGeneration: firestoreRemove } = useGenerations();
 
   const [selectedModel, setSelectedModelState] = useState<ModelId>("flash");
-  const [generations, setGenerations] = useState<GenerationRecord[]>([]);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+
+  // Derive user profile from Firestore or fallback
+  const user: UserProfile = profile
+    ? {
+        name: profile.name || authUser?.displayName || "User",
+        email: profile.email || authUser?.email || "",
+        plan: (profile.plan as PlanId) || "free",
+        creditsRemaining: profile.creditsRemaining ?? 3,
+        creditsUsed: profile.creditsUsed ?? 0,
+        flashGenerations: profile.flashGenerations ?? 0,
+        proGenerations: profile.proGenerations ?? 0,
+      }
+    : DEFAULT_USER;
+
+  // Map Firestore generations to local format
+  const generations: GenerationRecord[] = firestoreGens.map((g) => ({
+    id: g.id,
+    prompt: g.prompt,
+    tool: g.tool,
+    style: g.style,
+    model: g.model,
+    date: g.createdAt,
+    creditsConsumed: g.creditsConsumed,
+    gradient: g.gradient,
+  }));
 
   const creditCost = CREDIT_COSTS[selectedModel];
   const canGenerate = user.creditsRemaining >= creditCost;
@@ -96,37 +127,33 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const addGeneration = useCallback((record: Omit<GenerationRecord, "id" | "creditsConsumed">) => {
     const cost = CREDIT_COSTS[record.model];
-    const newRecord: GenerationRecord = {
-      ...record,
-      id: Date.now() + Math.random(),
+    // Save to Firestore
+    firestoreAdd({
+      prompt: record.prompt,
+      tool: record.tool,
+      style: record.style,
+      model: record.model,
       creditsConsumed: cost,
-    };
-    setGenerations(prev => [newRecord, ...prev]);
-    setUser(prev => ({
-      ...prev,
-      creditsRemaining: Math.max(0, prev.creditsRemaining - cost),
-      creditsUsed: prev.creditsUsed + cost,
-      flashGenerations: record.model === "flash" ? prev.flashGenerations + 1 : prev.flashGenerations,
-      proGenerations: record.model === "pro" ? prev.proGenerations + 1 : prev.proGenerations,
-    }));
-  }, []);
+      gradient: record.gradient,
+      imageUrls: [],
+      status: "completed",
+      createdAt: new Date(),
+    });
+    // Deduct credits in Firestore
+    updateCredits(cost, record.model);
+  }, [firestoreAdd, updateCredits]);
 
-  const deleteGeneration = useCallback((id: number) => {
-    setGenerations(prev => prev.filter(g => g.id !== id));
-  }, []);
+  const deleteGeneration = useCallback((id: string) => {
+    firestoreRemove(id);
+  }, [firestoreRemove]);
 
   const switchPlan = useCallback((plan: PlanId) => {
     const planConfig = PLANS[plan];
-    setUser(prev => ({
-      ...prev,
-      plan,
-      creditsRemaining: planConfig.credits,
-      creditsUsed: 0,
-    }));
+    firestoreSwitchPlan(plan, planConfig.credits);
     if (!planConfig.allowPro && selectedModel === "pro") {
       setSelectedModelState("flash");
     }
-  }, [selectedModel]);
+  }, [selectedModel, firestoreSwitchPlan]);
 
   const catalogs = generations.filter(g => g.tool === "Generate Catalog");
   const ads = generations.filter(g => g.tool === "Cinematic Ads" || g.tool === "Ad Creatives");
@@ -136,6 +163,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     <AppContext.Provider value={{
       user, selectedModel, setSelectedModel, generations, addGeneration, deleteGeneration,
       catalogs, ads, allImages, showUpgradeModal, setShowUpgradeModal, switchPlan, canGenerate, creditCost,
+      firestoreLoading: false,
     }}>
       {children}
     </AppContext.Provider>

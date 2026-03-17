@@ -3,6 +3,8 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { ProtectedRoute } from "@/components/app/ProtectedRoute";
 
 // Layouts
 import { AppLayout } from "@/layouts/AppLayout";
@@ -42,42 +44,44 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter>
-        <Routes>
-          {/* Marketing Website */}
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/features" element={<FeaturesPage />} />
-          <Route path="/pricing" element={<PricingPage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/signup" element={<SignupPage />} />
+      <AuthProvider>
+        <BrowserRouter>
+          <Routes>
+            {/* Marketing Website */}
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/features" element={<FeaturesPage />} />
+            <Route path="/pricing" element={<PricingPage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/signup" element={<SignupPage />} />
 
-          {/* App Dashboard */}
-          <Route path="/app" element={<AppLayout />}>
-            <Route index element={<WelcomeDashboard />} />
-            <Route path="prompts" element={<PromptLibraryPage />} />
-            <Route path="catalogs" element={<CatalogsPage />} />
-            <Route path="ads" element={<AdsPage />} />
-            <Route path="images" element={<ImagesPage />} />
-            <Route path="history" element={<HistoryPage />} />
-            <Route path="credits" element={<CreditsPage />} />
-            <Route path="plan" element={<PlanPage />} />
-          </Route>
+            {/* App Dashboard — Protected */}
+            <Route path="/app" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
+              <Route index element={<WelcomeDashboard />} />
+              <Route path="prompts" element={<PromptLibraryPage />} />
+              <Route path="catalogs" element={<CatalogsPage />} />
+              <Route path="ads" element={<AdsPage />} />
+              <Route path="images" element={<ImagesPage />} />
+              <Route path="history" element={<HistoryPage />} />
+              <Route path="credits" element={<CreditsPage />} />
+              <Route path="plan" element={<PlanPage />} />
+            </Route>
 
-          {/* Admin Panel */}
-          <Route path="/admin" element={<AdminLayout />}>
-            <Route index element={<AdminDashboard />} />
-            <Route path="users" element={<AdminUsersPage />} />
-            <Route path="credits" element={<AdminPlaceholder title="Credits" />} />
-            <Route path="billing" element={<AdminPlaceholder title="Billing" />} />
-            <Route path="analytics" element={<AdminAnalyticsPage />} />
-            <Route path="moderation" element={<AdminModerationPage />} />
-            <Route path="support" element={<AdminPlaceholder title="Support" />} />
-            <Route path="system" element={<AdminSystemPage />} />
-          </Route>
+            {/* Admin Panel — Protected */}
+            <Route path="/admin" element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
+              <Route index element={<AdminDashboard />} />
+              <Route path="users" element={<AdminUsersPage />} />
+              <Route path="credits" element={<AdminPlaceholder title="Credits" />} />
+              <Route path="billing" element={<AdminPlaceholder title="Billing" />} />
+              <Route path="analytics" element={<AdminAnalyticsPage />} />
+              <Route path="moderation" element={<AdminModerationPage />} />
+              <Route path="support" element={<AdminPlaceholder title="Support" />} />
+              <Route path="system" element={<AdminSystemPage />} />
+            </Route>
 
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );
