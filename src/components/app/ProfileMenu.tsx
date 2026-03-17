@@ -222,7 +222,7 @@ export function ProfileMenu({ collapsed }: { collapsed: boolean }) {
           {/* Menu items */}
           <div className="px-2 pt-2 pb-1 space-y-[2px]">
             <MenuRow icon={Palette} label="Personalization" onClick={() => { closeMenu(); navigate("/app"); }} />
-            <MenuRow icon={Settings} label="Settings" onClick={() => { closeMenu(); navigate("/app/plan"); }} />
+            <MenuRow icon={Settings} label="Settings" onClick={() => { closeMenu(); navigate("/app/settings"); }} />
 
             {/* Help — hover triggers submenu */}
             <div

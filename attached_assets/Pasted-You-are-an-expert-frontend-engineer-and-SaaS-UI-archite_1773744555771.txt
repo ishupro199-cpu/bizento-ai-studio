@@ -1,0 +1,142 @@
+You are an expert frontend engineer and SaaS UI architect.
+Build a fully functional and production-ready Settings System UI for a modern AI SaaS platform called Pixalera.
+Use:
+React (functional components)
+Tailwind CSS for styling
+Component-based architecture
+Do NOT focus on backend integration yet. Focus on clean UI, structure, and interactivity.
+
+GLOBAL DESIGN SYSTEM
+Theme:
+Dark background: #222222
+Accent color: #89E900
+UI Style:
+• glassmorphism
+• rounded corners (rounded-2xl)
+• soft shadows
+• subtle borders
+• smooth transitions
+Use consistent spacing and layout.
+
+MAIN LAYOUT (Settings Page)
+Create a two-column layout:
+LEFT:
+Settings navigation sidebar
+RIGHT:
+Dynamic content panel
+Sidebar width: fixed
+Content area: flexible
+
+Settings :
+Include the following sections:
+Profile
+Notifications
+Personalization
+Data Controls
+Security
+Help
+Each item should:
+• have an icon
+• support active state
+• highlight with accent color
+• smooth hover animation
+
+SETTINGS CONTENT STRUCTURE
+Each section must render inside reusable SettingsCard components.
+Cards must include:
+• title
+• content
+• spacing
+• border
+• rounded corners
+
+SECTION: PROFILE
+Fields:
+• Profile Photo (editable placeholder)
+• Name (input field)
+• Email (input field)
+• Workspace Name (input field)
+Display:
+• Current Plan badge
+Button:
+• Upgrade Plan (accent styled)
+
+SECTION: NOTIFICATIONS
+Create toggle switches:
+• Generation Complete Alerts
+• Email Notifications
+• Product Updates
+• Marketing Emails
+Use reusable ToggleSwitch component.
+
+SECTION: PERSONALIZATION
+Include:
+Base Style & Tone (radio buttons):
+Default
+Professional
+Friendly
+Casual
+Efficient
+Custom Instructions:
+Textarea input
+Additional fields:
+• Nickname
+• Occupation
+
+SECTION: DATA CONTROLS
+Buttons:
+Download My Data
+View Archived Chats
+Archive Chat History
+Clear Chat History
+Toggle:
+Auto-delete after 30 days
+Danger zone:
+Delete Pixalera Account (red button)
+
+SECTION: SECURITY
+Actions:
+Change Password
+Logout from all devices
+Logout
+Delete Account (danger)
+
+
+
+SECTION: HELP
+Clickable list items:
+Help Center
+Release Notes
+Terms & Privacy
+Report a Bug
+Keyboard Shortcuts
+Contact Us
+Each item should be a row with icon + arrow.
+
+INTERACTIONS
+• Toggle switches animate smoothly
+• Inputs highlight on focus
+• Buttons have hover effects
+• Active sidebar item highlighted
+• Smooth transitions between sections
+
+STATE MANAGEMENT
+Use React useState for:
+• active settings tab
+• toggle states
+• form inputs
+
+USER EXPERIENCE
+The UI must feel:
+• clean
+• fast
+• intuitive
+• premium SaaS quality
+
+IMPORTANT
+• avoid clutter
+• keep spacing consistent
+• ensure reusable components
+• follow modern SaaS UI standards
+This should look like a real production-level settings system for a startup product.
+

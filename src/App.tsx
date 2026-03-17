@@ -26,6 +26,7 @@ import HistoryPage from "@/pages/app/HistoryPage";
 import PromptLibraryPage from "@/pages/app/PromptLibraryPage";
 import CreditsPage from "@/pages/app/CreditsPage";
 import PlanPage from "@/pages/app/PlanPage";
+import SettingsPage from "@/pages/app/SettingsPage";
 
 // Admin pages
 import AdminDashboard from "@/pages/admin/AdminDashboard";
@@ -64,6 +65,7 @@ const App = () => (
               <Route path="history" element={<HistoryPage />} />
               <Route path="credits" element={<CreditsPage />} />
               <Route path="plan" element={<PlanPage />} />
+              <Route path="settings" element={<SettingsPage />} />
             </Route>
 
             {/* Admin Panel — Protected */}
