@@ -1,14 +1,14 @@
 import { useState } from "react";
 import {
   Sparkles, FolderOpen, Megaphone, Image,
-  CreditCard, Settings, BookOpen, ChevronRight, ChevronLeft, X, Clock
+  CreditCard, BookOpen, ChevronRight, ChevronLeft, X, Clock
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { useAppContext } from "@/contexts/AppContext";
 import { HistoryPanel } from "@/components/app/HistoryPanel";
+import { ProfileMenu } from "@/components/app/ProfileMenu";
 
 const navItems = [
   { title: "Generate", url: "/app", icon: Sparkles },
@@ -18,11 +18,6 @@ const navItems = [
   { title: "Images", url: "/app/images", icon: Image },
 ];
 
-const PLAN_LABELS: Record<string, string> = {
-  free: "Free Plan",
-  starter: "Starter Plan",
-  pro: "Pro Plan",
-};
 
 interface AppSidebarProps {
   collapsed: boolean;
@@ -48,12 +43,6 @@ function SidebarInner({
   const [selectedGenId, setSelectedGenId] = useState<string | null>(null);
   const [panelOpen, setPanelOpen] = useState(false);
   const [logoHovered, setLogoHovered] = useState(false);
-
-  const initials = user.name
-    ? user.name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)
-    : "U";
-
-  const planLabel = PLAN_LABELS[user.plan] ?? "Free Plan";
 
   const handleHistoryClick = (id: string) => {
     setSelectedGenId(id);
@@ -212,28 +201,7 @@ function SidebarInner({
 
         {/* Profile footer */}
         <div className="px-2 py-3 shrink-0">
-          <div
-            className={`flex items-center gap-3 rounded-lg py-2 hover:bg-white/5 transition-colors cursor-pointer ${
-              isCollapsed ? "justify-center px-0" : "px-3"
-            }`}
-          >
-            <Avatar className="h-7 w-7 shrink-0">
-              <AvatarFallback className="bg-primary/20 text-primary text-xs font-semibold">
-                {initials}
-              </AvatarFallback>
-            </Avatar>
-            {!isCollapsed && (
-              <div className="flex flex-1 items-center justify-between min-w-0">
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-foreground truncate leading-none">
-                    {user.name || "User"}
-                  </p>
-                  <p className="text-[11px] text-muted-foreground/70 truncate mt-0.5">{planLabel}</p>
-                </div>
-                <Settings className="h-4 w-4 shrink-0 text-muted-foreground" />
-              </div>
-            )}
-          </div>
+          <ProfileMenu collapsed={isCollapsed} />
         </div>
       </div>
 

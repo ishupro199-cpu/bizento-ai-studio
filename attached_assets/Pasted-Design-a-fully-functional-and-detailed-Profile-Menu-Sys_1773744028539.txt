@@ -1,0 +1,117 @@
+Design a fully functional and detailed Profile Menu System for a modern AI SaaS platform called PixaLera.
+The design must be highly polished, minimal, and professional, similar to ChatGPT and Notion.
+Use a dark theme:
+Background: #222222
+Accent: #89E900
+Use glassmorphism UI with rounded corners, soft shadows, and subtle borders.
+
+TRIGGER ELEMENT (PROFILE TAB)
+Design a clickable profile tab inside the sidebar.
+It should include:
+• user avatar (circular)
+• user name (Ishu)
+• small dropdown arrow
+The entire element should be clickable.
+On hover:
+• slight background highlight
+• smooth animation
+
+MAIN PROFILE POPUP (LEVEL 1)
+When the user clicks the profile tab, open a dropdown popup.
+Popup must appear near the profile tab and should float above the UI.
+
+POPUP HEADER
+Top section must include:
+• larger avatar
+• user name: Ishu
+• user email (optional)
+• current plan badge (Free / Pro)
+Style:
+• clean spacing
+• subtle divider below
+
+PRIMARY ACTION
+Below header:
+Upgrade Plan
+This should be visually highlighted using the accent color (#89E900).
+
+MAIN MENU ITEMS
+Display the following items as a vertical list:
+Personalization
+Settings
+Help → (this must show a submenu indicator arrow)
+Each item must:
+• have icon on left
+• text label
+• hover highlight
+• rounded selection background
+
+BOTTOM ACTION
+At the bottom of the popup:
+Logout
+Style:
+• separated by divider
+• slightly different tone (neutral or warning)
+
+SUBMENU (LEVEL 2 — HELP MENU)
+When the user hovers over "Help", open a second popup aligned to the right side.
+This submenu must appear instantly but smoothly.
+
+SUBMENU ITEMS
+Help Center
+Release Notes
+Terms & Policy
+Report a Bug
+Keyboard Shortcuts
+Each item must:
+• have icon
+• hover highlight
+• clickable row
+
+POSITIONING
+Main popup:
+• appears below or next to profile tab
+Submenu:
+• appears on the right side of the main popup
+• aligned vertically with the "Help" item
+Ensure there is no gap between menus to prevent flickering.
+
+INTERACTIONS
+• click profile → open popup
+• click outside → close popup
+• hover on Help → open submenu
+• move mouse away → close submenu
+Add smooth transitions (fade + slight slide).
+
+VISUAL STYLE
+• glass blur background
+• rounded corners (medium radius)
+• soft shadows
+• thin borders
+• minimal UI
+Hover states:
+• subtle green tint (#89E900 with opacity)
+• smooth animation
+
+ACCESSIBILITY
+• clear hover states
+• readable contrast
+• proper spacing
+
+USER EXPERIENCE GOAL
+The profile menu should feel:
+• fast
+• responsive
+• intuitive
+• premium
+It should allow users to quickly access important actions like:
+Upgrade
+Settings
+Help
+Logout
+
+IMPORTANT
+Do not clutter the UI.
+Keep spacing balanced and elements aligned.
+This must feel like a production-ready SaaS component, not a basic dropdown.
+
