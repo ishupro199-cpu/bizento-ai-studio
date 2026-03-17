@@ -1,8 +1,8 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   Send, LayoutGrid, Camera, Clapperboard, Megaphone,
   AlertTriangle, ChevronDown, Check, Plus,
-  ChevronLeft, ChevronRight, RotateCcw, Upload, X
+  ChevronLeft, ChevronRight, RotateCcw, Upload,
 } from "lucide-react";
 import { GenerationLoading } from "@/components/app/GenerationLoading";
 import { GenerationResults } from "@/components/app/GenerationResults";
@@ -30,7 +30,6 @@ const tools = [
   { id: "creative", name: "Ad Creatives", icon: Megaphone },
 ];
 
-/* All prompts from the prompt library — cycled in groups of 3 */
 const ALL_EXAMPLE_PROMPTS = [
   "Luxury perfume bottle on marble surface with golden hour lighting",
   "Minimal white background catalog shot with soft shadows",
@@ -48,6 +47,11 @@ const ALL_EXAMPLE_PROMPTS = [
 
 const DEFAULT_WORKSPACES = ["My Workspace", "Brand Projects", "Client Work"];
 
+/* Truncate text for display, preserve full text for the prompt */
+function truncatePrompt(text: string, maxLen: number) {
+  return text.length > maxLen ? text.slice(0, maxLen).trimEnd() + "…" : text;
+}
+
 export default function WelcomeDashboard() {
   const gen = useGenerationState();
   const { canGenerate, setShowUpgradeModal, user } = useAppContext();
@@ -60,17 +64,25 @@ export default function WelcomeDashboard() {
   const [plusOpen, setPlusOpen] = useState(false);
   const [workspaces, setWorkspaces] = useState(DEFAULT_WORKSPACES);
   const [activeWorkspace, setActiveWorkspace] = useState(DEFAULT_WORKSPACES[0]);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 640);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   const firstName = user.name?.split(" ")[0] || "there";
   const isGenerating = gen.phase === "uploading" || gen.phase === "generating";
 
-  /* Cycle through example prompts 3 at a time */
   const promptsPerPage = 3;
   const totalPages = Math.ceil(ALL_EXAMPLE_PROMPTS.length / promptsPerPage);
   const visiblePrompts = ALL_EXAMPLE_PROMPTS.slice(
     promptPage * promptsPerPage,
     promptPage * promptsPerPage + promptsPerPage
   );
+
   const handleRefreshPrompts = () => {
     setPromptPage((p) => (p + 1) % totalPages);
   };
@@ -81,7 +93,6 @@ export default function WelcomeDashboard() {
     }
   };
 
-  /* Ctrl+Enter to send; plain Enter = newline */
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
       e.preventDefault();
@@ -133,7 +144,7 @@ export default function WelcomeDashboard() {
     <div className="flex flex-col h-full min-h-0">
       {/* Zero credits banner */}
       {!canGenerate && (
-        <div className="mx-4 mt-4 bg-destructive/10 border border-destructive/20 rounded-xl p-3 flex items-center justify-between">
+        <div className="mx-3 sm:mx-4 mt-3 sm:mt-4 bg-destructive/10 border border-destructive/20 rounded-xl p-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <AlertTriangle className="h-4 w-4 text-destructive" />
             <span className="text-sm text-foreground">You've reached your generation limit.</span>
@@ -145,17 +156,17 @@ export default function WelcomeDashboard() {
       )}
 
       {/* Main centered content */}
-      <div className="flex-1 flex flex-col items-center justify-center px-4 py-8 overflow-auto">
-        <div className="w-full max-w-[780px] space-y-7">
+      <div className="flex-1 flex flex-col items-center justify-center px-3 sm:px-4 py-6 sm:py-8 overflow-auto">
+        <div className="w-full max-w-[780px] space-y-5 sm:space-y-7">
 
           {/* 1. Workspace selector */}
           <div className="flex justify-center">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-sm text-muted-foreground hover:bg-white/8 hover:text-foreground transition-colors">
+                <button className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-sm text-muted-foreground hover:bg-white/8 hover:text-foreground transition-colors">
                   <span className="h-2 w-2 rounded-full bg-primary shrink-0" />
-                  {activeWorkspace}
-                  <ChevronDown className="h-3.5 w-3.5 opacity-60" />
+                  <span className="max-w-[120px] truncate">{activeWorkspace}</span>
+                  <ChevronDown className="h-3.5 w-3.5 opacity-60 shrink-0" />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="center" className="w-52 rounded-xl bg-popover border-white/10">
@@ -183,16 +194,16 @@ export default function WelcomeDashboard() {
 
           {/* 2. Greeting */}
           <div className="text-center space-y-1">
-            <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-foreground leading-tight">
+            <h1 className="text-3xl sm:text-5xl font-bold tracking-tight text-foreground leading-tight">
               Hi {firstName},
             </h1>
-            <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight text-muted-foreground leading-tight">
+            <h2 className="text-2xl sm:text-4xl font-semibold tracking-tight text-muted-foreground leading-tight">
               What do you want to make?
             </h2>
           </div>
 
           {/* 3. Prompt input */}
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             {/* Attached image preview */}
             {previewUrl && (
               <div className="flex items-center gap-2 px-1">
@@ -209,8 +220,8 @@ export default function WelcomeDashboard() {
               </div>
             )}
 
-            {/* Prompt box — border changes on focus, background stays stable */}
-            <div className="flex items-end gap-3 bg-white/5 border border-white/10 rounded-2xl px-4 py-3.5 focus-within:border-white/25 transition-[border-color] duration-150">
+            {/* Prompt box */}
+            <div className="flex items-end gap-2 sm:gap-3 bg-white/5 border border-white/10 rounded-2xl px-3 sm:px-4 py-3 sm:py-3.5 focus-within:border-white/25 transition-[border-color] duration-150">
               <input
                 type="file"
                 ref={fileInputRef}
@@ -219,7 +230,7 @@ export default function WelcomeDashboard() {
                 onChange={handleFileSelect}
               />
 
-              {/* + button — opens popup with upload + tool options */}
+              {/* + button popover */}
               <Popover open={plusOpen} onOpenChange={setPlusOpen}>
                 <PopoverTrigger asChild>
                   <button
@@ -235,7 +246,6 @@ export default function WelcomeDashboard() {
                   side="top"
                   className="w-56 p-1.5 rounded-xl bg-popover border border-white/10"
                 >
-                  {/* Upload image option */}
                   <button
                     onClick={() => fileInputRef.current?.click()}
                     className="w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-foreground hover:bg-white/5 transition-colors"
@@ -243,10 +253,7 @@ export default function WelcomeDashboard() {
                     <Upload className="h-4 w-4 text-muted-foreground shrink-0" />
                     Upload Image
                   </button>
-
                   <div className="h-px bg-white/8 my-1" />
-
-                  {/* Tool options */}
                   {tools.map((tool) => (
                     <button
                       key={tool.id}
@@ -271,9 +278,9 @@ export default function WelcomeDashboard() {
                 value={inputPrompt}
                 onChange={(e) => setInputPrompt(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Describe your product (e.g. perfume bottle on marble...)"
+                placeholder={isMobile ? "Create With PixaLera" : "Describe your product (e.g. perfume bottle on marble...)"}
                 rows={1}
-                className="flex-1 bg-transparent resize-none text-[17px] text-foreground placeholder:text-muted-foreground/50 outline-none leading-relaxed max-h-40 overflow-y-auto py-0.5"
+                className="flex-1 bg-transparent resize-none text-base sm:text-[17px] text-foreground placeholder:text-muted-foreground/50 outline-none leading-relaxed max-h-40 overflow-y-auto scrollbar-none py-0.5"
                 onInput={(e) => {
                   const el = e.currentTarget;
                   el.style.height = "auto";
@@ -291,13 +298,34 @@ export default function WelcomeDashboard() {
               </button>
             </div>
 
-            <p className="text-[11px] text-muted-foreground/50 text-right pr-1">
+            {/* Hint — desktop only */}
+            <p className="hidden sm:block text-[11px] text-muted-foreground/50 text-right pr-1">
               Press <kbd className="font-mono">Ctrl+Enter</kbd> to send
             </p>
           </div>
 
-          {/* 4. Tools selector — horizontal scroll with arrows */}
-          <div className="flex items-center gap-2">
+          {/* 4. Tools selector */}
+          {/* Mobile: 2×2 grid | Desktop: horizontal scroll with arrows */}
+          <div className="block sm:hidden">
+            <div className="grid grid-cols-2 gap-2">
+              {tools.map((tool) => (
+                <button
+                  key={tool.id}
+                  onClick={() => setSelectedTool(tool.id)}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium transition-colors duration-150 border ${
+                    selectedTool === tool.id
+                      ? "bg-primary/10 text-primary border-primary/30"
+                      : "bg-white/5 text-muted-foreground border-white/10 hover:bg-white/8 hover:text-foreground"
+                  }`}
+                >
+                  <tool.icon className="h-3.5 w-3.5 shrink-0" />
+                  <span className="truncate">{tool.name}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="hidden sm:flex items-center gap-2">
             <button
               onClick={() => scrollTools("left")}
               className="h-8 w-8 shrink-0 flex items-center justify-center rounded-lg hover:bg-white/8 text-muted-foreground hover:text-foreground transition-colors"
@@ -334,9 +362,9 @@ export default function WelcomeDashboard() {
           </div>
 
           {/* 5. Example prompts */}
-          <div className="space-y-3">
+          <div className="space-y-2.5">
             <div className="flex items-center gap-2">
-              <p className="text-base font-medium text-muted-foreground">Try an example prompt</p>
+              <p className="text-sm sm:text-base font-medium text-muted-foreground">Try an example prompt</p>
               <button
                 onClick={handleRefreshPrompts}
                 title="Show more prompts"
@@ -350,9 +378,11 @@ export default function WelcomeDashboard() {
                 <button
                   key={prompt}
                   onClick={() => setInputPrompt(prompt)}
-                  className="px-4 py-2 rounded-xl text-sm text-muted-foreground bg-white/5 border border-white/10 hover:bg-white/10 hover:text-foreground transition-colors"
+                  className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm text-muted-foreground bg-white/5 border border-white/10 hover:bg-white/10 hover:text-foreground transition-colors max-w-[48%] sm:max-w-none"
                 >
-                  {prompt}
+                  <span className="block truncate sm:whitespace-normal">
+                    {isMobile ? truncatePrompt(prompt, 28) : prompt}
+                  </span>
                 </button>
               ))}
             </div>

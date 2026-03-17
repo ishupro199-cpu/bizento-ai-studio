@@ -27,11 +27,22 @@ const PLAN_LABELS: Record<string, string> = {
 interface AppSidebarProps {
   collapsed: boolean;
   onToggle: () => void;
-  onClose?: () => void;
-  isMobile?: boolean;
+  mobileOpen: boolean;
+  onMobileClose: () => void;
 }
 
-export function AppSidebar({ collapsed, onToggle, onClose, isMobile }: AppSidebarProps) {
+/* Reusable inner content — rendered in both desktop and mobile sidebars */
+function SidebarInner({
+  collapsed,
+  onToggle,
+  onClose,
+  isMobile = false,
+}: {
+  collapsed: boolean;
+  onToggle: () => void;
+  onClose: () => void;
+  isMobile?: boolean;
+}) {
   const location = useLocation();
   const { user, generations } = useAppContext();
   const [selectedGenId, setSelectedGenId] = useState<string | null>(null);
@@ -47,18 +58,25 @@ export function AppSidebar({ collapsed, onToggle, onClose, isMobile }: AppSideba
   const handleHistoryClick = (id: string) => {
     setSelectedGenId(id);
     setPanelOpen(true);
+    if (isMobile) onClose();
   };
+
+  const handleNavClick = () => {
+    if (isMobile) onClose();
+  };
+
+  /* On mobile, sidebar is always "expanded" (show full labels) */
+  const isCollapsed = isMobile ? false : collapsed;
 
   return (
     <>
-      <aside
-        style={{ width: collapsed ? 72 : 240 }}
-        className="relative flex flex-col h-screen bg-[hsl(var(--sidebar-background))] border-r border-[hsl(var(--sidebar-border))] transition-[width] duration-200 ease-in-out shrink-0 overflow-hidden z-30"
+      <div
+        style={{ width: isMobile ? 280 : isCollapsed ? 72 : 240 }}
+        className="flex flex-col h-full bg-[hsl(var(--sidebar-background))] border-r border-[hsl(var(--sidebar-border))] overflow-hidden transition-[width] duration-200 ease-in-out"
       >
         {/* Logo row */}
-        <div className={`flex items-center h-14 px-3 shrink-0 ${collapsed ? "justify-center" : "justify-between"}`}>
-          {collapsed ? (
-            /* Collapsed: logo icon, on hover show expand arrow */
+        <div className={`flex items-center h-14 px-3 shrink-0 ${isCollapsed ? "justify-center" : "justify-between"}`}>
+          {isCollapsed ? (
             <button
               onClick={onToggle}
               title="Expand sidebar"
@@ -66,14 +84,10 @@ export function AppSidebar({ collapsed, onToggle, onClose, isMobile }: AppSideba
               onMouseLeave={() => setLogoHovered(false)}
               className="relative flex h-9 w-9 items-center justify-center rounded-lg hover:bg-white/5 transition-colors"
             >
-              <div
-                className={`h-7 w-7 rounded-lg bg-primary flex items-center justify-center transition-opacity duration-150 ${logoHovered ? "opacity-0" : "opacity-100"}`}
-              >
+              <div className={`h-7 w-7 rounded-lg bg-primary flex items-center justify-center transition-opacity duration-150 ${logoHovered ? "opacity-0" : "opacity-100"}`}>
                 <Sparkles className="h-3.5 w-3.5 text-primary-foreground" />
               </div>
-              <ChevronRight
-                className={`h-4 w-4 text-muted-foreground absolute transition-opacity duration-150 ${logoHovered ? "opacity-100" : "opacity-0"}`}
-              />
+              <ChevronRight className={`h-4 w-4 text-muted-foreground absolute transition-opacity duration-150 ${logoHovered ? "opacity-100" : "opacity-0"}`} />
             </button>
           ) : (
             <>
@@ -95,9 +109,8 @@ export function AppSidebar({ collapsed, onToggle, onClose, isMobile }: AppSideba
           )}
         </div>
 
-        {/* Scrollable area: nav + history */}
+        {/* Scrollable area */}
         <div className="flex-1 overflow-y-auto overflow-x-hidden py-2 px-2 space-y-0.5 sidebar-scroll">
-          {/* Main nav items */}
           {navItems.map((item) => {
             const isActive =
               item.url === "/app"
@@ -108,9 +121,10 @@ export function AppSidebar({ collapsed, onToggle, onClose, isMobile }: AppSideba
                 key={item.title}
                 to={item.url}
                 end={item.url === "/app"}
-                title={collapsed ? item.title : undefined}
+                onClick={handleNavClick}
+                title={isCollapsed ? item.title : undefined}
                 className={`flex items-center gap-3 rounded-lg py-2 text-sm font-medium transition-colors duration-150 ${
-                  collapsed ? "justify-center w-full px-0" : "px-3"
+                  isCollapsed ? "justify-center w-full px-0" : "px-3"
                 } ${
                   isActive
                     ? "bg-primary/10 text-primary"
@@ -118,19 +132,17 @@ export function AppSidebar({ collapsed, onToggle, onClose, isMobile }: AppSideba
                 }`}
               >
                 <item.icon className="h-5 w-5 shrink-0" />
-                {!collapsed && <span className="whitespace-nowrap">{item.title}</span>}
+                {!isCollapsed && <span className="whitespace-nowrap">{item.title}</span>}
               </NavLink>
             );
           })}
 
-          {/* History — heading + inline list when expanded */}
-          {!collapsed && (
+          {/* History section */}
+          {!isCollapsed && (
             <>
               <div className="pt-4 pb-1 px-3 flex items-center gap-2">
                 <Clock className="h-3.5 w-3.5 text-muted-foreground/70 shrink-0" />
-                <span className="text-[11px] font-semibold text-muted-foreground/70 uppercase tracking-wider">
-                  History
-                </span>
+                <span className="text-[11px] font-semibold text-muted-foreground/70 uppercase tracking-wider">History</span>
               </div>
 
               {generations.length === 0 ? (
@@ -161,7 +173,7 @@ export function AppSidebar({ collapsed, onToggle, onClose, isMobile }: AppSideba
           )}
 
           {/* Collapsed: clock icon */}
-          {collapsed && (
+          {isCollapsed && (
             <button
               onClick={() => setPanelOpen(true)}
               title="Generation History"
@@ -176,14 +188,15 @@ export function AppSidebar({ collapsed, onToggle, onClose, isMobile }: AppSideba
 
         {/* Account / Plan */}
         <div className="px-2 py-2 space-y-0.5">
-          {!collapsed && (
+          {!isCollapsed && (
             <p className="px-3 py-1 text-[10px] text-muted-foreground/70 uppercase tracking-wider">Account</p>
           )}
           <NavLink
             to="/app/plan"
-            title={collapsed ? "Plan" : undefined}
+            onClick={handleNavClick}
+            title={isCollapsed ? "Plan" : undefined}
             className={`flex items-center gap-3 rounded-lg py-2 text-sm font-medium transition-colors duration-150 ${
-              collapsed ? "justify-center px-0 w-full" : "px-3"
+              isCollapsed ? "justify-center px-0 w-full" : "px-3"
             } ${
               location.pathname.startsWith("/app/plan")
                 ? "bg-primary/10 text-primary"
@@ -191,7 +204,7 @@ export function AppSidebar({ collapsed, onToggle, onClose, isMobile }: AppSideba
             }`}
           >
             <CreditCard className="h-5 w-5 shrink-0" />
-            {!collapsed && <span className="whitespace-nowrap">Plan</span>}
+            {!isCollapsed && <span className="whitespace-nowrap">Plan</span>}
           </NavLink>
         </div>
 
@@ -201,7 +214,7 @@ export function AppSidebar({ collapsed, onToggle, onClose, isMobile }: AppSideba
         <div className="px-2 py-3 shrink-0">
           <div
             className={`flex items-center gap-3 rounded-lg py-2 hover:bg-white/5 transition-colors cursor-pointer ${
-              collapsed ? "justify-center px-0" : "px-3"
+              isCollapsed ? "justify-center px-0" : "px-3"
             }`}
           >
             <Avatar className="h-7 w-7 shrink-0">
@@ -209,7 +222,7 @@ export function AppSidebar({ collapsed, onToggle, onClose, isMobile }: AppSideba
                 {initials}
               </AvatarFallback>
             </Avatar>
-            {!collapsed && (
+            {!isCollapsed && (
               <div className="flex flex-1 items-center justify-between min-w-0">
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-foreground truncate leading-none">
@@ -222,13 +235,53 @@ export function AppSidebar({ collapsed, onToggle, onClose, isMobile }: AppSideba
             )}
           </div>
         </div>
-      </aside>
+      </div>
 
       <HistoryPanel
         open={panelOpen}
         onClose={() => setPanelOpen(false)}
         selectedId={selectedGenId}
       />
+    </>
+  );
+}
+
+export function AppSidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: AppSidebarProps) {
+  return (
+    <>
+      {/* ── Desktop sidebar — in normal flex flow, hidden on mobile ── */}
+      <div className="hidden sm:flex shrink-0 h-screen sticky top-0">
+        <SidebarInner
+          collapsed={collapsed}
+          onToggle={onToggle}
+          onClose={onToggle}
+          isMobile={false}
+        />
+      </div>
+
+      {/* ── Mobile drawer overlay ── */}
+      <div className="sm:hidden">
+        {/* Backdrop */}
+        <div
+          className={`fixed inset-0 bg-black/60 z-40 transition-opacity duration-300 ${
+            mobileOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+          }`}
+          onClick={onMobileClose}
+        />
+        {/* Drawer */}
+        <div
+          className={`fixed inset-y-0 left-0 z-50 flex h-full transition-transform duration-300 ease-in-out ${
+            mobileOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
+        >
+          <SidebarInner
+            collapsed={false}
+            onToggle={onMobileClose}
+            onClose={onMobileClose}
+            isMobile={true}
+          />
+        </div>
+      </div>
     </>
   );
 }
