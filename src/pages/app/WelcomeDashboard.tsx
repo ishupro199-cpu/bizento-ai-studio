@@ -1,32 +1,55 @@
 import { useState } from "react";
-import { Sparkles, Camera, Clapperboard, LayoutGrid, Megaphone, ArrowRight, AlertTriangle } from "lucide-react";
-import { StyleSelector } from "@/components/app/StyleSelector";
+import { Plus, Send, LayoutGrid, Camera, Clapperboard, Megaphone, AlertTriangle } from "lucide-react";
 import { GenerationLoading } from "@/components/app/GenerationLoading";
 import { GenerationResults } from "@/components/app/GenerationResults";
 import { useGenerationState } from "@/hooks/useGenerationState";
-import { PromptBar } from "@/components/app/PromptBar";
 import { useAppContext } from "@/contexts/AppContext";
 import { Button } from "@/components/ui/button";
-
-const demoSteps = [
-  { label: "Product Photo", icon: Camera, desc: "Upload your raw product image" },
-  { label: "AI Processing", icon: Sparkles, desc: "Our AI enhances and transforms" },
-  { label: "Pro Visuals", icon: Clapperboard, desc: "Get studio-quality results" },
-];
+import { useImageUpload } from "@/hooks/useImageUpload";
+import { useRef } from "react";
 
 const tools = [
-  { name: "Generate Catalog", desc: "Professional ecommerce images", icon: LayoutGrid },
-  { name: "Product Photography", desc: "Studio-quality scenes", icon: Camera },
-  { name: "Cinematic Ads", desc: "CGI product advertisements", icon: Clapperboard },
-  { name: "Ad Creatives", desc: "Social media ad designs", icon: Megaphone },
+  { id: "catalog", name: "Generate Catalog", icon: LayoutGrid },
+  { id: "photo", name: "Product Photography", icon: Camera },
+  { id: "cinematic", name: "Cinematic Ads", icon: Clapperboard },
+  { id: "creative", name: "Ad Creatives", icon: Megaphone },
+];
+
+const examplePrompts = [
+  "Luxury perfume bottle on marble",
+  "Minimal skincare catalog shoot",
+  "Sneaker in neon futuristic lighting",
 ];
 
 export default function WelcomeDashboard() {
   const gen = useGenerationState();
-  const { canGenerate, creditCost, setShowUpgradeModal } = useAppContext();
+  const { canGenerate, setShowUpgradeModal, user } = useAppContext();
   const [inputPrompt, setInputPrompt] = useState("");
+  const [selectedTool, setSelectedTool] = useState("catalog");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { upload, uploading, previewUrl, clearUpload } = useImageUpload();
 
+  const firstName = user.name?.split(" ")[0] || "there";
   const isGenerating = gen.phase === "uploading" || gen.phase === "generating";
+
+  const handleGenerate = () => {
+    if (inputPrompt.trim() && canGenerate) {
+      gen.startGeneration(inputPrompt);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleGenerate();
+    }
+  };
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) await upload(file);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
 
   if (gen.phase === "complete") {
     return (
@@ -34,7 +57,6 @@ export default function WelcomeDashboard() {
         <div className="flex-1 overflow-auto">
           <GenerationResults results={gen.results} onRegenerate={gen.reset} />
         </div>
-        <PromptBar prompt={gen.prompt} onPromptChange={() => {}} onGenerate={gen.reset} disabled />
       </div>
     );
   }
@@ -44,72 +66,137 @@ export default function WelcomeDashboard() {
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full min-h-0">
       {/* Zero credits banner */}
       {!canGenerate && (
-        <div className="mx-4 mt-4 glass rounded-xl p-3 flex items-center justify-between border-destructive/30">
+        <div className="mx-4 mt-4 bg-destructive/10 border border-destructive/20 rounded-2xl p-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <AlertTriangle className="h-4 w-4 text-destructive" />
             <span className="text-sm text-foreground">You've reached your generation limit.</span>
           </div>
-          <Button size="sm" className="text-xs h-7" onClick={() => setShowUpgradeModal(true)}>Upgrade</Button>
+          <Button size="sm" className="text-xs h-7 rounded-full" onClick={() => setShowUpgradeModal(true)}>
+            Upgrade
+          </Button>
         </div>
       )}
 
-      <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-6">
-        <div className="max-w-3xl w-full text-center space-y-6 sm:space-y-8">
-          <div className="space-y-3 animate-fade-in">
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight">
-              Welcome to <span className="text-gradient">Bizento AI</span>
+      {/* Main centered content */}
+      <div className="flex-1 flex flex-col items-center justify-center px-4 py-8">
+        <div className="w-full max-w-[900px] space-y-8">
+
+          {/* 1. Workspace header */}
+          <div className="flex justify-center">
+            <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-sm text-muted-foreground">
+              {firstName}'s Workspace
+            </div>
+          </div>
+
+          {/* 2. Greeting */}
+          <div className="text-center space-y-2">
+            <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-foreground">
+              Hi {firstName},
             </h1>
-            <p className="text-base sm:text-lg text-muted-foreground max-w-xl mx-auto">
-              Turn your product photos into professional catalog images and ads with AI.
-            </p>
-            <p className="text-xs text-muted-foreground">Cost: {creditCost} credit{creditCost > 1 ? "s" : ""} per generation</p>
+            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-muted-foreground">
+              What do you want to make?
+            </h2>
           </div>
 
-          <div className="flex items-center justify-center gap-3 sm:gap-4 flex-wrap animate-fade-in" style={{ animationDelay: "0.1s" }}>
-            {demoSteps.map((step, i) => (
-              <div key={step.label} className="flex items-center gap-3 sm:gap-4">
-                <div className="glass rounded-2xl p-4 sm:p-5 text-center w-36 sm:w-44 hover:bg-[hsl(var(--glass-hover))] transition-all duration-200 group">
-                  <div className="mx-auto mb-2 sm:mb-3 h-9 w-9 sm:h-10 sm:w-10 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                    <step.icon className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-                  </div>
-                  <p className="text-xs sm:text-sm font-semibold text-foreground">{step.label}</p>
-                  <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">{step.desc}</p>
+          {/* 3. Prompt input */}
+          <div className="relative">
+            {/* Image preview strip */}
+            {previewUrl && (
+              <div className="flex items-center gap-2 mb-2 px-2">
+                <div className="relative">
+                  <img src={previewUrl} alt="Upload" className="h-10 w-10 rounded-xl object-cover border border-white/10" />
+                  <button
+                    onClick={clearUpload}
+                    className="absolute -top-1.5 -right-1.5 h-4 w-4 bg-background border border-white/10 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground"
+                  >
+                    ×
+                  </button>
                 </div>
-                {i < demoSteps.length - 1 && (
-                  <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0 hidden sm:block" />
-                )}
+                <span className="text-xs text-muted-foreground">Image attached</span>
               </div>
-            ))}
+            )}
+
+            <div className="flex items-end gap-2 bg-white/5 border border-white/10 rounded-[24px] px-4 py-3 focus-within:border-white/20 transition-colors">
+              <input
+                type="file"
+                ref={fileInputRef}
+                className="hidden"
+                accept="image/*"
+                onChange={handleFileSelect}
+              />
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="h-8 w-8 shrink-0 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors text-muted-foreground hover:text-foreground mb-0.5"
+                title="Upload image"
+              >
+                <Plus className="h-5 w-5" />
+              </button>
+
+              <textarea
+                value={inputPrompt}
+                onChange={(e) => setInputPrompt(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Describe your product (e.g. perfume bottle on marble...)"
+                rows={1}
+                className="flex-1 bg-transparent resize-none text-sm text-foreground placeholder:text-muted-foreground/60 outline-none leading-6 max-h-40 overflow-y-auto py-1"
+                style={{ minHeight: "32px" }}
+                onInput={(e) => {
+                  const el = e.currentTarget;
+                  el.style.height = "auto";
+                  el.style.height = `${el.scrollHeight}px`;
+                }}
+              />
+
+              <button
+                onClick={handleGenerate}
+                disabled={!inputPrompt.trim() || !canGenerate}
+                className="h-8 w-8 shrink-0 flex items-center justify-center rounded-full bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors mb-0.5"
+              >
+                <Send className="h-4 w-4" />
+              </button>
+            </div>
           </div>
 
-          <div className="animate-fade-in text-left" style={{ animationDelay: "0.15s" }}>
-            <StyleSelector selected={gen.selectedStyle} onSelect={gen.setSelectedStyle} />
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 animate-fade-in" style={{ animationDelay: "0.2s" }}>
+          {/* 4. Tools selector */}
+          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none justify-center flex-wrap sm:flex-nowrap">
             {tools.map((tool) => (
               <button
-                key={tool.name}
-                className="glass rounded-xl p-3 sm:p-4 text-left hover:bg-[hsl(var(--glass-hover))] transition-all duration-200 group cursor-pointer"
+                key={tool.id}
+                onClick={() => setSelectedTool(tool.id)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors duration-150 border ${
+                  selectedTool === tool.id
+                    ? "bg-primary/10 text-primary border-primary/30"
+                    : "bg-white/5 text-muted-foreground border-white/10 hover:bg-white/8 hover:text-foreground"
+                }`}
               >
-                <tool.icon className="h-5 w-5 text-primary mb-2 group-hover:scale-110 transition-transform" />
-                <p className="text-xs sm:text-sm font-medium text-foreground">{tool.name}</p>
-                <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">{tool.desc}</p>
+                <tool.icon className="h-4 w-4 shrink-0" />
+                {tool.name}
               </button>
             ))}
           </div>
+
+          {/* 5. Example prompts */}
+          <div className="space-y-3">
+            <p className="text-center text-sm text-muted-foreground">Try an example prompt</p>
+            <div className="flex gap-2 flex-wrap justify-center">
+              {examplePrompts.map((prompt) => (
+                <button
+                  key={prompt}
+                  onClick={() => setInputPrompt(prompt)}
+                  className="px-4 py-2 rounded-full text-sm text-muted-foreground bg-white/5 border border-white/10 hover:bg-white/10 hover:text-foreground transition-colors"
+                >
+                  {prompt}
+                </button>
+              ))}
+            </div>
+          </div>
+
         </div>
       </div>
-
-      <PromptBar
-        prompt={inputPrompt}
-        onPromptChange={setInputPrompt}
-        onGenerate={() => gen.startGeneration(inputPrompt)}
-        disabled={!canGenerate}
-      />
     </div>
   );
 }

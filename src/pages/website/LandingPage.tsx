@@ -24,7 +24,7 @@ export default function LandingPage() {
           <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
             <Sparkles className="h-4 w-4 text-primary-foreground" />
           </div>
-          <span className="text-lg font-bold">Bizento <span className="text-primary">AI</span></span>
+          <span className="text-lg font-bold">Pixa<span className="text-primary">Lera</span></span>
         </div>
         <div className="hidden md:flex items-center gap-6">
           <Link to="/features" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Features</Link>
@@ -135,7 +135,7 @@ export default function LandingPage() {
       {/* Footer */}
       <footer className="border-t border-[hsl(var(--glass-border))] py-8 px-6">
         <div className="max-w-5xl mx-auto flex items-center justify-between">
-          <span className="text-sm text-muted-foreground">© 2026 Bizento AI</span>
+          <span className="text-sm text-muted-foreground">© 2026 PixaLera</span>
           <div className="flex gap-4 text-sm text-muted-foreground">
             <Link to="/features" className="hover:text-foreground transition-colors">Features</Link>
             <Link to="/pricing" className="hover:text-foreground transition-colors">Pricing</Link>

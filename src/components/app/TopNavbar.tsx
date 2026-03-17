@@ -1,6 +1,5 @@
-import { Sparkles, Bell, HelpCircle, Zap, ChevronDown, Crown } from "lucide-react";
+import { Sparkles, Bell, Zap, ChevronDown, Crown, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { SidebarTrigger } from "@/components/ui/sidebar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,34 +9,45 @@ import {
 import { useAppContext } from "@/contexts/AppContext";
 
 const models = [
-  { id: "flash" as const, name: "Nano Bana Flash", desc: "Fast generation (1 credit)", icon: Zap },
-  { id: "pro" as const, name: "Nano Bana Pro", desc: "Highest quality (2 credits)", icon: Sparkles },
+  { id: "flash" as const, name: "Nano Flash", desc: "Fast generation (1 credit)", icon: Zap },
+  { id: "pro" as const, name: "Pixa Pro", desc: "Highest quality (2 credits)", icon: Sparkles },
 ];
 
-export function TopNavbar() {
+interface TopNavbarProps {
+  onMenuToggle?: () => void;
+}
+
+export function TopNavbar({ onMenuToggle }: TopNavbarProps) {
   const { selectedModel, setSelectedModel, user, setShowUpgradeModal } = useAppContext();
-  const currentModel = models.find(m => m.id === selectedModel) || models[0];
+  const currentModel = models.find((m) => m.id === selectedModel) || models[0];
 
   return (
-    <header className="h-14 flex items-center justify-between px-3 sm:px-4 border-b border-[hsl(var(--glass-border))]">
+    <header className="h-14 flex items-center justify-between px-3 sm:px-4 sticky top-0 z-20 backdrop-blur-[10px] bg-transparent">
       <div className="flex items-center gap-2 sm:gap-3">
-        <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
+        {onMenuToggle && (
+          <button
+            onClick={onMenuToggle}
+            className="h-8 w-8 flex items-center justify-center rounded-full text-muted-foreground hover:bg-white/5 hover:text-foreground transition-colors sm:hidden"
+          >
+            <Menu className="h-4 w-4" />
+          </button>
+        )}
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="glass gap-1.5 sm:gap-2 h-9 px-2.5 sm:px-3 rounded-lg">
+            <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium text-foreground hover:bg-white/5 transition-colors">
               <currentModel.icon className="h-3.5 w-3.5 text-primary" />
-              <span className="text-xs sm:text-sm font-medium truncate max-w-[120px] sm:max-w-none">{currentModel.name}</span>
+              <span className="truncate max-w-[120px] sm:max-w-none">{currentModel.name}</span>
               <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
-            </Button>
+            </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-56 bg-popover border-[hsl(var(--glass-border))]">
             {models.map((model) => (
               <DropdownMenuItem
                 key={model.id}
                 onClick={() => setSelectedModel(model.id)}
-                className={`flex flex-col items-start gap-0.5 cursor-pointer ${
-                  selectedModel === model.id ? "bg-primary/10" : ""
+                className={`flex flex-col items-start gap-0.5 cursor-pointer rounded-xl ${
+                  selectedModel === model.id ? "bg-primary/10" : "hover:bg-white/5"
                 }`}
               >
                 <span className="text-sm font-medium flex items-center gap-1.5">
@@ -53,22 +63,23 @@ export function TopNavbar() {
       </div>
 
       <div className="flex items-center gap-1.5 sm:gap-2">
-        <div className="glass rounded-lg px-2 sm:px-3 py-1.5 flex items-center gap-1.5 sm:gap-2">
+        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 text-sm">
           <Zap className="h-3.5 w-3.5 text-primary" />
-          <span className="text-xs sm:text-sm font-medium">{user.creditsRemaining}</span>
-          <span className="hidden sm:inline text-xs sm:text-sm font-medium">credits</span>
+          <span className="font-medium">{user.creditsRemaining}</span>
+          <span className="hidden sm:inline text-muted-foreground">credits</span>
         </div>
 
-        <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg h-8 text-xs font-semibold hidden sm:flex" onClick={() => setShowUpgradeModal(true)}>
+        <Button
+          size="sm"
+          className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full h-8 text-xs font-semibold hidden sm:flex"
+          onClick={() => setShowUpgradeModal(true)}
+        >
           Upgrade
         </Button>
 
-        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
+        <button className="h-8 w-8 flex items-center justify-center rounded-full text-muted-foreground hover:bg-white/5 hover:text-foreground transition-colors">
           <Bell className="h-4 w-4" />
-        </Button>
-        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground hidden sm:flex">
-          <HelpCircle className="h-4 w-4" />
-        </Button>
+        </button>
       </div>
     </header>
   );

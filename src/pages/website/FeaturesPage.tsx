@@ -17,7 +17,7 @@ export default function FeaturesPage() {
           <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
             <Sparkles className="h-4 w-4 text-primary-foreground" />
           </div>
-          <span className="text-lg font-bold">Bizento <span className="text-primary">AI</span></span>
+          <span className="text-lg font-bold">Pixa<span className="text-primary">Lera</span></span>
         </Link>
         <Link to="/app"><Button size="sm" className="bg-primary text-primary-foreground rounded-lg">Get Started</Button></Link>
       </nav>

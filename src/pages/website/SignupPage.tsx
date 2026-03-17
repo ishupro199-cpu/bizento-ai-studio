@@ -41,7 +41,7 @@ export default function SignupPage() {
             <Sparkles className="h-5 w-5 text-primary-foreground" />
           </div>
           <h1 className="text-2xl font-bold">Create your account</h1>
-          <p className="text-sm text-muted-foreground mt-1">Start creating with Bizento AI</p>
+          <p className="text-sm text-muted-foreground mt-1">Start creating with PixaLera</p>
         </div>
 
         <form onSubmit={handleSubmit} className="glass rounded-xl p-6 space-y-4">

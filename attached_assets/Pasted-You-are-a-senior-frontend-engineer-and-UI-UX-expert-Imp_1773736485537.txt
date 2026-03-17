@@ -1,0 +1,289 @@
+You are a senior frontend engineer and UI/UX expert. Improve and refactor my existing AI SaaS web app (Bizento AI) to match a premium, minimal, ChatGPT-like interface while maintaining performance and responsiveness.
+
+IMPORTANT:
+
+* Do NOT rebuild from scratch
+* Only modify and improve the existing codebase
+* Keep code clean, modular, and scalable
+* Use modern UI practices (flex/grid, proper spacing, accessibility)
+
+---
+
+## 1. SIDEBAR (COLLAPSIBLE + RESPONSIVE FIX)
+
+Refactor sidebar into 2 states:
+
+### Expanded State:
+
+* Width: 240px
+* Show logo + “Bizento AI”
+* Show menu labels + icons
+* Close icon INSIDE sidebar (top-right)
+
+### Collapsed State:
+
+* Width: 72px
+* Show ONLY icons (center aligned)
+* Hide labels completely
+* Ensure no overflow or broken alignment
+
+### Fix Layout Issues:
+
+* Icons size: 20–22px
+* Padding: 12px
+* Gap: 16px
+* Use flex column with center alignment
+
+### Interaction Behavior:
+
+* On hover over logo area (collapsed):
+  → show expand icon
+* On click → expand sidebar smoothly
+* Add transition: 0.2s ease
+
+### CRITICAL:
+
+Fix icon overflow when collapsed (ensure proper container width and no text wrapping)
+
+---
+
+## 2. REMOVE HISTORY PAGE → ADD SIDEBAR PANEL
+
+* Remove “History” as a separate page
+* Add “Generation History” inside sidebar
+
+### Behavior:
+
+* Clicking it opens a RIGHT SIDE PANEL (not full page)
+
+* Panel includes:
+
+  * Image thumbnail
+  * Prompt text
+  * Timestamp
+
+* Panel should slide in (right to left)
+
+* Use overlay background
+
+---
+
+## 3. ACCOUNT SECTION SIMPLIFICATION
+
+Replace:
+
+* Plan
+* Billing
+* Credits
+
+With ONE section:
+→ “Plan”
+
+### Plan Page Content:
+
+* Current subscription
+* Credits remaining
+* Upgrade button
+* Billing history
+
+### Sidebar Order:
+
+[Main Features]
+
+--- divider ---
+
+Plan
+
+--- divider ---
+
+Profile
+
+---
+
+## 4. NAVBAR REDESIGN (CHATGPT STYLE)
+
+### Style:
+
+* Background: transparent
+* Add backdrop blur (backdrop-filter: blur(10px))
+* No borders
+* Sticky top
+
+### Model Selector Changes:
+
+Rename:
+
+* Nano → Nano Flash
+* Flash → Pixa Flash
+* Pro → Pixa Pro
+
+### UI Style:
+
+* Remove box/outline
+* Make it text + dropdown arrow
+* Hover:
+  → subtle grey background (NOT green)
+
+---
+
+## 5. HOVER SYSTEM FIX (IMPORTANT)
+
+REMOVE:
+
+* Global kiwi green hover effect
+
+REPLACE WITH:
+
+* Background: rgba(255,255,255,0.05)
+* OR dark grey (#2a2a2a)
+
+### States:
+
+* Hover → soft grey
+* Active → kiwi green (#89E900)
+* Click → slightly darker grey
+
+Apply consistently across:
+
+* Sidebar items
+* Buttons
+* Cards
+* Inputs
+
+---
+
+## 6. BORDER RADIUS FIX
+
+Replace all inconsistent radius styles with:
+
+* border-radius: 9999px (fully rounded)
+
+Apply to:
+
+* Buttons
+* Input fields
+* Hover backgrounds
+* Tool cards
+
+Ensure NO square hover backgrounds appear
+
+---
+
+## 7. HOMEPAGE (WELCOME SCREEN REDESIGN)
+
+Redesign homepage based on this structure:
+
+### 1. Workspace Header (Top Center)
+
+* Text: “Ishu’s Workspace”
+* Small rounded pill style
+
+---
+
+### 2. Greeting Section
+
+Large heading:
+
+Hi Ishu,
+What do you want to make?
+
+* Strong typography
+* Center aligned
+
+---
+
+### 3. Prompt Input Box
+
+* Large rounded input (pill shape)
+* Placeholder:
+  “Describe your product (e.g. perfume bottle...)”
+
+### Inside Input:
+
+* Left: + icon (upload)
+* Right: send/generate button
+
+---
+
+### 4. Tools Selector (Horizontal)
+
+Scrollable row with:
+
+* Generate Catalog
+* Product Photography
+* Cinematic Ads
+* Ad Creatives
+
+Each as rounded selectable cards
+
+---
+
+### 5. Example Prompts Section
+
+Heading:
+“Try an example prompt”
+
+Below:
+Clickable prompt cards:
+
+* “Luxury perfume bottle on marble”
+* “Minimal skincare catalog shoot”
+* “Sneaker in neon futuristic lighting”
+
+### Behavior:
+
+* Click → autofill input
+
+---
+
+### 6. Layout Rules:
+
+* Center everything
+* Max width: ~900px
+* Proper vertical spacing
+* Clean minimal UI
+
+---
+
+## 8. DESIGN SYSTEM RULES
+
+### Colors:
+
+* Background: #222222
+* Accent: #89E900 (ONLY for active elements)
+
+### Typography:
+
+* Clean sans-serif
+* Large headings, medium body
+
+### Spacing:
+
+* Use consistent spacing scale (8px system)
+
+### Animations:
+
+* Smooth (0.2s–0.3s)
+* No aggressive effects
+
+---
+
+## 9. FINAL GOAL
+
+The UI should feel:
+
+* Minimal
+* Premium
+* Fast
+* Like ChatGPT + Midjourney hybrid
+
+Focus on:
+
+* Simplicity
+* Clarity
+* Usability
+
+---
+
+Only return updated code blocks and components.
+Do not explain theory.
