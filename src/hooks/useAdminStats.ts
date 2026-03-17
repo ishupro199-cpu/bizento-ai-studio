@@ -9,6 +9,8 @@ export interface AdminStats {
   totalCreditsUsed: number;
   flashGenerations: number;
   proGenerations: number;
+  realImageGenerations: number;
+  totalGenerationTimeSeconds: number;
   dailyCounts: Record<string, number>;
   toolUsage: Record<string, number>;
   loading: boolean;
@@ -20,6 +22,7 @@ export interface RecentActivity {
   description: string;
   tool: string;
   model: string;
+  hasRealImages: boolean;
   timestamp: Date;
 }
 
@@ -29,6 +32,8 @@ const DEFAULT_STATS: AdminStats = {
   totalCreditsUsed: 0,
   flashGenerations: 0,
   proGenerations: 0,
+  realImageGenerations: 0,
+  totalGenerationTimeSeconds: 0,
   dailyCounts: {},
   toolUsage: {},
   loading: true,
@@ -51,6 +56,8 @@ export function useAdminStats() {
             totalCreditsUsed: data.totalCreditsUsed || 0,
             flashGenerations: data.flashGenerations || 0,
             proGenerations: data.proGenerations || 0,
+            realImageGenerations: data.realImageGenerations || 0,
+            totalGenerationTimeSeconds: data.totalGenerationTimeSeconds || 0,
             dailyCounts: data.dailyCounts || {},
             toolUsage: data.toolUsage || {},
             loading: false,
@@ -82,6 +89,7 @@ export function useAdminStats() {
               : "Image generated",
             tool: data.tool || "Generate Catalog",
             model: data.model || "flash",
+            hasRealImages: data.hasRealImages ?? false,
             timestamp:
               ts instanceof Timestamp ? ts.toDate() : ts ? new Date(ts) : new Date(),
           };
@@ -124,5 +132,24 @@ export function useAdminStats() {
     };
   };
 
-  return { stats, recentActivity, activityLoading, last7Days, toolBreakdown, modelSplit };
+  const avgGenerationTime = (): number => {
+    if (!stats.totalGenerations || !stats.totalGenerationTimeSeconds) return 0;
+    return Math.round(stats.totalGenerationTimeSeconds / stats.totalGenerations);
+  };
+
+  const aiSuccessRate = (): number => {
+    if (!stats.totalGenerations) return 0;
+    return Math.round((stats.realImageGenerations / stats.totalGenerations) * 100);
+  };
+
+  return {
+    stats,
+    recentActivity,
+    activityLoading,
+    last7Days,
+    toolBreakdown,
+    modelSplit,
+    avgGenerationTime,
+    aiSuccessRate,
+  };
 }

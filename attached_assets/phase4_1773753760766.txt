@@ -1,0 +1,178 @@
+You are an expert AI systems architect and full-stack SaaS engineer.
+Continue building the platform Bizento AI.
+Previous phases already created:
+Phase 1
+• project structure
+• design system
+• dashboard layout
+• sidebar navigation
+• top navbar with model selector
+Phase 2
+• generation workspace
+• prompt system
+• tools selector
+• style selector
+• results interface
+• image library
+Phase 3
+• credit system
+• pricing logic
+• model selection behavior
+• generation workflow simulation
+• admin analytics
+Now implement Phase 4: AI Integration Architecture and Generation Pipeline.
+The goal is to transform Bizento AI from a UI prototype into a real AI-powered creative generation system.
+
+AI SYSTEM OVERVIEW
+Bizento AI transforms a simple product photo into professional visuals such as:
+• ecommerce catalog images
+• product photography
+• cinematic CGI product ads
+• marketing creatives
+The system must support four generation tools:
+Generate Catalog
+Product Photography
+Cinematic Ads
+Ad Creatives
+Each tool will use the same AI pipeline with different style parameters.
+
+IMAGE GENERATION PIPELINE
+Implement the following AI workflow.
+Step 1 — Image Upload
+User uploads a product image.
+Store the original image in the image storage system.
+
+Step 2 — Product Analysis
+Use a vision model to analyze the uploaded image.
+Extract product information such as:
+product category
+color
+material
+object type
+Use this information to improve prompt generation.
+
+Step 3 — Background Removal
+Remove the background from the product image.
+Output should be a transparent product image.
+This step allows the system to place the product into new scenes.
+
+Step 4 — Scene Generation
+Generate a background scene based on:
+selected style
+selected tool
+prompt text
+Examples:
+luxury marble scene
+studio lighting
+flower product scene
+cinematic neon scene
+
+Step 5 — Product Compositing
+Place the extracted product image into the generated scene.
+Adjust:
+lighting
+shadow
+perspective
+reflection
+Ensure the final image looks realistic.
+
+Step 6 — Image Rendering
+Render the final output image.
+Produce multiple variations.
+Example:
+3 generated images per request.
+
+STEP 7 — SAVE OUTPUT
+Save generated images into storage.
+Store metadata including:
+prompt
+tool
+style
+model used
+generation time
+credits used
+Images should automatically appear in:
+My Catalogs
+My Ads
+Images
+History
+
+MODEL BEHAVIOR
+The platform supports two models.
+Nano Bana Flash
+• faster generation
+• lower compute cost
+• ideal for catalog images
+Nano Bana Pro
+• higher realism
+• better lighting and reflections
+• ideal for ads and cinematic visuals
+When Nano Bana Pro is selected, the generation pipeline should prioritize higher quality rendering.
+
+STYLE PRESET SYSTEM
+Create a style preset system.
+Examples:
+Luxury Studio
+Minimal Catalog
+Floral Product Scene
+Marble Product Scene
+Neon Futuristic Scene
+Beach Lifestyle Scene
+Each preset modifies the scene generation parameters.
+
+PROMPT AUGMENTATION
+Improve user prompts automatically.
+Example:
+User prompt:
+"perfume bottle ad"
+System expands prompt to:
+"luxury perfume bottle product photography with cinematic lighting and marble background"
+This improves generation quality.
+
+PERFORMANCE OPTIMIZATION
+To reduce cost and improve speed:
+Do not generate the full image from scratch every time.
+Instead:
+Generate background scene
+Overlay product image
+Render final composition
+This reduces generation cost significantly.
+
+IMAGE STORAGE SYSTEM
+Implement a structured storage system.
+Example folders:
+uploads/
+generated/catalog/
+generated/ads/
+generated/photography/
+Ensure generated images can be quickly retrieved by the user dashboard.
+
+SCALABILITY DESIGN
+Design the system so it can scale.
+Support future expansion to:
+10,000 users
+100,000 users
+Ensure generation requests are processed asynchronously.
+
+ADMIN MONITORING
+Admin dashboard must show:
+Daily generation count
+Model usage distribution
+Tool usage distribution
+Total storage used
+Example metrics:
+Catalog generations
+Product photography generations
+Cinematic ads generated
+
+FINAL GOAL OF PHASE 4
+After Phase 4 the system should support:
+• real product image uploads
+• AI powered image generation pipeline
+• scene generation
+• product compositing
+• image rendering
+• storage and retrieval
+• admin analytics
+This phase converts Bizento AI from a prototype into a functional AI generation platform.
+

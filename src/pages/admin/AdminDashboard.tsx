@@ -1,4 +1,7 @@
-import { Users, Zap, CreditCard, TrendingUp, BarChart3, Clock, LayoutGrid, Camera, Clapperboard, Megaphone } from "lucide-react";
+import {
+  Users, Zap, CreditCard, TrendingUp, BarChart3, Clock,
+  LayoutGrid, Camera, Clapperboard, Megaphone, Sparkles, Timer,
+} from "lucide-react";
 import { useAdminStats } from "@/hooks/useAdminStats";
 
 const TOOL_ICONS: Record<string, React.ElementType> = {
@@ -17,35 +20,63 @@ function timeAgo(date: Date): string {
 }
 
 export default function AdminDashboard() {
-  const { stats, recentActivity, activityLoading, last7Days, modelSplit } = useAdminStats();
+  const { stats, recentActivity, activityLoading, last7Days, modelSplit, avgGenerationTime, aiSuccessRate } = useAdminStats();
 
   const dailyData = last7Days();
   const maxDaily = Math.max(...dailyData.map((d) => d.count), 1);
   const { flashPct, proPct } = modelSplit();
+  const avgTime = avgGenerationTime();
+  const aiRate = aiSuccessRate();
 
   const statCards = [
-    { label: "Total Users", value: stats.loading ? "—" : stats.totalUsers.toLocaleString(), icon: Users },
-    { label: "Total Generations", value: stats.loading ? "—" : stats.totalGenerations.toLocaleString(), icon: Zap },
-    { label: "Credits Used", value: stats.loading ? "—" : stats.totalCreditsUsed.toLocaleString(), icon: CreditCard },
-    { label: "Flash Gens", value: stats.loading ? "—" : stats.flashGenerations.toLocaleString(), icon: TrendingUp },
-    { label: "Pro Gens", value: stats.loading ? "—" : stats.proGenerations.toLocaleString(), icon: BarChart3 },
+    { label: "Total Users", value: stats.loading ? "—" : stats.totalUsers.toLocaleString(), icon: Users, color: "text-blue-400" },
+    { label: "Total Generations", value: stats.loading ? "—" : stats.totalGenerations.toLocaleString(), icon: Zap, color: "text-primary" },
+    { label: "Credits Used", value: stats.loading ? "—" : stats.totalCreditsUsed.toLocaleString(), icon: CreditCard, color: "text-amber-400" },
+    { label: "Flash Gens", value: stats.loading ? "—" : stats.flashGenerations.toLocaleString(), icon: TrendingUp, color: "text-green-400" },
+    { label: "Pro Gens", value: stats.loading ? "—" : stats.proGenerations.toLocaleString(), icon: BarChart3, color: "text-purple-400" },
+    { label: "Real AI Images", value: stats.loading ? "—" : stats.realImageGenerations.toLocaleString(), icon: Sparkles, color: "text-primary" },
   ];
 
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         {statCards.map((stat) => (
           <div key={stat.label} className="glass rounded-xl p-4">
             <div className="flex items-center justify-between mb-2">
-              <stat.icon className="h-4 w-4 text-primary" />
+              <stat.icon className={`h-4 w-4 ${stat.color}`} />
               <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
             </div>
             <p className="text-xl font-bold text-foreground">{stat.value}</p>
             <p className="text-xs text-muted-foreground mt-0.5">{stat.label}</p>
           </div>
         ))}
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="glass rounded-xl p-4 flex items-center gap-4">
+          <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+            <Timer className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <p className="text-xl font-bold text-foreground">
+              {stats.loading ? "—" : avgTime > 0 ? `${avgTime}s` : "N/A"}
+            </p>
+            <p className="text-xs text-muted-foreground">Avg. Generation Time</p>
+          </div>
+        </div>
+        <div className="glass rounded-xl p-4 flex items-center gap-4">
+          <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+            <Sparkles className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <p className="text-xl font-bold text-foreground">
+              {stats.loading ? "—" : `${aiRate}%`}
+            </p>
+            <p className="text-xs text-muted-foreground">AI Image Success Rate</p>
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -106,6 +137,22 @@ export default function AdminDashboard() {
               <span>{stats.proGenerations} Pro jobs</span>
             </div>
           </div>
+
+          <div className="pt-2 space-y-2">
+            <h4 className="text-xs font-medium text-muted-foreground/70 uppercase tracking-wider">AI Pipeline</h4>
+            <div>
+              <div className="flex items-center justify-between text-xs mb-1">
+                <span className="text-muted-foreground">Real AI Images</span>
+                <span className="text-primary font-medium">{aiRate}%</span>
+              </div>
+              <div className="h-2 rounded-full bg-muted overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-primary/80 transition-all duration-700"
+                  style={{ width: `${aiRate}%` }}
+                />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -136,6 +183,9 @@ export default function AdminDashboard() {
                     <span className="text-muted-foreground truncate block">{a.description}</span>
                     <span className="text-[10px] text-muted-foreground/60">
                       {a.tool} · {a.model === "pro" ? "Pro" : "Flash"}
+                      {a.hasRealImages && (
+                        <span className="text-primary ml-1">· AI image</span>
+                      )}
                     </span>
                   </div>
                   <span className="text-[10px] text-muted-foreground/50 shrink-0">

@@ -35,6 +35,9 @@ export interface GenerationRecord {
   gradient: string;
   uploadedImageUrl?: string;
   variantCount?: number;
+  imageUrls?: string[];
+  hasRealImages?: boolean;
+  generationTime?: number;
 }
 
 interface UserProfile {
@@ -117,6 +120,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     creditsConsumed: g.creditsConsumed,
     gradient: g.gradient,
     uploadedImageUrl: g.uploadedImageUrl,
+    imageUrls: g.imageUrls,
   }));
 
   const creditCost = CREDIT_COSTS[selectedModel];
@@ -142,13 +146,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
         model: record.model,
         creditsConsumed: cost,
         gradient: record.gradient,
-        imageUrls: [],
+        imageUrls: record.imageUrls ?? [],
         uploadedImageUrl: record.uploadedImageUrl || "",
         status: "completed",
+        hasRealImages: record.hasRealImages ?? false,
+        generationTime: record.generationTime,
         createdAt: new Date(),
       });
       updateCredits(cost, record.model);
-      updateAdminStats(record.tool, record.model, cost);
+      updateAdminStats(record.tool, record.model, cost, {
+        hasRealImages: record.hasRealImages ?? false,
+        generationTime: record.generationTime,
+      });
     },
     [firestoreAdd, updateCredits]
   );

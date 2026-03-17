@@ -31,29 +31,35 @@ export interface FirestoreGeneration {
   imageUrls: string[];
   uploadedImageUrl: string;
   status: "completed" | "failed";
+  hasRealImages?: boolean;
+  generationTime?: number;
   createdAt: Date;
 }
 
 export async function updateAdminStats(
   tool: string,
   model: ModelId,
-  credits: number
+  credits: number,
+  extras?: { generationTime?: number; hasRealImages?: boolean }
 ) {
   try {
     const today = new Date().toISOString().slice(0, 10);
     const statsRef = doc(db, "admin", "stats");
-    await setDoc(
-      statsRef,
-      {
-        totalGenerations: increment(1),
-        totalCreditsUsed: increment(credits),
-        flashGenerations: model === "flash" ? increment(1) : increment(0),
-        proGenerations: model === "pro" ? increment(1) : increment(0),
-        [`dailyCounts.${today}`]: increment(1),
-        [`toolUsage.${tool}`]: increment(1),
-      },
-      { merge: true }
-    );
+    const update: Record<string, any> = {
+      totalGenerations: increment(1),
+      totalCreditsUsed: increment(credits),
+      flashGenerations: model === "flash" ? increment(1) : increment(0),
+      proGenerations: model === "pro" ? increment(1) : increment(0),
+      [`dailyCounts.${today}`]: increment(1),
+      [`toolUsage.${tool}`]: increment(1),
+    };
+    if (extras?.hasRealImages) {
+      update.realImageGenerations = increment(1);
+    }
+    if (extras?.generationTime) {
+      update.totalGenerationTimeSeconds = increment(extras.generationTime);
+    }
+    await setDoc(statsRef, update, { merge: true });
   } catch {
   }
 }
@@ -102,6 +108,8 @@ export function useGenerations() {
             imageUrls: data.imageUrls || [],
             uploadedImageUrl: data.uploadedImageUrl || "",
             status: data.status,
+            hasRealImages: data.hasRealImages ?? false,
+            generationTime: data.generationTime,
             createdAt:
               data.createdAt instanceof Timestamp
                 ? data.createdAt.toDate()
