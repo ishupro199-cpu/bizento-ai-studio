@@ -1,14 +1,13 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Sparkles, Loader2 } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { Sparkles, Loader2, Eye, EyeOff, ArrowLeft, Zap, ImageIcon, Layers } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
   const { signIn } = useAuth();
   const navigate = useNavigate();
@@ -28,34 +27,253 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-6">
-      <div className="w-full max-w-sm space-y-6">
-        <div className="text-center">
-          <div className="h-10 w-10 rounded-lg bg-primary flex items-center justify-center mx-auto mb-4">
-            <Sparkles className="h-5 w-5 text-primary-foreground" />
-          </div>
-          <h1 className="text-2xl font-bold">Welcome back</h1>
-          <p className="text-sm text-muted-foreground mt-1">Sign in to PixaLera</p>
+    <div className="min-h-screen flex flex-col lg:flex-row bg-[#111111]">
+
+      {/* ── LEFT — Form Panel ── */}
+      <div className="flex-1 flex flex-col min-h-screen lg:min-h-0 relative">
+
+        {/* Back button */}
+        <div className="absolute top-6 left-6 z-10">
+          <Link
+            to="/"
+            className="inline-flex items-center gap-2 text-[13px] text-white/40 hover:text-white/80 transition-colors duration-150 group"
+          >
+            <span className="flex items-center justify-center h-7 w-7 rounded-full border border-white/10 group-hover:border-white/25 transition-colors">
+              <ArrowLeft className="h-3.5 w-3.5" />
+            </span>
+            Back
+          </Link>
         </div>
 
-        <form onSubmit={handleSubmit} className="glass rounded-xl p-6 space-y-4">
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-foreground">Email</label>
-            <Input type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} className="bg-secondary/50 border-[hsl(var(--glass-border))]" />
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-foreground">Password</label>
-            <Input type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} className="bg-secondary/50 border-[hsl(var(--glass-border))]" />
-          </div>
-          <Button type="submit" className="w-full bg-primary text-primary-foreground rounded-lg mt-2" disabled={loading}>
-            {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-            Sign in
-          </Button>
-        </form>
+        {/* Form centered */}
+        <div className="flex-1 flex items-center justify-center px-6 py-24">
+          <div className="w-full max-w-[380px] space-y-8">
 
-        <p className="text-center text-sm text-muted-foreground">
-          Don't have an account? <Link to="/signup" className="text-primary hover:underline">Sign up</Link>
-        </p>
+            {/* Logo + heading */}
+            <div>
+              <div className="flex items-center gap-2.5 mb-6">
+                <div className="h-8 w-8 rounded-lg bg-[#89E900] flex items-center justify-center">
+                  <Sparkles className="h-4 w-4 text-black" />
+                </div>
+                <span className="text-[15px] font-bold text-white tracking-tight">
+                  Pixa<span className="text-[#89E900]">Lera</span>
+                </span>
+              </div>
+              <h1 className="text-[2rem] font-bold text-white leading-tight">Welcome back!</h1>
+              <p className="text-[14px] text-white/45 mt-2 leading-relaxed">
+                Sign in to your account and start creating<br className="hidden sm:block" /> stunning AI-powered visuals.
+              </p>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Email */}
+              <div className="space-y-1.5">
+                <label className="text-[13px] font-medium text-white/60">Email address</label>
+                <input
+                  type="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="w-full h-12 rounded-2xl bg-white/[0.06] border border-white/[0.09] px-4 text-[14px] text-white placeholder-white/25 outline-none transition-all duration-150 focus:border-[#89E900]/50 focus:bg-white/[0.08] focus:ring-0"
+                />
+              </div>
+
+              {/* Password */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-[13px] font-medium text-white/60">Password</label>
+                  <button
+                    type="button"
+                    className="text-[12px] text-[#89E900]/80 hover:text-[#89E900] transition-colors"
+                    onClick={() => toast.info("Password reset coming soon")}
+                  >
+                    Forgot password?
+                  </button>
+                </div>
+                <div className="relative">
+                  <input
+                    type={showPw ? "text" : "password"}
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    className="w-full h-12 rounded-2xl bg-white/[0.06] border border-white/[0.09] px-4 pr-12 text-[14px] text-white placeholder-white/25 outline-none transition-all duration-150 focus:border-[#89E900]/50 focus:bg-white/[0.08]"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPw((v) => !v)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 transition-colors"
+                    tabIndex={-1}
+                  >
+                    {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Submit */}
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full h-12 rounded-2xl text-[14px] font-semibold text-black transition-all duration-150 flex items-center justify-center gap-2 mt-2 disabled:opacity-60"
+                style={{
+                  background: "linear-gradient(135deg, #89E900 0%, #6BBF00 100%)",
+                  boxShadow: "0 4px 24px rgba(137,233,0,0.25)",
+                }}
+                onMouseEnter={e => !loading && ((e.currentTarget as HTMLElement).style.boxShadow = "0 6px 32px rgba(137,233,0,0.40)")}
+                onMouseLeave={e => ((e.currentTarget as HTMLElement).style.boxShadow = "0 4px 24px rgba(137,233,0,0.25)")}
+              >
+                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                {loading ? "Signing in…" : "Sign in"}
+              </button>
+            </form>
+
+            {/* Divider */}
+            <div className="flex items-center gap-3">
+              <div className="flex-1 h-px bg-white/[0.07]" />
+              <span className="text-[12px] text-white/25 font-medium">or continue with</span>
+              <div className="flex-1 h-px bg-white/[0.07]" />
+            </div>
+
+            {/* Social buttons */}
+            <div className="flex gap-3">
+              {[
+                {
+                  label: "Google",
+                  icon: (
+                    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none">
+                      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+                      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                    </svg>
+                  ),
+                },
+                {
+                  label: "Apple",
+                  icon: (
+                    <svg viewBox="0 0 24 24" className="h-5 w-5 fill-white">
+                      <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98l-.09.06c-.22.15-2.18 1.27-2.16 3.8.03 3.02 2.65 4.03 2.68 4.04l-.07.28zM13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+                    </svg>
+                  ),
+                },
+                {
+                  label: "GitHub",
+                  icon: (
+                    <svg viewBox="0 0 24 24" className="h-5 w-5 fill-white">
+                      <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>
+                    </svg>
+                  ),
+                },
+              ].map(({ label, icon }) => (
+                <button
+                  key={label}
+                  type="button"
+                  onClick={() => toast.info(`${label} sign-in coming soon`)}
+                  className="flex-1 h-12 rounded-2xl border border-white/[0.09] bg-white/[0.04] flex items-center justify-center transition-all duration-150 hover:bg-white/[0.08] hover:border-white/[0.15]"
+                  aria-label={`Continue with ${label}`}
+                >
+                  {icon}
+                </button>
+              ))}
+            </div>
+
+            {/* Footer link */}
+            <p className="text-center text-[13px] text-white/35">
+              Not a member?{" "}
+              <Link to="/signup" className="text-[#89E900] hover:text-[#a5f030] font-medium transition-colors">
+                Create an account
+              </Link>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* ── RIGHT — Visual Panel (hidden on mobile) ── */}
+      <div
+        className="hidden lg:flex lg:w-[50%] xl:w-[55%] flex-col items-center justify-center relative overflow-hidden p-12"
+        style={{
+          background: "linear-gradient(135deg, #0f1a00 0%, #111111 40%, #0d1500 100%)",
+        }}
+      >
+        {/* Subtle grid pattern */}
+        <div
+          className="absolute inset-0 opacity-[0.04]"
+          style={{
+            backgroundImage: `linear-gradient(rgba(137,233,0,1) 1px, transparent 1px), linear-gradient(90deg, rgba(137,233,0,1) 1px, transparent 1px)`,
+            backgroundSize: "40px 40px",
+          }}
+        />
+
+        {/* Glow blobs */}
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 h-64 w-64 rounded-full blur-[120px] opacity-20" style={{ background: "#89E900" }} />
+        <div className="absolute bottom-1/4 right-1/4 h-48 w-48 rounded-full blur-[100px] opacity-10" style={{ background: "#89E900" }} />
+
+        {/* Content */}
+        <div className="relative z-10 flex flex-col items-center text-center max-w-md space-y-8">
+
+          {/* Floating AI cards */}
+          <div className="relative w-full max-w-sm h-64">
+            {/* Main card */}
+            <div
+              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-52 rounded-2xl p-4 border border-white/10"
+              style={{ background: "rgba(25,25,25,0.85)", backdropFilter: "blur(12px)" }}
+            >
+              <div className="flex items-center gap-2 mb-3">
+                <div className="h-8 w-8 rounded-xl bg-[#89E900]/20 flex items-center justify-center">
+                  <ImageIcon className="h-4 w-4 text-[#89E900]" />
+                </div>
+                <div>
+                  <p className="text-[12px] font-semibold text-white leading-none">Catalog Shot</p>
+                  <p className="text-[10px] text-white/40 mt-0.5">Flash model</p>
+                </div>
+              </div>
+              <div className="h-24 rounded-xl overflow-hidden mb-3" style={{ background: "linear-gradient(135deg, #1a2a00 0%, #89E900 100%)", opacity: 0.7 }} />
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] text-white/50">4 credits used</span>
+                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: "rgba(137,233,0,0.15)", color: "#89E900" }}>Done</span>
+              </div>
+            </div>
+
+            {/* Top-right floating stat */}
+            <div
+              className="absolute top-2 right-0 rounded-xl px-3 py-2 border border-white/10 flex items-center gap-2"
+              style={{ background: "rgba(20,20,20,0.90)", backdropFilter: "blur(8px)" }}
+            >
+              <Zap className="h-3.5 w-3.5 text-[#89E900] fill-[#89E900]" />
+              <span className="text-[11px] font-semibold text-white">12 generated</span>
+            </div>
+
+            {/* Bottom-left floating stat */}
+            <div
+              className="absolute bottom-4 left-0 rounded-xl px-3 py-2 border border-white/10 flex items-center gap-2"
+              style={{ background: "rgba(20,20,20,0.90)", backdropFilter: "blur(8px)" }}
+            >
+              <Layers className="h-3.5 w-3.5 text-[#89E900]" />
+              <span className="text-[11px] font-semibold text-white">3 styles</span>
+            </div>
+          </div>
+
+          {/* Tagline */}
+          <div className="space-y-3">
+            <h2 className="text-[1.6rem] font-bold text-white leading-snug">
+              Turn product photos into{" "}
+              <span style={{ color: "#89E900" }}>pro visuals</span>{" "}
+              in seconds
+            </h2>
+            <p className="text-[14px] text-white/40 leading-relaxed">
+              Upload a simple photo and let PixaLera generate professional catalog images, cinematic ads, and social media creatives.
+            </p>
+          </div>
+
+          {/* Dots */}
+          <div className="flex gap-1.5">
+            <span className="h-1.5 w-5 rounded-full" style={{ background: "#89E900" }} />
+            <span className="h-1.5 w-1.5 rounded-full bg-white/20" />
+            <span className="h-1.5 w-1.5 rounded-full bg-white/20" />
+          </div>
+        </div>
       </div>
     </div>
   );
