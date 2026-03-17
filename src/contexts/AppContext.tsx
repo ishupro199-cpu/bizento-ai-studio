@@ -40,6 +40,7 @@ export interface GenerationRecord {
 interface UserProfile {
   name: string;
   email: string;
+  photoURL: string;
   plan: PlanId;
   creditsRemaining: number;
   creditsUsed: number;
@@ -76,6 +77,7 @@ export function useAppContext() {
 const DEFAULT_USER: UserProfile = {
   name: "User",
   email: "",
+  photoURL: "",
   plan: "free",
   creditsRemaining: 3,
   creditsUsed: 0,
@@ -95,13 +97,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     ? {
         name: profile.name || authUser?.displayName || "User",
         email: profile.email || authUser?.email || "",
+        photoURL: profile.photoURL || authUser?.photoURL || "",
         plan: (profile.plan as PlanId) || "free",
         creditsRemaining: profile.creditsRemaining ?? 3,
         creditsUsed: profile.creditsUsed ?? 0,
         flashGenerations: profile.flashGenerations ?? 0,
         proGenerations: profile.proGenerations ?? 0,
       }
-    : DEFAULT_USER;
+    : { ...DEFAULT_USER, photoURL: authUser?.photoURL || "" };
 
   const generations: GenerationRecord[] = firestoreGens.map((g) => ({
     id: g.id,

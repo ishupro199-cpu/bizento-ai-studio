@@ -19,8 +19,21 @@ export default function SignupPage() {
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showPhone, setShowPhone] = useState(false);
-  const { signUp } = useAuth();
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const { signUp, signInWithGoogle } = useAuth();
   const navigate = useNavigate();
+
+  const handleGoogleSignUp = async () => {
+    setGoogleLoading(true);
+    try {
+      await signInWithGoogle();
+      navigate("/app");
+    } catch (err: any) {
+      toast.error(err.message || "Google sign-in failed");
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -183,8 +196,9 @@ export default function SignupPage() {
                 {/* Google */}
                 <button
                   type="button"
-                  onClick={() => toast.info("Google sign-up coming soon")}
-                  className="flex-1 h-12 rounded-2xl border border-white/[0.09] bg-white/[0.04] flex items-center justify-center transition-all duration-150 hover:bg-white/[0.08] hover:border-white/[0.15]"
+                  onClick={handleGoogleSignUp}
+                  disabled={googleLoading}
+                  className="flex-1 h-12 rounded-2xl border border-white/[0.09] bg-white/[0.04] flex items-center justify-center transition-all duration-150 hover:bg-white/[0.08] hover:border-white/[0.15] disabled:opacity-60"
                   aria-label="Continue with Google"
                 >
                   <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none">

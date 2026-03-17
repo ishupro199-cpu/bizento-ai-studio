@@ -11,8 +11,9 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [showPhone, setShowPhone] = useState(false);
-  const { signIn } = useAuth();
+  const { signIn, signInWithGoogle, sendPasswordReset } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -26,6 +27,31 @@ export default function LoginPage() {
       toast.error(err.message || "Invalid credentials");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setGoogleLoading(true);
+    try {
+      await signInWithGoogle();
+      navigate("/app");
+    } catch (err: any) {
+      toast.error(err.message || "Google sign-in failed");
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!email) {
+      toast.error("Enter your email address first");
+      return;
+    }
+    try {
+      await sendPasswordReset(email);
+      toast.success("Password reset email sent! Check your inbox.");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to send reset email");
     }
   };
 
@@ -88,7 +114,7 @@ export default function LoginPage() {
                   <button
                     type="button"
                     className="text-[12px] text-[#89E900]/80 hover:text-[#89E900] transition-colors"
-                    onClick={() => toast.info("Password reset coming soon")}
+                    onClick={handleForgotPassword}
                   >
                     Forgot password?
                   </button>
@@ -143,8 +169,9 @@ export default function LoginPage() {
                 {/* Google */}
                 <button
                   type="button"
-                  onClick={() => toast.info("Google sign-in coming soon")}
-                  className="flex-1 h-12 rounded-2xl border border-white/[0.09] bg-white/[0.04] flex items-center justify-center transition-all duration-150 hover:bg-white/[0.08] hover:border-white/[0.15]"
+                  onClick={handleGoogleSignIn}
+                  disabled={googleLoading}
+                  className="flex-1 h-12 rounded-2xl border border-white/[0.09] bg-white/[0.04] flex items-center justify-center transition-all duration-150 hover:bg-white/[0.08] hover:border-white/[0.15] disabled:opacity-60"
                   aria-label="Continue with Google"
                 >
                   <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none">

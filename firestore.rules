@@ -1,0 +1,69 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Helpers ──────────────────────────────────────────────────────────────
+    function isLoggedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isLoggedIn() && request.auth.uid == uid;
+    }
+
+    function isAdmin() {
+      return isLoggedIn() &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // ── Users collection ──────────────────────────────────────────────────────
+    // Each user can read/write their own document. Admins can read all.
+    match /users/{uid} {
+      allow read: if isOwner(uid) || isAdmin();
+      allow create: if isOwner(uid);
+      allow update: if isOwner(uid) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // ── Generations collection ────────────────────────────────────────────────
+    // Users can read/write only their own generations. Admins can read all.
+    match /generations/{docId} {
+      allow read: if isLoggedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isLoggedIn() && request.resource.data.userId == request.auth.uid;
+      allow update: if isLoggedIn() && resource.data.userId == request.auth.uid;
+      allow delete: if isLoggedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+    }
+
+    // ── Admin collection ──────────────────────────────────────────────────────
+    // Only admins can read. Stats can be updated by any authenticated user
+    // (via increment ops inside server functions) but only admins can read.
+    match /admin/{docId} {
+      allow read: if isAdmin();
+      allow write: if isLoggedIn();
+    }
+
+    // ── Orders collection (Razorpay) ──────────────────────────────────────────
+    // Created by authenticated users; only the owner or admin can read.
+    // Only backend / Cloud Functions should write after creation.
+    match /orders/{orderId} {
+      allow read: if isLoggedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isLoggedIn() && request.resource.data.userId == request.auth.uid;
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // ── Payments collection (Razorpay webhook records) ────────────────────────
+    // Only admins can read/write directly; verified by Cloud Functions.
+    match /payments/{paymentId} {
+      allow read: if isLoggedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow write: if isAdmin();
+    }
+
+    // ── Deny everything else ──────────────────────────────────────────────────
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

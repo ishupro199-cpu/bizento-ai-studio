@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Phone, Loader2, ChevronLeft, ConfirmationResult } from "lucide-react";
+import { Phone, Loader2, ChevronLeft } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";

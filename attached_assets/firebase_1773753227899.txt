@@ -1,0 +1,22 @@
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyB_fgFYx0W35VtmUrTkKAtE_YSPtaxw6Pk",
+  authDomain: "pixaleraai.firebaseapp.com",
+  databaseURL: "https://pixaleraai-default-rtdb.firebaseio.com",
+  projectId: "pixaleraai",
+  storageBucket: "pixaleraai.firebasestorage.app",
+  messagingSenderId: "167299328782",
+  appId: "1:167299328782:web:28cb3aef8b46c31d51055f",
+  measurementId: "G-GZ2XT3YXED"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);

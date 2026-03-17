@@ -4,7 +4,7 @@ import {
   HelpCircle, LogOut, BookOpen, FileText, Shield,
   Bug, Keyboard, Crown
 } from "lucide-react";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAppContext, PLANS } from "@/contexts/AppContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -129,6 +129,7 @@ export function ProfileMenu({ collapsed }: { collapsed: boolean }) {
         `}
       >
         <Avatar className="h-7 w-7 shrink-0 ring-1 ring-[#89E900]/25 transition-all duration-150 group-hover:ring-[#89E900]/55">
+          {user.photoURL && <AvatarImage src={user.photoURL} alt={user.name} referrerPolicy="no-referrer" />}
           <AvatarFallback className="bg-[#89E900]/15 text-[#89E900] text-[11px] font-bold">
             {initials}
           </AvatarFallback>
@@ -167,6 +168,7 @@ export function ProfileMenu({ collapsed }: { collapsed: boolean }) {
           <div className="px-4 pt-4 pb-3">
             <div className="flex items-center gap-3">
               <Avatar className="h-11 w-11 shrink-0 ring-2 ring-[#89E900]/35">
+                {user.photoURL && <AvatarImage src={user.photoURL} alt={user.name} referrerPolicy="no-referrer" />}
                 <AvatarFallback className="bg-[#89E900]/15 text-[#89E900] text-sm font-bold">
                   {initials}
                 </AvatarFallback>
