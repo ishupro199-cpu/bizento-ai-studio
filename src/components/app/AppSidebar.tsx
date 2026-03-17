@@ -18,6 +18,12 @@ const navItems = [
   { title: "Images", url: "/app/images", icon: Image },
 ];
 
+const PLAN_LABELS: Record<string, string> = {
+  free: "Free Plan",
+  starter: "Starter Plan",
+  pro: "Pro Plan",
+};
+
 interface AppSidebarProps {
   collapsed: boolean;
   onToggle: () => void;
@@ -30,10 +36,13 @@ export function AppSidebar({ collapsed, onToggle, onClose, isMobile }: AppSideba
   const { user, generations } = useAppContext();
   const [selectedGenId, setSelectedGenId] = useState<string | null>(null);
   const [panelOpen, setPanelOpen] = useState(false);
+  const [logoHovered, setLogoHovered] = useState(false);
 
   const initials = user.name
     ? user.name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)
     : "U";
+
+  const planLabel = PLAN_LABELS[user.plan] ?? "Free Plan";
 
   const handleHistoryClick = (id: string) => {
     setSelectedGenId(id);
@@ -49,14 +58,22 @@ export function AppSidebar({ collapsed, onToggle, onClose, isMobile }: AppSideba
         {/* Logo row */}
         <div className={`flex items-center h-14 px-3 shrink-0 ${collapsed ? "justify-center" : "justify-between"}`}>
           {collapsed ? (
+            /* Collapsed: logo icon, on hover show expand arrow */
             <button
               onClick={onToggle}
               title="Expand sidebar"
-              className="flex h-9 w-9 items-center justify-center rounded-lg hover:bg-white/5 transition-colors"
+              onMouseEnter={() => setLogoHovered(true)}
+              onMouseLeave={() => setLogoHovered(false)}
+              className="relative flex h-9 w-9 items-center justify-center rounded-lg hover:bg-white/5 transition-colors"
             >
-              <div className="h-7 w-7 rounded-lg bg-primary flex items-center justify-center">
+              <div
+                className={`h-7 w-7 rounded-lg bg-primary flex items-center justify-center transition-opacity duration-150 ${logoHovered ? "opacity-0" : "opacity-100"}`}
+              >
                 <Sparkles className="h-3.5 w-3.5 text-primary-foreground" />
               </div>
+              <ChevronRight
+                className={`h-4 w-4 text-muted-foreground absolute transition-opacity duration-150 ${logoHovered ? "opacity-100" : "opacity-0"}`}
+              />
             </button>
           ) : (
             <>
@@ -106,7 +123,7 @@ export function AppSidebar({ collapsed, onToggle, onClose, isMobile }: AppSideba
             );
           })}
 
-          {/* History section — heading + inline list */}
+          {/* History — heading + inline list when expanded */}
           {!collapsed && (
             <>
               <div className="pt-4 pb-1 px-3 flex items-center gap-2">
@@ -117,15 +134,13 @@ export function AppSidebar({ collapsed, onToggle, onClose, isMobile }: AppSideba
               </div>
 
               {generations.length === 0 ? (
-                <p className="px-3 py-2 text-xs text-muted-foreground/50">
-                  No generations yet.
-                </p>
+                <p className="px-3 py-2 text-xs text-muted-foreground/50">No generations yet.</p>
               ) : (
                 generations.slice(0, 20).map((gen) => (
                   <button
                     key={gen.id}
                     onClick={() => handleHistoryClick(gen.id)}
-                    className="w-full flex items-center gap-2.5 rounded-lg px-3 py-2 text-left hover:bg-white/5 transition-colors group"
+                    className="w-full flex items-center gap-2.5 rounded-lg px-3 py-2 text-left hover:bg-white/5 transition-colors"
                   >
                     <div
                       className="h-6 w-6 shrink-0 rounded-md"
@@ -145,7 +160,7 @@ export function AppSidebar({ collapsed, onToggle, onClose, isMobile }: AppSideba
             </>
           )}
 
-          {/* Collapsed: show clock icon for history */}
+          {/* Collapsed: clock icon */}
           {collapsed && (
             <button
               onClick={() => setPanelOpen(true)}
@@ -200,26 +215,13 @@ export function AppSidebar({ collapsed, onToggle, onClose, isMobile }: AppSideba
                   <p className="text-sm font-medium text-foreground truncate leading-none">
                     {user.name || "User"}
                   </p>
-                  <p className="text-[11px] text-muted-foreground truncate mt-0.5">{user.email}</p>
+                  <p className="text-[11px] text-muted-foreground/70 truncate mt-0.5">{planLabel}</p>
                 </div>
                 <Settings className="h-4 w-4 shrink-0 text-muted-foreground" />
               </div>
             )}
           </div>
         </div>
-
-        {/* Expand toggle when collapsed */}
-        {collapsed && (
-          <div className="px-2 pb-3">
-            <button
-              onClick={onToggle}
-              title="Expand"
-              className="w-full flex items-center justify-center rounded-lg py-2 text-muted-foreground hover:bg-white/5 hover:text-foreground transition-colors"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </button>
-          </div>
-        )}
       </aside>
 
       <HistoryPanel

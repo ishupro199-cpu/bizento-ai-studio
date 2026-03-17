@@ -1,0 +1,180 @@
+You are a senior frontend engineer. Fix incorrect UI styling issues in my existing codebase. DO NOT redesign everything — only correct the mistakes precisely.
+
+---
+
+## 1. BORDER RADIUS FIX (CRITICAL)
+
+### PROBLEM:
+
+border-radius: 9999px has been applied globally to many elements, making entire UI overly rounded.
+
+### REQUIRED FIX:
+
+Apply border-radius selectively:
+
+### KEEP FULLY ROUNDED (9999px) ONLY FOR:
+
+* Buttons
+* Input fields
+* Icon hover backgrounds
+* Pills / tags
+
+### USE NORMAL RADIUS (DO NOT USE 9999px) FOR:
+
+* Cards → border-radius: 12px or 16px
+* Dropdown menus → 12px
+* Sidebar container → 0px or 8px
+* Panels / modals → 16px
+
+### IMPORTANT:
+
+Remove any global CSS like:
+
+* {
+  border-radius: 9999px;
+  }
+
+Replace with component-based styling only.
+
+---
+
+## 2. HOVER BACKGROUND FIX (VERY IMPORTANT)
+
+### PROBLEM:
+
+On hover, elements turn bright kiwi green (#89E900), which breaks UI and looks aggressive.
+
+### REQUIRED FIX:
+
+### REMOVE:
+
+Any global hover like:
+:hover {
+background: #89E900;
+}
+
+---
+
+### IMPLEMENT THIS HOVER SYSTEM:
+
+#### Default Hover (ALL elements):
+
+background: rgba(255, 255, 255, 0.05);
+
+#### Optional alternative:
+
+background: #2a2a2a;
+
+---
+
+### ACTIVE / SELECTED STATE ONLY:
+
+background: #89E900;
+color: black;
+
+---
+
+### APPLY TO:
+
+* Sidebar items
+* Dropdown options
+* Buttons
+* Cards
+* Tool selectors
+
+---
+
+## 3. DROPDOWN (MODEL SELECTOR) FIX
+
+### PROBLEM:
+
+Dropdown options are getting full green background on hover (bad UI)
+
+### REQUIRED BEHAVIOR:
+
+* Hover:
+  → soft grey background (rgba(255,255,255,0.05))
+* Selected item:
+  → kiwi green background
+
+### ALSO:
+
+* Add smooth transition (0.15s ease)
+* Keep text readable
+
+---
+
+## 4. ICON HOVER STYLE (MATCH SECOND IMAGE)
+
+### REQUIRED BEHAVIOR:
+
+For icons like "+" upload button:
+
+* On hover:
+  → Show small rounded background ONLY around icon
+  → NOT full container
+
+### STYLE:
+
+* background: rgba(255,255,255,0.08)
+* border-radius: 9999px
+* padding: 6px–8px
+* transition: 0.15s ease
+
+### IMPORTANT:
+
+Do NOT expand hover effect to full input box
+
+---
+
+## 5. INPUT FIELD HOVER FIX
+
+### PROBLEM:
+
+Entire input field background is changing on hover
+
+### REQUIRED FIX:
+
+* Input background should remain stable
+* ONLY:
+
+  * border color OR
+  * subtle glow change
+
+Example:
+border-color: rgba(255,255,255,0.2);
+
+---
+
+## 6. CONSISTENCY RULE
+
+### FINAL RULES:
+
+* Green (#89E900) = ONLY for:
+
+  * Active state
+  * Selected items
+  * Primary CTA buttons
+
+* Hover = ALWAYS subtle grey
+
+* Rounded shapes:
+
+  * Full round ONLY for small UI elements
+  * NOT for containers
+
+---
+
+## 7. FINAL GOAL
+
+The UI should feel:
+
+* Clean
+* Minimal
+* Premium
+* Like ChatGPT (not flashy neon UI)
+
+---
+
+Only update the relevant CSS / components.
+Do not rewrite entire app.

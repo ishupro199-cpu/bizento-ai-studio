@@ -1,5 +1,9 @@
 import { useState, useRef } from "react";
-import { Plus, Send, LayoutGrid, Camera, Clapperboard, Megaphone, AlertTriangle, ChevronDown, Check, Plus as PlusIcon, ChevronLeft, ChevronRight, RotateCcw } from "lucide-react";
+import {
+  Send, LayoutGrid, Camera, Clapperboard, Megaphone,
+  AlertTriangle, ChevronDown, Check, Plus,
+  ChevronLeft, ChevronRight, RotateCcw, Upload, X
+} from "lucide-react";
 import { GenerationLoading } from "@/components/app/GenerationLoading";
 import { GenerationResults } from "@/components/app/GenerationResults";
 import { useGenerationState } from "@/hooks/useGenerationState";
@@ -13,6 +17,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 const tools = [
   { id: "catalog", name: "Generate Catalog", icon: LayoutGrid },
@@ -21,10 +30,20 @@ const tools = [
   { id: "creative", name: "Ad Creatives", icon: Megaphone },
 ];
 
-const examplePrompts = [
-  "Luxury perfume bottle on marble",
-  "Minimal skincare catalog shoot",
-  "Sneaker in neon futuristic lighting",
+/* All prompts from the prompt library — cycled in groups of 3 */
+const ALL_EXAMPLE_PROMPTS = [
+  "Luxury perfume bottle on marble surface with golden hour lighting",
+  "Minimal white background catalog shot with soft shadows",
+  "Skincare product surrounded by fresh flowers and petals",
+  "Sneaker floating on neon gradient background with particles",
+  "Watch with water splash effect cinematic advertisement",
+  "Organic food packaging on rustic wooden table outdoor setting",
+  "Headphones on concrete surface with moody studio lighting",
+  "Sunglasses on beach sand with ocean waves in background",
+  "Lipstick collection arranged in geometric pattern minimal style",
+  "Coffee bag product shot with steam and beans scattered around",
+  "Diamond ring on velvet cushion with dramatic spotlight",
+  "Smartphone floating with holographic UI elements around it",
 ];
 
 const DEFAULT_WORKSPACES = ["My Workspace", "Brand Projects", "Client Work"];
@@ -37,12 +56,24 @@ export default function WelcomeDashboard() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const toolsScrollRef = useRef<HTMLDivElement>(null);
   const { upload, uploading, previewUrl, clearUpload } = useImageUpload();
-
-  const firstName = user.name?.split(" ")[0] || "there";
+  const [promptPage, setPromptPage] = useState(0);
+  const [plusOpen, setPlusOpen] = useState(false);
   const [workspaces, setWorkspaces] = useState(DEFAULT_WORKSPACES);
   const [activeWorkspace, setActiveWorkspace] = useState(DEFAULT_WORKSPACES[0]);
 
+  const firstName = user.name?.split(" ")[0] || "there";
   const isGenerating = gen.phase === "uploading" || gen.phase === "generating";
+
+  /* Cycle through example prompts 3 at a time */
+  const promptsPerPage = 3;
+  const totalPages = Math.ceil(ALL_EXAMPLE_PROMPTS.length / promptsPerPage);
+  const visiblePrompts = ALL_EXAMPLE_PROMPTS.slice(
+    promptPage * promptsPerPage,
+    promptPage * promptsPerPage + promptsPerPage
+  );
+  const handleRefreshPrompts = () => {
+    setPromptPage((p) => (p + 1) % totalPages);
+  };
 
   const handleGenerate = () => {
     if (inputPrompt.trim() && canGenerate) {
@@ -50,8 +81,9 @@ export default function WelcomeDashboard() {
     }
   };
 
+  /* Ctrl+Enter to send; plain Enter = newline */
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
+    if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
       e.preventDefault();
       handleGenerate();
     }
@@ -59,12 +91,20 @@ export default function WelcomeDashboard() {
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) await upload(file);
+    if (file) {
+      await upload(file);
+      setPlusOpen(false);
+    }
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
+  const handleSelectTool = (toolId: string) => {
+    setSelectedTool(toolId);
+    setPlusOpen(false);
+  };
+
   const handleCreateWorkspace = () => {
-    const name = prompt("Workspace name:");
+    const name = window.prompt("Workspace name:");
     if (name?.trim()) {
       setWorkspaces((prev) => [...prev, name.trim()]);
       setActiveWorkspace(name.trim());
@@ -98,7 +138,7 @@ export default function WelcomeDashboard() {
             <AlertTriangle className="h-4 w-4 text-destructive" />
             <span className="text-sm text-foreground">You've reached your generation limit.</span>
           </div>
-          <Button size="sm" className="text-xs h-7" onClick={() => setShowUpgradeModal(true)}>
+          <Button size="sm" className="text-xs h-7 rounded-lg" onClick={() => setShowUpgradeModal(true)}>
             Upgrade
           </Button>
         </div>
@@ -118,12 +158,12 @@ export default function WelcomeDashboard() {
                   <ChevronDown className="h-3.5 w-3.5 opacity-60" />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="center" className="w-52 bg-popover border-white/10">
+              <DropdownMenuContent align="center" className="w-52 rounded-xl bg-popover border-white/10">
                 {workspaces.map((ws) => (
                   <DropdownMenuItem
                     key={ws}
                     onClick={() => setActiveWorkspace(ws)}
-                    className="flex items-center gap-2 cursor-pointer text-sm hover:bg-white/5"
+                    className="flex items-center gap-2 cursor-pointer text-sm rounded-lg hover:bg-white/5"
                   >
                     <Check className={`h-3.5 w-3.5 shrink-0 ${activeWorkspace === ws ? "text-primary" : "opacity-0"}`} />
                     {ws}
@@ -132,9 +172,9 @@ export default function WelcomeDashboard() {
                 <DropdownMenuSeparator className="bg-white/10" />
                 <DropdownMenuItem
                   onClick={handleCreateWorkspace}
-                  className="flex items-center gap-2 cursor-pointer text-sm text-muted-foreground hover:bg-white/5"
+                  className="flex items-center gap-2 cursor-pointer text-sm text-muted-foreground rounded-lg hover:bg-white/5"
                 >
-                  <PlusIcon className="h-3.5 w-3.5 shrink-0" />
+                  <Plus className="h-3.5 w-3.5 shrink-0" />
                   Create new workspace
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -153,6 +193,7 @@ export default function WelcomeDashboard() {
 
           {/* 3. Prompt input */}
           <div className="space-y-2">
+            {/* Attached image preview */}
             {previewUrl && (
               <div className="flex items-center gap-2 px-1">
                 <div className="relative">
@@ -168,7 +209,8 @@ export default function WelcomeDashboard() {
               </div>
             )}
 
-            <div className="flex items-end gap-3 bg-white/5 border border-white/10 rounded-2xl px-4 py-3.5 focus-within:border-white/25 focus-within:bg-white/7 transition-colors">
+            {/* Prompt box — border changes on focus, background stays stable */}
+            <div className="flex items-end gap-3 bg-white/5 border border-white/10 rounded-2xl px-4 py-3.5 focus-within:border-white/25 transition-[border-color] duration-150">
               <input
                 type="file"
                 ref={fileInputRef}
@@ -176,14 +218,54 @@ export default function WelcomeDashboard() {
                 accept="image/*"
                 onChange={handleFileSelect}
               />
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                disabled={uploading}
-                title="Upload image"
-                className="h-8 w-8 shrink-0 flex items-center justify-center rounded-lg hover:bg-white/10 transition-colors text-muted-foreground hover:text-foreground mb-0.5"
-              >
-                <Plus className="h-5 w-5" />
-              </button>
+
+              {/* + button — opens popup with upload + tool options */}
+              <Popover open={plusOpen} onOpenChange={setPlusOpen}>
+                <PopoverTrigger asChild>
+                  <button
+                    disabled={uploading}
+                    title="Add"
+                    className="h-8 w-8 shrink-0 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors text-muted-foreground hover:text-foreground mb-0.5"
+                  >
+                    <Plus className="h-5 w-5" />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent
+                  align="start"
+                  side="top"
+                  className="w-56 p-1.5 rounded-xl bg-popover border border-white/10"
+                >
+                  {/* Upload image option */}
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-foreground hover:bg-white/5 transition-colors"
+                  >
+                    <Upload className="h-4 w-4 text-muted-foreground shrink-0" />
+                    Upload Image
+                  </button>
+
+                  <div className="h-px bg-white/8 my-1" />
+
+                  {/* Tool options */}
+                  {tools.map((tool) => (
+                    <button
+                      key={tool.id}
+                      onClick={() => handleSelectTool(tool.id)}
+                      className={`w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
+                        selectedTool === tool.id
+                          ? "bg-primary/10 text-primary"
+                          : "text-foreground hover:bg-white/5"
+                      }`}
+                    >
+                      <tool.icon className="h-4 w-4 shrink-0 text-muted-foreground" />
+                      {tool.name}
+                      {selectedTool === tool.id && (
+                        <Check className="h-3.5 w-3.5 ml-auto text-primary" />
+                      )}
+                    </button>
+                  ))}
+                </PopoverContent>
+              </Popover>
 
               <textarea
                 value={inputPrompt}
@@ -191,7 +273,7 @@ export default function WelcomeDashboard() {
                 onKeyDown={handleKeyDown}
                 placeholder="Describe your product (e.g. perfume bottle on marble...)"
                 rows={1}
-                className="flex-1 bg-transparent resize-none text-base text-foreground placeholder:text-muted-foreground/50 outline-none leading-relaxed max-h-40 overflow-y-auto py-0.5"
+                className="flex-1 bg-transparent resize-none text-[17px] text-foreground placeholder:text-muted-foreground/50 outline-none leading-relaxed max-h-40 overflow-y-auto py-0.5"
                 onInput={(e) => {
                   const el = e.currentTarget;
                   el.style.height = "auto";
@@ -202,11 +284,16 @@ export default function WelcomeDashboard() {
               <button
                 onClick={handleGenerate}
                 disabled={!inputPrompt.trim() || !canGenerate}
+                title="Send (Ctrl+Enter)"
                 className="h-8 w-8 shrink-0 flex items-center justify-center rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-35 disabled:cursor-not-allowed transition-colors mb-0.5"
               >
                 <Send className="h-4 w-4" />
               </button>
             </div>
+
+            <p className="text-[11px] text-muted-foreground/50 text-right pr-1">
+              Press <kbd className="font-mono">Ctrl+Enter</kbd> to send
+            </p>
           </div>
 
           {/* 4. Tools selector — horizontal scroll with arrows */}
@@ -249,11 +336,17 @@ export default function WelcomeDashboard() {
           {/* 5. Example prompts */}
           <div className="space-y-3">
             <div className="flex items-center gap-2">
-              <p className="text-sm text-muted-foreground">Try an example prompt</p>
-              <RotateCcw className="h-3.5 w-3.5 text-muted-foreground/60" />
+              <p className="text-base font-medium text-muted-foreground">Try an example prompt</p>
+              <button
+                onClick={handleRefreshPrompts}
+                title="Show more prompts"
+                className="h-6 w-6 flex items-center justify-center rounded-full hover:bg-white/8 text-muted-foreground/60 hover:text-muted-foreground transition-colors"
+              >
+                <RotateCcw className="h-3.5 w-3.5" />
+              </button>
             </div>
             <div className="flex gap-2 flex-wrap">
-              {examplePrompts.map((prompt) => (
+              {visiblePrompts.map((prompt) => (
                 <button
                   key={prompt}
                   onClick={() => setInputPrompt(prompt)}

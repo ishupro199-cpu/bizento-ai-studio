@@ -34,7 +34,8 @@
     --input: 0 0% 100% / 0.1;
     --ring: 85 100% 45%;
 
-    --radius: 9999px;
+    /* Component-based radius — NOT global 9999px */
+    --radius: 0.75rem;
 
     --sidebar-background: 0 0% 11%;
     --sidebar-foreground: 0 0% 85%;
