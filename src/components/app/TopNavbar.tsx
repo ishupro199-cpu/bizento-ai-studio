@@ -9,7 +9,7 @@ import {
 import { useAppContext } from "@/contexts/AppContext";
 
 const models = [
-  { id: "flash" as const, name: "Nano Flash", desc: "Fast generation (1 credit)", icon: Zap },
+  { id: "flash" as const, name: "Pixa Flash", desc: "Fast generation (1 credit)", icon: Zap },
   { id: "pro" as const, name: "Pixa Pro", desc: "Highest quality (2 credits)", icon: Sparkles },
 ];
 
@@ -27,7 +27,7 @@ export function TopNavbar({ onMenuToggle }: TopNavbarProps) {
         {onMenuToggle && (
           <button
             onClick={onMenuToggle}
-            className="h-8 w-8 flex items-center justify-center rounded-full text-muted-foreground hover:bg-white/5 hover:text-foreground transition-colors sm:hidden"
+            className="h-8 w-8 flex items-center justify-center rounded-lg text-muted-foreground hover:bg-white/5 hover:text-foreground transition-colors sm:hidden"
           >
             <Menu className="h-4 w-4" />
           </button>
@@ -35,18 +35,23 @@ export function TopNavbar({ onMenuToggle }: TopNavbarProps) {
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium text-foreground hover:bg-white/5 transition-colors">
-              <currentModel.icon className="h-3.5 w-3.5 text-primary" />
-              <span className="truncate max-w-[120px] sm:max-w-none">{currentModel.name}</span>
-              <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
-            </button>
+            <Button
+              variant="ghost"
+              className="glass gap-2 h-9 px-3 rounded-lg hover:bg-white/8 border-white/10"
+            >
+              <currentModel.icon className="h-3.5 w-3.5 text-primary shrink-0" />
+              <span className="text-sm font-medium truncate max-w-[110px] sm:max-w-none">
+                {currentModel.name}
+              </span>
+              <ChevronDown className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+            </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-56 bg-popover border-[hsl(var(--glass-border))]">
             {models.map((model) => (
               <DropdownMenuItem
                 key={model.id}
                 onClick={() => setSelectedModel(model.id)}
-                className={`flex flex-col items-start gap-0.5 cursor-pointer rounded-xl ${
+                className={`flex flex-col items-start gap-0.5 cursor-pointer rounded-lg ${
                   selectedModel === model.id ? "bg-primary/10" : "hover:bg-white/5"
                 }`}
               >
@@ -63,7 +68,7 @@ export function TopNavbar({ onMenuToggle }: TopNavbarProps) {
       </div>
 
       <div className="flex items-center gap-1.5 sm:gap-2">
-        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 text-sm">
+        <div className="glass flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm">
           <Zap className="h-3.5 w-3.5 text-primary" />
           <span className="font-medium">{user.creditsRemaining}</span>
           <span className="hidden sm:inline text-muted-foreground">credits</span>
@@ -71,13 +76,13 @@ export function TopNavbar({ onMenuToggle }: TopNavbarProps) {
 
         <Button
           size="sm"
-          className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full h-8 text-xs font-semibold hidden sm:flex"
+          className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg h-8 text-xs font-semibold hidden sm:flex"
           onClick={() => setShowUpgradeModal(true)}
         >
           Upgrade
         </Button>
 
-        <button className="h-8 w-8 flex items-center justify-center rounded-full text-muted-foreground hover:bg-white/5 hover:text-foreground transition-colors">
+        <button className="h-8 w-8 flex items-center justify-center rounded-lg text-muted-foreground hover:bg-white/5 hover:text-foreground transition-colors">
           <Bell className="h-4 w-4" />
         </button>
       </div>

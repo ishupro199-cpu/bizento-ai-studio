@@ -1,7 +1,7 @@
 import { useState } from "react";
 import {
-  Sparkles, FolderOpen, Megaphone, Image, Clock,
-  CreditCard, Settings, BookOpen, ChevronRight, ChevronLeft, X
+  Sparkles, FolderOpen, Megaphone, Image,
+  CreditCard, Settings, BookOpen, ChevronRight, ChevronLeft, X, Clock
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
@@ -27,12 +27,18 @@ interface AppSidebarProps {
 
 export function AppSidebar({ collapsed, onToggle, onClose, isMobile }: AppSidebarProps) {
   const location = useLocation();
-  const { user } = useAppContext();
-  const [historyOpen, setHistoryOpen] = useState(false);
+  const { user, generations } = useAppContext();
+  const [selectedGenId, setSelectedGenId] = useState<string | null>(null);
+  const [panelOpen, setPanelOpen] = useState(false);
 
   const initials = user.name
     ? user.name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)
     : "U";
+
+  const handleHistoryClick = (id: string) => {
+    setSelectedGenId(id);
+    setPanelOpen(true);
+  };
 
   return (
     <>
@@ -46,7 +52,7 @@ export function AppSidebar({ collapsed, onToggle, onClose, isMobile }: AppSideba
             <button
               onClick={onToggle}
               title="Expand sidebar"
-              className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-white/5 transition-colors"
+              className="flex h-9 w-9 items-center justify-center rounded-lg hover:bg-white/5 transition-colors"
             >
               <div className="h-7 w-7 rounded-lg bg-primary flex items-center justify-center">
                 <Sparkles className="h-3.5 w-3.5 text-primary-foreground" />
@@ -64,7 +70,7 @@ export function AppSidebar({ collapsed, onToggle, onClose, isMobile }: AppSideba
               </div>
               <button
                 onClick={isMobile ? onClose : onToggle}
-                className="h-7 w-7 flex items-center justify-center rounded-full hover:bg-white/5 transition-colors text-muted-foreground hover:text-foreground"
+                className="h-7 w-7 flex items-center justify-center rounded-lg hover:bg-white/5 transition-colors text-muted-foreground hover:text-foreground"
               >
                 {isMobile ? <X className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
               </button>
@@ -72,8 +78,9 @@ export function AppSidebar({ collapsed, onToggle, onClose, isMobile }: AppSideba
           )}
         </div>
 
-        {/* Main nav */}
-        <nav className="flex-1 overflow-y-auto overflow-x-hidden py-2 px-2 space-y-0.5">
+        {/* Scrollable area: nav + history */}
+        <div className="flex-1 overflow-y-auto overflow-x-hidden py-2 px-2 space-y-0.5 sidebar-scroll">
+          {/* Main nav items */}
           {navItems.map((item) => {
             const isActive =
               item.url === "/app"
@@ -85,7 +92,7 @@ export function AppSidebar({ collapsed, onToggle, onClose, isMobile }: AppSideba
                 to={item.url}
                 end={item.url === "/app"}
                 title={collapsed ? item.title : undefined}
-                className={`flex items-center gap-3 rounded-full py-2 text-sm font-medium transition-colors duration-150 ${
+                className={`flex items-center gap-3 rounded-lg py-2 text-sm font-medium transition-colors duration-150 ${
                   collapsed ? "justify-center w-full px-0" : "px-3"
                 } ${
                   isActive
@@ -99,30 +106,68 @@ export function AppSidebar({ collapsed, onToggle, onClose, isMobile }: AppSideba
             );
           })}
 
-          {/* History — opens panel */}
-          <button
-            onClick={() => setHistoryOpen(true)}
-            title={collapsed ? "Generation History" : undefined}
-            className={`w-full flex items-center gap-3 rounded-full py-2 text-sm font-medium transition-colors duration-150 text-[hsl(var(--sidebar-foreground))] hover:bg-white/5 ${
-              collapsed ? "justify-center px-0" : "px-3"
-            }`}
-          >
-            <Clock className="h-5 w-5 shrink-0" />
-            {!collapsed && <span className="whitespace-nowrap">History</span>}
-          </button>
-        </nav>
+          {/* History section — heading + inline list */}
+          {!collapsed && (
+            <>
+              <div className="pt-4 pb-1 px-3 flex items-center gap-2">
+                <Clock className="h-3.5 w-3.5 text-muted-foreground/70 shrink-0" />
+                <span className="text-[11px] font-semibold text-muted-foreground/70 uppercase tracking-wider">
+                  History
+                </span>
+              </div>
+
+              {generations.length === 0 ? (
+                <p className="px-3 py-2 text-xs text-muted-foreground/50">
+                  No generations yet.
+                </p>
+              ) : (
+                generations.slice(0, 20).map((gen) => (
+                  <button
+                    key={gen.id}
+                    onClick={() => handleHistoryClick(gen.id)}
+                    className="w-full flex items-center gap-2.5 rounded-lg px-3 py-2 text-left hover:bg-white/5 transition-colors group"
+                  >
+                    <div
+                      className="h-6 w-6 shrink-0 rounded-md"
+                      style={{ background: gen.gradient || "linear-gradient(135deg,#89E900 0%,#222 100%)" }}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-[hsl(var(--sidebar-foreground))] truncate leading-snug">{gen.prompt}</p>
+                      <p className="text-[10px] text-muted-foreground/60 truncate">
+                        {gen.date instanceof Date
+                          ? gen.date.toLocaleDateString(undefined, { month: "short", day: "numeric" })
+                          : ""}
+                      </p>
+                    </div>
+                  </button>
+                ))
+              )}
+            </>
+          )}
+
+          {/* Collapsed: show clock icon for history */}
+          {collapsed && (
+            <button
+              onClick={() => setPanelOpen(true)}
+              title="Generation History"
+              className="w-full flex items-center justify-center rounded-lg py-2 text-[hsl(var(--sidebar-foreground))] hover:bg-white/5 transition-colors"
+            >
+              <Clock className="h-5 w-5 shrink-0" />
+            </button>
+          )}
+        </div>
 
         <Separator className="mx-3 w-auto bg-[hsl(var(--sidebar-border))]" />
 
-        {/* Account section */}
+        {/* Account / Plan */}
         <div className="px-2 py-2 space-y-0.5">
           {!collapsed && (
-            <p className="px-3 py-1 text-[10px] text-muted-foreground uppercase tracking-wider">Account</p>
+            <p className="px-3 py-1 text-[10px] text-muted-foreground/70 uppercase tracking-wider">Account</p>
           )}
           <NavLink
             to="/app/plan"
             title={collapsed ? "Plan" : undefined}
-            className={`flex items-center gap-3 rounded-full py-2 text-sm font-medium transition-colors duration-150 ${
+            className={`flex items-center gap-3 rounded-lg py-2 text-sm font-medium transition-colors duration-150 ${
               collapsed ? "justify-center px-0 w-full" : "px-3"
             } ${
               location.pathname.startsWith("/app/plan")
@@ -140,7 +185,7 @@ export function AppSidebar({ collapsed, onToggle, onClose, isMobile }: AppSideba
         {/* Profile footer */}
         <div className="px-2 py-3 shrink-0">
           <div
-            className={`flex items-center gap-3 rounded-full py-2 hover:bg-white/5 transition-colors cursor-pointer ${
+            className={`flex items-center gap-3 rounded-lg py-2 hover:bg-white/5 transition-colors cursor-pointer ${
               collapsed ? "justify-center px-0" : "px-3"
             }`}
           >
@@ -169,7 +214,7 @@ export function AppSidebar({ collapsed, onToggle, onClose, isMobile }: AppSideba
             <button
               onClick={onToggle}
               title="Expand"
-              className="w-full flex items-center justify-center rounded-full py-2 text-muted-foreground hover:bg-white/5 hover:text-foreground transition-colors"
+              className="w-full flex items-center justify-center rounded-lg py-2 text-muted-foreground hover:bg-white/5 hover:text-foreground transition-colors"
             >
               <ChevronRight className="h-4 w-4" />
             </button>
@@ -177,7 +222,11 @@ export function AppSidebar({ collapsed, onToggle, onClose, isMobile }: AppSideba
         )}
       </aside>
 
-      <HistoryPanel open={historyOpen} onClose={() => setHistoryOpen(false)} />
+      <HistoryPanel
+        open={panelOpen}
+        onClose={() => setPanelOpen(false)}
+        selectedId={selectedGenId}
+      />
     </>
   );
 }
