@@ -80,7 +80,7 @@ export default function PromptLibraryPage() {
                 <Button
                   size="icon"
                   variant="ghost"
-                  className="h-7 w-7 text-muted-foreground hover:text-primary"
+                  className="h-7 w-7 text-muted-foreground hover:text-foreground"
                 >
                   <ArrowRight className="h-3.5 w-3.5" />
                 </Button>
