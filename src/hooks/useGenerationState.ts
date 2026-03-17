@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef } from "react";
-import { useAppContext, ModelId } from "@/contexts/AppContext";
+import { useAppContext, ModelId, CREDIT_COSTS } from "@/contexts/AppContext";
+import { augmentPrompt } from "@/lib/promptAugmentation";
 
 export type GenerationPhase = "idle" | "uploading" | "generating" | "complete";
 
@@ -9,19 +10,23 @@ export interface GenerationStep {
 }
 
 const FLASH_STEPS: GenerationStep[] = [
-  { label: "Analyzing Product", duration: 500 },
-  { label: "Removing Background", duration: 500 },
-  { label: "Generating Scene", duration: 600 },
-  { label: "Compositing Product", duration: 400 },
-  { label: "Rendering Final Image", duration: 500 },
+  { label: "Uploading Image", duration: 400 },
+  { label: "Analyzing Product", duration: 400 },
+  { label: "Removing Background", duration: 400 },
+  { label: "Generating Scene", duration: 500 },
+  { label: "Compositing Product", duration: 350 },
+  { label: "Rendering Final Image", duration: 400 },
+  { label: "Saving Results", duration: 200 },
 ];
 
 const PRO_STEPS: GenerationStep[] = [
-  { label: "Analyzing Product", duration: 800 },
-  { label: "Removing Background", duration: 800 },
-  { label: "Generating Scene", duration: 1000 },
-  { label: "Compositing Product", duration: 700 },
-  { label: "Rendering Final Image", duration: 700 },
+  { label: "Uploading Image", duration: 500 },
+  { label: "Analyzing Product", duration: 700 },
+  { label: "Removing Background", duration: 700 },
+  { label: "Generating Scene", duration: 900 },
+  { label: "Compositing Product", duration: 600 },
+  { label: "Rendering Final Image", duration: 600 },
+  { label: "Saving Results", duration: 300 },
 ];
 
 export { FLASH_STEPS as GENERATION_STEPS };
@@ -29,6 +34,7 @@ export { FLASH_STEPS as GENERATION_STEPS };
 export interface GenerationResult {
   id: number;
   prompt: string;
+  augmentedPrompt: string;
   tool: string;
   style: string;
   model: string;
@@ -55,8 +61,12 @@ export function useGenerationState() {
 
   const steps = selectedModel === "pro" ? PRO_STEPS : FLASH_STEPS;
 
-  const startGeneration = useCallback((inputPrompt: string, toolName?: string) => {
+  const startGeneration = useCallback((inputPrompt: string, toolName?: string, style?: string) => {
     if (!inputPrompt.trim() || !canGenerate) return;
+    const activeStyle = style || selectedStyle;
+    const activeTool = toolName || "Generate Catalog";
+    const augmented = augmentPrompt(inputPrompt, activeStyle, activeTool);
+
     setPrompt(inputPrompt);
     setPhase("uploading");
     setCurrentStep(0);
@@ -72,19 +82,19 @@ export function useGenerationState() {
         setPhase("complete");
         setProgress(100);
 
-        const tool = toolName || "Generate Catalog";
         const newResults = GRADIENTS.map((g, i) => ({
           id: Date.now() + i,
           prompt: inputPrompt,
-          tool,
-          style: "Luxury Studio",
+          augmentedPrompt: augmented,
+          tool: activeTool,
+          style: activeStyle,
           model: selectedModel === "pro" ? "Nano Bana Pro" : "Nano Bana Flash",
           timestamp: new Date(),
           gradient: g,
         }));
         setResults(newResults);
 
-        // Add to global history
+        // Save to Firestore via AppContext
         newResults.forEach((r) => {
           addGeneration({
             prompt: r.prompt,
@@ -112,7 +122,7 @@ export function useGenerationState() {
     timerRef.current = window.setTimeout(() => {
       runStep();
     }, 500);
-  }, [selectedModel, canGenerate, addGeneration]);
+  }, [selectedModel, canGenerate, addGeneration, selectedStyle]);
 
   const reset = useCallback(() => {
     if (timerRef.current) clearTimeout(timerRef.current);

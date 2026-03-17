@@ -1,4 +1,4 @@
-import { Download, RefreshCw, Edit3, Trash2, Image as ImageIcon, Coins } from "lucide-react";
+import { Download, RefreshCw, Trash2, Image as ImageIcon, Coins } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useState } from "react";

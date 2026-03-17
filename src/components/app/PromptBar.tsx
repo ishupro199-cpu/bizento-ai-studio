@@ -1,4 +1,4 @@
-import { Plus, Send, ChevronUp, Camera, Clapperboard, LayoutGrid, Megaphone, Wrench } from "lucide-react";
+import { Plus, Send, ChevronUp, Camera, Clapperboard, LayoutGrid, Megaphone, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -8,6 +8,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { AISuggestions } from "./AISuggestions";
 import { useRef, useState } from "react";
+import { Progress } from "@/components/ui/progress";
+import { useImageUpload } from "@/hooks/useImageUpload";
 
 const tools = [
   { id: "catalog", name: "Generate Catalog", desc: "Professional ecommerce product images", icon: LayoutGrid },
@@ -26,6 +28,7 @@ interface PromptBarProps {
 export function PromptBar({ prompt, onPromptChange, onGenerate, disabled }: PromptBarProps) {
   const [selectedTool, setSelectedTool] = useState(tools[0]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { upload, uploading, progress: uploadProgress, previewUrl, clearUpload } = useImageUpload();
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey && prompt.trim()) {
@@ -34,18 +37,40 @@ export function PromptBar({ prompt, onPromptChange, onGenerate, disabled }: Prom
     }
   };
 
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      await upload(file);
+    }
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
   return (
     <div className="sticky bottom-0 p-3 sm:p-4 pt-2 space-y-2">
       <div className="max-w-4xl mx-auto">
         <AISuggestions onSelect={onPromptChange} />
       </div>
+
+      {/* Upload preview */}
+      {previewUrl && (
+        <div className="max-w-4xl mx-auto flex items-center gap-2 glass rounded-xl px-3 py-2">
+          <img src={previewUrl} alt="Upload" className="h-10 w-10 rounded-lg object-cover" />
+          <span className="text-xs text-muted-foreground flex-1 truncate">Image attached</span>
+          {uploading && <Progress value={uploadProgress} className="w-20 h-1.5" />}
+          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={clearUpload}>
+            <X className="h-3 w-3" />
+          </Button>
+        </div>
+      )}
+
       <div className="glass rounded-2xl p-1.5 sm:p-2 flex items-center gap-1.5 sm:gap-2 max-w-4xl mx-auto glow-accent">
-        <input type="file" ref={fileInputRef} className="hidden" accept="image/*" />
+        <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileSelect} />
         <Button
           variant="ghost"
           size="icon"
           className="h-9 w-9 sm:h-10 sm:w-10 shrink-0 rounded-xl text-muted-foreground hover:text-foreground hover:bg-[hsl(var(--glass-hover))]"
           onClick={() => fileInputRef.current?.click()}
+          disabled={uploading}
         >
           <Plus className="h-5 w-5" />
         </Button>
@@ -93,7 +118,7 @@ export function PromptBar({ prompt, onPromptChange, onGenerate, disabled }: Prom
         <Button
           size="icon"
           className="h-9 w-9 sm:h-10 sm:w-10 shrink-0 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90"
-          disabled={!prompt.trim() || disabled}
+          disabled={!prompt.trim() || disabled || uploading}
           onClick={onGenerate}
         >
           <Send className="h-4 w-4" />

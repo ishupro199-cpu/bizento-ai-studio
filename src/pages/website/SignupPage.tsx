@@ -1,9 +1,38 @@
-import { Link } from "react-router-dom";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 export default function SignupPage() {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const { signUp } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name || !email || !password) return;
+    if (password.length < 6) {
+      toast.error("Password must be at least 6 characters");
+      return;
+    }
+    setLoading(true);
+    try {
+      await signUp(email, password, name);
+      toast.success("Account created successfully!");
+      navigate("/app");
+    } catch (err: any) {
+      toast.error(err.message || "Signup failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-6">
       <div className="w-full max-w-sm space-y-6">
@@ -15,23 +44,24 @@ export default function SignupPage() {
           <p className="text-sm text-muted-foreground mt-1">Start creating with Bizento AI</p>
         </div>
 
-        <div className="glass rounded-xl p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="glass rounded-xl p-6 space-y-4">
           <div className="space-y-2">
             <label className="text-sm font-medium text-foreground">Name</label>
-            <Input type="text" placeholder="John Doe" className="bg-secondary/50 border-[hsl(var(--glass-border))]" />
+            <Input type="text" placeholder="John Doe" value={name} onChange={(e) => setName(e.target.value)} className="bg-secondary/50 border-[hsl(var(--glass-border))]" />
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium text-foreground">Email</label>
-            <Input type="email" placeholder="you@example.com" className="bg-secondary/50 border-[hsl(var(--glass-border))]" />
+            <Input type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} className="bg-secondary/50 border-[hsl(var(--glass-border))]" />
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium text-foreground">Password</label>
-            <Input type="password" placeholder="••••••••" className="bg-secondary/50 border-[hsl(var(--glass-border))]" />
+            <Input type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} className="bg-secondary/50 border-[hsl(var(--glass-border))]" />
           </div>
-          <Link to="/app">
-            <Button className="w-full bg-primary text-primary-foreground rounded-lg mt-2">Create account</Button>
-          </Link>
-        </div>
+          <Button type="submit" className="w-full bg-primary text-primary-foreground rounded-lg mt-2" disabled={loading}>
+            {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+            Create account
+          </Button>
+        </form>
 
         <p className="text-center text-sm text-muted-foreground">
           Already have an account? <Link to="/login" className="text-primary hover:underline">Sign in</Link>
