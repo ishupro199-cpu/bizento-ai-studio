@@ -3,6 +3,7 @@ import {
   Sparkles, FolderOpen, Megaphone, Image,
   CreditCard, BookOpen, ChevronRight, ChevronLeft, X, Clock
 } from "lucide-react";
+import { PixaLeraIcon } from "@/components/PixaLeraIcon";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import { Separator } from "@/components/ui/separator";
@@ -73,17 +74,15 @@ function SidebarInner({
               onMouseLeave={() => setLogoHovered(false)}
               className="relative flex h-9 w-9 items-center justify-center rounded-lg hover:bg-white/5 transition-colors"
             >
-              <div className={`h-7 w-7 rounded-lg bg-primary flex items-center justify-center transition-opacity duration-150 ${logoHovered ? "opacity-0" : "opacity-100"}`}>
-                <Sparkles className="h-3.5 w-3.5 text-primary-foreground" />
+              <div className={`transition-opacity duration-150 ${logoHovered ? "opacity-0" : "opacity-100"}`}>
+                <PixaLeraIcon size={28} />
               </div>
               <ChevronRight className={`h-4 w-4 text-muted-foreground absolute transition-opacity duration-150 ${logoHovered ? "opacity-100" : "opacity-0"}`} />
             </button>
           ) : (
             <>
               <div className="flex items-center gap-2.5">
-                <div className="h-7 w-7 shrink-0 rounded-lg bg-primary flex items-center justify-center">
-                  <Sparkles className="h-3.5 w-3.5 text-primary-foreground" />
-                </div>
+                <PixaLeraIcon size={28} className="shrink-0" />
                 <span className="text-base font-bold tracking-tight text-foreground whitespace-nowrap">
                   Pixa<span className="text-primary">Lera</span>
                 </span>

@@ -10,7 +10,9 @@ import {
   doc,
   updateDoc,
   getDoc,
+  setDoc,
   Timestamp,
+  increment,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/contexts/AuthContext";
@@ -20,14 +22,48 @@ export interface FirestoreGeneration {
   id: string;
   userId: string;
   prompt: string;
+  augmentedPrompt: string;
   tool: string;
   style: string;
   model: ModelId;
   creditsConsumed: number;
   gradient: string;
   imageUrls: string[];
+  uploadedImageUrl: string;
   status: "completed" | "failed";
   createdAt: Date;
+}
+
+export async function updateAdminStats(
+  tool: string,
+  model: ModelId,
+  credits: number
+) {
+  try {
+    const today = new Date().toISOString().slice(0, 10);
+    const statsRef = doc(db, "admin", "stats");
+    await setDoc(
+      statsRef,
+      {
+        totalGenerations: increment(1),
+        totalCreditsUsed: increment(credits),
+        flashGenerations: model === "flash" ? increment(1) : increment(0),
+        proGenerations: model === "pro" ? increment(1) : increment(0),
+        [`dailyCounts.${today}`]: increment(1),
+        [`toolUsage.${tool}`]: increment(1),
+      },
+      { merge: true }
+    );
+  } catch {
+  }
+}
+
+export async function incrementUserCount() {
+  try {
+    const statsRef = doc(db, "admin", "stats");
+    await setDoc(statsRef, { totalUsers: increment(1) }, { merge: true });
+  } catch {
+  }
 }
 
 export function useGenerations() {
@@ -48,26 +84,35 @@ export function useGenerations() {
       orderBy("createdAt", "desc")
     );
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const docs = snapshot.docs.map((d) => {
-        const data = d.data();
-        return {
-          id: d.id,
-          userId: data.userId,
-          prompt: data.prompt,
-          tool: data.tool,
-          style: data.style,
-          model: data.model,
-          creditsConsumed: data.creditsConsumed,
-          gradient: data.gradient,
-          imageUrls: data.imageUrls || [],
-          status: data.status,
-          createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate() : new Date(data.createdAt),
-        } as FirestoreGeneration;
-      });
-      setGenerations(docs);
-      setLoading(false);
-    });
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const docs = snapshot.docs.map((d) => {
+          const data = d.data();
+          return {
+            id: d.id,
+            userId: data.userId,
+            prompt: data.prompt,
+            augmentedPrompt: data.augmentedPrompt || "",
+            tool: data.tool,
+            style: data.style,
+            model: data.model,
+            creditsConsumed: data.creditsConsumed,
+            gradient: data.gradient,
+            imageUrls: data.imageUrls || [],
+            uploadedImageUrl: data.uploadedImageUrl || "",
+            status: data.status,
+            createdAt:
+              data.createdAt instanceof Timestamp
+                ? data.createdAt.toDate()
+                : new Date(data.createdAt),
+          } as FirestoreGeneration;
+        });
+        setGenerations(docs);
+        setLoading(false);
+      },
+      () => setLoading(false)
+    );
 
     return unsubscribe;
   }, [user]);
@@ -103,12 +148,16 @@ export function useUserProfile() {
       return;
     }
 
-    const unsubscribe = onSnapshot(doc(db, "users", user.uid), (snapshot) => {
-      if (snapshot.exists()) {
-        setProfile({ id: snapshot.id, ...snapshot.data() });
-      }
-      setLoading(false);
-    });
+    const unsubscribe = onSnapshot(
+      doc(db, "users", user.uid),
+      (snapshot) => {
+        if (snapshot.exists()) {
+          setProfile({ id: snapshot.id, ...snapshot.data() });
+        }
+        setLoading(false);
+      },
+      () => setLoading(false)
+    );
 
     return unsubscribe;
   }, [user]);
@@ -123,8 +172,14 @@ export function useUserProfile() {
       await updateDoc(ref, {
         creditsRemaining: Math.max(0, data.creditsRemaining - creditsToDeduct),
         creditsUsed: (data.creditsUsed || 0) + creditsToDeduct,
-        flashGenerations: model === "flash" ? (data.flashGenerations || 0) + 1 : data.flashGenerations || 0,
-        proGenerations: model === "pro" ? (data.proGenerations || 0) + 1 : data.proGenerations || 0,
+        flashGenerations:
+          model === "flash"
+            ? (data.flashGenerations || 0) + 1
+            : data.flashGenerations || 0,
+        proGenerations:
+          model === "pro"
+            ? (data.proGenerations || 0) + 1
+            : data.proGenerations || 0,
       });
     },
     [user]

@@ -1,6 +1,6 @@
-import { createContext, useContext, useState, useCallback, useEffect, ReactNode } from "react";
+import { createContext, useContext, useState, useCallback, ReactNode } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useUserProfile, useGenerations } from "@/hooks/useFirestore";
+import { useUserProfile, useGenerations, updateAdminStats } from "@/hooks/useFirestore";
 
 export type PlanId = "free" | "starter" | "pro";
 export type ModelId = "flash" | "pro";
@@ -26,12 +26,15 @@ export const CREDIT_COSTS: Record<ModelId, number> = { flash: 1, pro: 2 };
 export interface GenerationRecord {
   id: string;
   prompt: string;
+  augmentedPrompt?: string;
   tool: string;
   style: string;
   model: ModelId;
   date: Date;
   creditsConsumed: number;
   gradient: string;
+  uploadedImageUrl?: string;
+  variantCount?: number;
 }
 
 interface UserProfile {
@@ -88,7 +91,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [selectedModel, setSelectedModelState] = useState<ModelId>("flash");
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
-  // Derive user profile from Firestore or fallback
   const user: UserProfile = profile
     ? {
         name: profile.name || authUser?.displayName || "User",
@@ -101,16 +103,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
     : DEFAULT_USER;
 
-  // Map Firestore generations to local format
   const generations: GenerationRecord[] = firestoreGens.map((g) => ({
     id: g.id,
     prompt: g.prompt,
+    augmentedPrompt: g.augmentedPrompt,
     tool: g.tool,
     style: g.style,
     model: g.model,
     date: g.createdAt,
     creditsConsumed: g.creditsConsumed,
     gradient: g.gradient,
+    uploadedImageUrl: g.uploadedImageUrl,
   }));
 
   const creditCost = CREDIT_COSTS[selectedModel];
@@ -125,23 +128,27 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return true;
   }, [user.plan]);
 
-  const addGeneration = useCallback((record: Omit<GenerationRecord, "id" | "creditsConsumed">) => {
-    const cost = CREDIT_COSTS[record.model];
-    // Save to Firestore
-    firestoreAdd({
-      prompt: record.prompt,
-      tool: record.tool,
-      style: record.style,
-      model: record.model,
-      creditsConsumed: cost,
-      gradient: record.gradient,
-      imageUrls: [],
-      status: "completed",
-      createdAt: new Date(),
-    });
-    // Deduct credits in Firestore
-    updateCredits(cost, record.model);
-  }, [firestoreAdd, updateCredits]);
+  const addGeneration = useCallback(
+    (record: Omit<GenerationRecord, "id" | "creditsConsumed">) => {
+      const cost = CREDIT_COSTS[record.model];
+      firestoreAdd({
+        prompt: record.prompt,
+        augmentedPrompt: record.augmentedPrompt || "",
+        tool: record.tool,
+        style: record.style,
+        model: record.model,
+        creditsConsumed: cost,
+        gradient: record.gradient,
+        imageUrls: [],
+        uploadedImageUrl: record.uploadedImageUrl || "",
+        status: "completed",
+        createdAt: new Date(),
+      });
+      updateCredits(cost, record.model);
+      updateAdminStats(record.tool, record.model, cost);
+    },
+    [firestoreAdd, updateCredits]
+  );
 
   const deleteGeneration = useCallback((id: string) => {
     firestoreRemove(id);
@@ -155,16 +162,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, [selectedModel, firestoreSwitchPlan]);
 
-  const catalogs = generations.filter(g => g.tool === "Generate Catalog");
-  const ads = generations.filter(g => g.tool === "Cinematic Ads" || g.tool === "Ad Creatives");
+  const catalogs = generations.filter((g) => g.tool === "Generate Catalog");
+  const ads = generations.filter(
+    (g) => g.tool === "Cinematic Ads" || g.tool === "Ad Creatives"
+  );
   const allImages = generations;
 
   return (
-    <AppContext.Provider value={{
-      user, selectedModel, setSelectedModel, generations, addGeneration, deleteGeneration,
-      catalogs, ads, allImages, showUpgradeModal, setShowUpgradeModal, switchPlan, canGenerate, creditCost,
-      firestoreLoading: false,
-    }}>
+    <AppContext.Provider
+      value={{
+        user, selectedModel, setSelectedModel, generations, addGeneration, deleteGeneration,
+        catalogs, ads, allImages, showUpgradeModal, setShowUpgradeModal, switchPlan,
+        canGenerate, creditCost, firestoreLoading: false,
+      }}
+    >
       {children}
     </AppContext.Provider>
   );

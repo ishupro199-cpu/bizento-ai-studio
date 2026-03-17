@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Sparkles, Loader2, Eye, EyeOff, ArrowLeft, Zap, ImageIcon, Layers, Phone } from "lucide-react";
+import { Loader2, Eye, EyeOff, ArrowLeft, Zap, ImageIcon, Layers, Phone } from "lucide-react";
+import { PixaLeraIcon } from "@/components/PixaLeraIcon";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { PhoneAuthPanel } from "@/components/app/PhoneAuthPanel";
@@ -54,9 +55,7 @@ export default function LoginPage() {
             {/* Logo + heading */}
             <div>
               <div className="flex items-center gap-2.5 mb-6">
-                <div className="h-8 w-8 rounded-lg bg-[#89E900] flex items-center justify-center">
-                  <Sparkles className="h-4 w-4 text-black" />
-                </div>
+                <PixaLeraIcon size={32} />
                 <span className="text-[15px] font-bold text-white tracking-tight">
                   Pixa<span className="text-[#89E900]">Lera</span>
                 </span>

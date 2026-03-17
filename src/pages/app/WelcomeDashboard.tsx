@@ -59,7 +59,7 @@ export default function WelcomeDashboard() {
   const [selectedTool, setSelectedTool] = useState("catalog");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const toolsScrollRef = useRef<HTMLDivElement>(null);
-  const { upload, uploading, previewUrl, clearUpload } = useImageUpload();
+  const { upload, uploading, previewUrl, uploadedUrl, clearUpload } = useImageUpload();
   const [promptPage, setPromptPage] = useState(0);
   const [plusOpen, setPlusOpen] = useState(false);
   const [workspaces, setWorkspaces] = useState(DEFAULT_WORKSPACES);
@@ -89,7 +89,8 @@ export default function WelcomeDashboard() {
 
   const handleGenerate = () => {
     if (inputPrompt.trim() && canGenerate) {
-      gen.startGeneration(inputPrompt);
+      const toolName = tools.find((t) => t.id === selectedTool)?.name || "Generate Catalog";
+      gen.startGeneration(inputPrompt, toolName, gen.selectedStyle, uploadedUrl || "");
     }
   };
 
