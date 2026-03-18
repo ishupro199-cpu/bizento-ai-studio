@@ -1,7 +1,7 @@
 import { useState } from "react";
 import {
   FolderOpen, Megaphone, Image,
-  CreditCard, Lightbulb, ChevronRight, ChevronLeft, X, Clock,
+  CreditCard, Lightbulb, ChevronRight, ChevronLeft, X,
   Settings, Plus, History
 } from "lucide-react";
 import { PixaLeraIcon } from "@/components/PixaLeraIcon";
@@ -9,7 +9,6 @@ import { NavLink } from "@/components/NavLink";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Separator } from "@/components/ui/separator";
 import { useAppContext } from "@/contexts/AppContext";
-import { HistoryPanel } from "@/components/app/HistoryPanel";
 import { ProfileMenu } from "@/components/app/ProfileMenu";
 
 const navItems = [
@@ -40,16 +39,8 @@ function SidebarInner({
 }) {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, generations } = useAppContext();
-  const [selectedGenId, setSelectedGenId] = useState<string | null>(null);
-  const [panelOpen, setPanelOpen] = useState(false);
+  const { user } = useAppContext();
   const [logoHovered, setLogoHovered] = useState(false);
-
-  const handleHistoryClick = (id: string) => {
-    setSelectedGenId(id);
-    setPanelOpen(true);
-    if (isMobile) onClose();
-  };
 
   const handleNavClick = () => {
     if (isMobile) onClose();
@@ -144,46 +135,6 @@ function SidebarInner({
             );
           })}
 
-          {/* Recent generations in sidebar */}
-          {!isCollapsed && generations.length > 0 && (
-            <>
-              <div className="pt-4 pb-1 px-3 flex items-center gap-2">
-                <Clock className="h-3.5 w-3.5 text-muted-foreground/70 shrink-0" />
-                <span className="text-[11px] font-semibold text-muted-foreground/70 uppercase tracking-wider">Recent</span>
-              </div>
-              {generations.slice(0, 8).map((gen) => (
-                <button
-                  key={gen.id}
-                  onClick={() => handleHistoryClick(gen.id)}
-                  className="w-full flex items-center gap-2.5 rounded-lg px-3 py-2 text-left hover:bg-white/5 transition-colors"
-                >
-                  <div
-                    className="h-6 w-6 shrink-0 rounded-md"
-                    style={{ background: gen.gradient || "linear-gradient(135deg,#89E900 0%,#222 100%)" }}
-                  />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs text-[hsl(var(--sidebar-foreground))] truncate leading-snug">{gen.prompt}</p>
-                    <p className="text-[10px] text-muted-foreground/60 truncate">
-                      {gen.date instanceof Date
-                        ? gen.date.toLocaleDateString(undefined, { month: "short", day: "numeric" })
-                        : ""}
-                    </p>
-                  </div>
-                </button>
-              ))}
-            </>
-          )}
-
-          {/* Collapsed: clock icon */}
-          {isCollapsed && (
-            <button
-              onClick={() => setPanelOpen(true)}
-              title="Generation History"
-              className="w-full flex items-center justify-center rounded-lg py-2 text-[hsl(var(--sidebar-foreground))] hover:bg-white/5 transition-colors"
-            >
-              <Clock className="h-5 w-5 shrink-0" />
-            </button>
-          )}
         </div>
 
         <Separator className="mx-3 w-auto bg-[hsl(var(--sidebar-border))]" />
@@ -233,11 +184,6 @@ function SidebarInner({
         </div>
       </div>
 
-      <HistoryPanel
-        open={panelOpen}
-        onClose={() => setPanelOpen(false)}
-        selectedId={selectedGenId}
-      />
     </>
   );
 }

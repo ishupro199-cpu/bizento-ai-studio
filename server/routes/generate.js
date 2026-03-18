@@ -86,6 +86,8 @@ router.get("/health", (_req, res) => {
   res.json({
     status: "ok",
     hasReplicateToken: !!process.env.REPLICATE_API_TOKEN,
+    hasHuggingFaceToken: !!process.env.HUGGINGFACE_API_TOKEN,
+    aiEnabled: !!(process.env.REPLICATE_API_TOKEN || process.env.HUGGINGFACE_API_TOKEN),
     timestamp: new Date().toISOString(),
   });
 });
