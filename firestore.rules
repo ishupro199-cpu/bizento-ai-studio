@@ -18,46 +18,74 @@ service cloud.firestore {
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
 
+    function isVerifiedUser() {
+      return isLoggedIn() &&
+        (request.auth.token.email_verified == true ||
+         request.auth.token.phone_number != null ||
+         request.auth.token.firebase.sign_in_provider in ['google.com', 'apple.com']);
+    }
+
+    function hasField(data, field) {
+      return field in data;
+    }
+
+    function isValidUserData(data) {
+      return hasField(data, 'name') && data.name is string && data.name.size() > 0 &&
+             hasField(data, 'plan') && data.plan in ['free', 'pro', 'enterprise'] &&
+             hasField(data, 'role') && data.role in ['user', 'admin'] &&
+             hasField(data, 'creditsRemaining') && data.creditsRemaining is int &&
+             hasField(data, 'creditsUsed') && data.creditsUsed is int;
+    }
+
     // ── Users collection ──────────────────────────────────────────────────────
-    // Each user can read/write their own document. Admins can read all.
     match /users/{uid} {
-      allow read: if isOwner(uid) || isAdmin();
+      allow get: if isOwner(uid) || isAdmin();
+      allow list: if isAdmin();
       allow create: if isOwner(uid);
       allow update: if isOwner(uid) || isAdmin();
       allow delete: if isAdmin();
     }
 
     // ── Generations collection ────────────────────────────────────────────────
-    // Users can read/write only their own generations. Admins can read all.
     match /generations/{docId} {
-      allow read: if isLoggedIn() && (resource.data.userId == request.auth.uid || isAdmin());
-      allow create: if isLoggedIn() && request.resource.data.userId == request.auth.uid;
+      allow get: if isLoggedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow list: if isAdmin();
+      allow create: if isLoggedIn() && isVerifiedUser() &&
+                       request.resource.data.userId == request.auth.uid;
       allow update: if isLoggedIn() && resource.data.userId == request.auth.uid;
       allow delete: if isLoggedIn() && (resource.data.userId == request.auth.uid || isAdmin());
     }
 
-    // ── Admin collection ──────────────────────────────────────────────────────
-    // Only admins can read. Stats can be updated by any authenticated user
-    // (via increment ops inside server functions) but only admins can read.
-    match /admin/{docId} {
+    // ── Admin stats ───────────────────────────────────────────────────────────
+    // /admin/stats — authenticated users can increment counters, only admins read
+    match /admin/stats {
       allow read: if isAdmin();
       allow write: if isLoggedIn();
     }
 
-    // ── Orders collection (Razorpay) ──────────────────────────────────────────
-    // Created by authenticated users; only the owner or admin can read.
-    // Only backend / Cloud Functions should write after creation.
+    // All other /admin/* docs — admin only
+    match /admin/{docId} {
+      allow read, write: if isAdmin();
+    }
+
+    // ── Orders collection (payments) ──────────────────────────────────────────
     match /orders/{orderId} {
       allow read: if isLoggedIn() && (resource.data.userId == request.auth.uid || isAdmin());
-      allow create: if isLoggedIn() && request.resource.data.userId == request.auth.uid;
+      allow create: if isLoggedIn() && isVerifiedUser() &&
+                       request.resource.data.userId == request.auth.uid;
       allow update: if isAdmin();
       allow delete: if isAdmin();
     }
 
-    // ── Payments collection (Razorpay webhook records) ────────────────────────
-    // Only admins can read/write directly; verified by Cloud Functions.
+    // ── Payments collection (webhook records) ─────────────────────────────────
     match /payments/{paymentId} {
       allow read: if isLoggedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow write: if isAdmin();
+    }
+
+    // ── Public config (read-only for everyone) ─────────────────────────────────
+    match /config/{docId} {
+      allow read: if true;
       allow write: if isAdmin();
     }
 

@@ -10,21 +10,28 @@ import {
   RecaptchaVerifier,
   signInWithPhoneNumber,
   GoogleAuthProvider,
+  OAuthProvider,
   signInWithPopup,
   sendPasswordResetEmail,
+  sendEmailVerification,
+  reload,
 } from "firebase/auth";
 import { doc, setDoc, getDoc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
+import { mapFirebaseError } from "@/lib/authErrors";
 
-interface AuthContextType {
+export interface AuthContextType {
   user: User | null;
   loading: boolean;
   isAdmin: boolean;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, name: string) => Promise<void>;
+  signUp: (email: string, password: string, name: string) => Promise<{ needsVerification: boolean }>;
   signOut: () => Promise<void>;
   signInWithGoogle: () => Promise<void>;
+  signInWithApple: () => Promise<void>;
   sendPasswordReset: (email: string) => Promise<void>;
+  resendVerificationEmail: () => Promise<void>;
+  checkEmailVerified: () => Promise<boolean>;
   sendPhoneOtp: (phone: string, containerId: string) => Promise<ConfirmationResult>;
   confirmPhoneOtp: (result: ConfirmationResult, code: string, name?: string) => Promise<void>;
 }
@@ -44,6 +51,7 @@ async function ensureUserDoc(user: User, extra?: { name?: string }) {
     await setDoc(ref, {
       name: extra?.name || user.displayName || user.email?.split("@")[0] || "User",
       email: user.email || "",
+      phoneNumber: user.phoneNumber || "",
       photoURL: user.photoURL || "",
       plan: "free",
       creditsRemaining: 3,
@@ -51,6 +59,8 @@ async function ensureUserDoc(user: User, extra?: { name?: string }) {
       flashGenerations: 0,
       proGenerations: 0,
       role: "user",
+      emailVerified: user.emailVerified,
+      providers: user.providerData.map((p) => p.providerId),
       createdAt: new Date(),
     });
   } else {
@@ -58,6 +68,7 @@ async function ensureUserDoc(user: User, extra?: { name?: string }) {
     const updates: Record<string, any> = {};
     if (user.photoURL && !data.photoURL) updates.photoURL = user.photoURL;
     if (user.displayName && !data.name) updates.name = user.displayName;
+    if (user.emailVerified && !data.emailVerified) updates.emailVerified = true;
     if (Object.keys(updates).length > 0) {
       const { updateDoc } = await import("firebase/firestore");
       await updateDoc(ref, updates);
@@ -89,13 +100,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    await signInWithEmailAndPassword(auth, email, password);
+    try {
+      const cred = await signInWithEmailAndPassword(auth, email, password);
+      if (!cred.user.emailVerified) {
+        throw Object.assign(new Error("Please verify your email before signing in. Check your inbox for the verification link."), { code: "auth/unverified-email" });
+      }
+    } catch (err: any) {
+      if (err.code === "auth/unverified-email") throw err;
+      throw new Error(mapFirebaseError(err));
+    }
   };
 
-  const signUp = async (email: string, password: string, name: string) => {
-    const cred = await createUserWithEmailAndPassword(auth, email, password);
-    await updateProfile(cred.user, { displayName: name });
-    await ensureUserDoc(cred.user, { name });
+  const signUp = async (email: string, password: string, name: string): Promise<{ needsVerification: boolean }> => {
+    try {
+      const cred = await createUserWithEmailAndPassword(auth, email, password);
+      await updateProfile(cred.user, { displayName: name });
+      await sendEmailVerification(cred.user, {
+        url: `${window.location.origin}/login`,
+        handleCodeInApp: false,
+      });
+      await ensureUserDoc(cred.user, { name });
+      await firebaseSignOut(auth);
+      return { needsVerification: true };
+    } catch (err: any) {
+      throw new Error(mapFirebaseError(err));
+    }
   };
 
   const signOutUser = async () => {
@@ -103,29 +132,74 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signInWithGoogle = async () => {
-    const provider = new GoogleAuthProvider();
-    provider.addScope("email");
-    provider.addScope("profile");
-    const cred = await signInWithPopup(auth, provider);
-    await ensureUserDoc(cred.user);
+    try {
+      const provider = new GoogleAuthProvider();
+      provider.addScope("email");
+      provider.addScope("profile");
+      const cred = await signInWithPopup(auth, provider);
+      await ensureUserDoc(cred.user);
+    } catch (err: any) {
+      throw new Error(mapFirebaseError(err));
+    }
+  };
+
+  const signInWithApple = async () => {
+    try {
+      const provider = new OAuthProvider("apple.com");
+      provider.addScope("email");
+      provider.addScope("name");
+      const cred = await signInWithPopup(auth, provider);
+      await ensureUserDoc(cred.user);
+    } catch (err: any) {
+      throw new Error(mapFirebaseError(err));
+    }
   };
 
   const sendPasswordReset = async (email: string) => {
-    await sendPasswordResetEmail(auth, email);
+    try {
+      await sendPasswordResetEmail(auth, email, { url: `${window.location.origin}/login` });
+    } catch (err: any) {
+      throw new Error(mapFirebaseError(err));
+    }
+  };
+
+  const resendVerificationEmail = async () => {
+    try {
+      if (auth.currentUser) {
+        await sendEmailVerification(auth.currentUser, {
+          url: `${window.location.origin}/login`,
+          handleCodeInApp: false,
+        });
+      }
+    } catch (err: any) {
+      throw new Error(mapFirebaseError(err));
+    }
+  };
+
+  const checkEmailVerified = async (): Promise<boolean> => {
+    if (!auth.currentUser) return false;
+    await reload(auth.currentUser);
+    return auth.currentUser.emailVerified;
   };
 
   const sendPhoneOtp = async (phone: string, containerId: string): Promise<ConfirmationResult> => {
-    const verifier = new RecaptchaVerifier(auth, containerId, { size: "invisible" });
-    const result = await signInWithPhoneNumber(auth, phone, verifier);
-    return result;
+    try {
+      const verifier = new RecaptchaVerifier(auth, containerId, { size: "invisible" });
+      const result = await signInWithPhoneNumber(auth, phone, verifier);
+      return result;
+    } catch (err: any) {
+      throw new Error(mapFirebaseError(err));
+    }
   };
 
   const confirmPhoneOtp = async (result: ConfirmationResult, code: string, name?: string) => {
-    const cred = await result.confirm(code);
-    if (name) {
-      await updateProfile(cred.user, { displayName: name });
+    try {
+      const cred = await result.confirm(code);
+      if (name) await updateProfile(cred.user, { displayName: name });
+      await ensureUserDoc(cred.user, { name });
+    } catch (err: any) {
+      throw new Error(mapFirebaseError(err));
     }
-    await ensureUserDoc(cred.user, { name });
   };
 
   return (
@@ -133,7 +207,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       value={{
         user, loading, isAdmin,
         signIn, signUp, signOut: signOutUser,
-        signInWithGoogle, sendPasswordReset,
+        signInWithGoogle, signInWithApple,
+        sendPasswordReset, resendVerificationEmail, checkEmailVerified,
         sendPhoneOtp, confirmPhoneOtp,
       }}
     >
