@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Check, X, Zap, ArrowRight } from "lucide-react";
-import { BizentoIcon } from "@/components/BizentoIcon";
+import { PixaleraIcon } from "@/components/PixaleraIcon";
 
 const PLANS = [
   {
@@ -9,7 +9,7 @@ const PLANS = [
     period: "/month",
     credits: 15,
     bonusCredits: 0,
-    desc: "Try Bizento AI with no commitment.",
+    desc: "Try Pixalera AI with no commitment.",
     popular: false,
     cta: "Get Started Free",
     ctaLink: "/signup",
@@ -141,9 +141,9 @@ export default function PricingPage() {
       {/* Nav */}
       <nav className="flex items-center justify-between px-6 py-4 max-w-7xl mx-auto relative z-10">
         <Link to="/" className="flex items-center gap-2.5">
-          <BizentoIcon size={32} />
+          <PixaleraIcon size={32} />
           <span className="text-[17px] font-black tracking-tight" style={{ color: "#F0EBD8", letterSpacing: "-0.02em" }}>
-            Bizento<span style={{ color: "#89E900" }}>.</span>
+            Pixalera<span style={{ color: "#89E900" }}>.</span>
           </span>
         </Link>
         <div className="flex items-center gap-3">

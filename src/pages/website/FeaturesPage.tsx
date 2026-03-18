@@ -4,7 +4,7 @@ import {
   Zap, Shield, LayoutGrid, Clapperboard, Megaphone, Check,
   ChevronRight, Star,
 } from "lucide-react";
-import { BizentoIcon } from "@/components/BizentoIcon";
+import { PixaleraIcon } from "@/components/PixaleraIcon";
 
 const TOOLS = [
   {
@@ -59,16 +59,16 @@ const CAPABILITIES = [
 ];
 
 const COMPARE_ROWS = [
-  { feature: "Turnaround time", traditional: "2–3 weeks", bizento: "Under 1 minute" },
-  { feature: "Cost per image", traditional: "₹500–₹5,000", bizento: "From ₹2–₹10" },
-  { feature: "Min. order quantity", traditional: "Usually 50+", bizento: "1 image" },
-  { feature: "Reshooting needed", traditional: "Yes — expensive", bizento: "One click" },
-  { feature: "Brand consistency", traditional: "Hard to maintain", bizento: "Guaranteed with presets" },
-  { feature: "Scalability", traditional: "Bottlenecked", bizento: "Unlimited" },
+  { feature: "Turnaround time", traditional: "2–3 weeks", pixalera: "Under 1 minute" },
+  { feature: "Cost per image", traditional: "₹500–₹5,000", pixalera: "From ₹2–₹10" },
+  { feature: "Min. order quantity", traditional: "Usually 50+", pixalera: "1 image" },
+  { feature: "Reshooting needed", traditional: "Yes — expensive", pixalera: "One click" },
+  { feature: "Brand consistency", traditional: "Hard to maintain", pixalera: "Guaranteed with presets" },
+  { feature: "Scalability", traditional: "Bottlenecked", pixalera: "Unlimited" },
 ];
 
 const TESTIMONIALS = [
-  { name: "Arjun Patel", role: "Founder, WearLab", avatar: "A", quote: "We cut our photoshoot budget by 80% and our catalog looks better than ever. Bizento AI is a no-brainer for any ecommerce brand." },
+  { name: "Arjun Patel", role: "Founder, WearLab", avatar: "A", quote: "We cut our photoshoot budget by 80% and our catalog looks better than ever. Pixalera AI is a no-brainer for any ecommerce brand." },
   { name: "Sneha Kapoor", role: "CMO, PureGlow", avatar: "S", quote: "Our Instagram content went from average to stunning. The AI understands our aesthetic perfectly. We produce 5x more content now." },
 ];
 
@@ -77,9 +77,9 @@ function WebsiteNav() {
     <nav className="border-b" style={{ borderColor: "#1E2028", background: "rgba(13,15,20,0.95)", backdropFilter: "blur(20px)" }}>
       <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2.5">
-          <BizentoIcon size={30} />
+          <PixaleraIcon size={30} />
           <span className="text-[16px] font-black" style={{ color: "#F0EBD8" }}>
-            Bizento<span style={{ color: "#89E900" }}>.</span>
+            Pixalera<span style={{ color: "#89E900" }}>.</span>
           </span>
         </Link>
         <div className="flex items-center gap-3">
@@ -201,14 +201,14 @@ export default function FeaturesPage() {
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-14">
             <h2 className="text-4xl md:text-5xl font-extrabold">
-              Traditional shoot vs. <span style={{ color: "#89E900" }}>Bizento AI</span>
+              Traditional shoot vs. <span style={{ color: "#89E900" }}>Pixalera AI</span>
             </h2>
           </div>
           <div className="rounded-2xl border overflow-hidden" style={{ borderColor: "#1E2028" }}>
             <div className="grid grid-cols-3 text-center" style={{ background: "#12141A" }}>
               <div className="py-4 px-4 text-[13px] font-bold" style={{ color: "#8A8F9E", borderRight: "1px solid #1E2028" }}>Feature</div>
               <div className="py-4 px-4 text-[13px] font-bold" style={{ color: "#8A8F9E", borderRight: "1px solid #1E2028" }}>Traditional Shoot</div>
-              <div className="py-4 px-4 text-[13px] font-bold" style={{ color: "#89E900" }}>Bizento AI</div>
+              <div className="py-4 px-4 text-[13px] font-bold" style={{ color: "#89E900" }}>Pixalera AI</div>
             </div>
             {COMPARE_ROWS.map((row, i) => (
               <div key={row.feature}
@@ -216,7 +216,7 @@ export default function FeaturesPage() {
                 style={{ borderColor: "#1E2028", background: i % 2 === 0 ? "rgba(255,255,255,0.01)" : "transparent" }}>
                 <div className="py-3.5 px-4 text-[13px] font-medium text-left" style={{ borderRight: "1px solid #1E2028" }}>{row.feature}</div>
                 <div className="py-3.5 px-4 text-[13px]" style={{ color: "#8A8F9E", borderRight: "1px solid #1E2028" }}>{row.traditional}</div>
-                <div className="py-3.5 px-4 text-[13px] font-semibold" style={{ color: "#89E900" }}>{row.bizento}</div>
+                <div className="py-3.5 px-4 text-[13px] font-semibold" style={{ color: "#89E900" }}>{row.pixalera}</div>
               </div>
             ))}
           </div>

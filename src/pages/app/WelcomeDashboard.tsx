@@ -419,7 +419,7 @@ export default function WelcomeDashboard() {
                 <div className="h-6 w-6 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
                   <Sparkles className="h-3 w-3 text-primary" />
                 </div>
-                <span className="text-xs text-muted-foreground font-medium">Bizento AI</span>
+                <span className="text-xs text-muted-foreground font-medium">Pixalera AI</span>
               </div>
               <div className="bg-white/4 border border-white/10 rounded-2xl rounded-tl-sm px-4 py-3.5 space-y-2">
                 {THINKING_STEPS.map((step, i) => {
@@ -503,7 +503,7 @@ export default function WelcomeDashboard() {
                 <div className="h-6 w-6 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
                   <Sparkles className="h-3 w-3 text-primary" />
                 </div>
-                <span className="text-xs text-muted-foreground font-medium">Bizento AI</span>
+                <span className="text-xs text-muted-foreground font-medium">Pixalera AI</span>
               </div>
               <div className="bg-white/4 border border-white/10 rounded-2xl rounded-tl-sm px-4 py-4">
                 <PlatformOptimization

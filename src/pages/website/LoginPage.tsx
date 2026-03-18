@@ -4,7 +4,7 @@ import {
   Loader2, Eye, EyeOff, ArrowLeft, Zap, ImageIcon, Layers,
   Mail, Phone, RefreshCw,
 } from "lucide-react";
-import { BizentoIcon } from "@/components/BizentoIcon";
+import { PixaleraIcon } from "@/components/PixaleraIcon";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { isTempEmail } from "@/lib/authErrors";
@@ -131,9 +131,9 @@ export default function LoginPage() {
             {/* Logo + heading */}
             <div>
               <div className="flex items-center gap-2.5 mb-6">
-                <BizentoIcon size={32} />
+                <PixaleraIcon size={32} />
                 <span className="text-[15px] font-bold text-white tracking-tight">
-                  Bizento<span className="text-[#89E900]"> AI</span>
+                  Pixalera<span className="text-[#89E900]"> AI</span>
                 </span>
               </div>
               <h1 className="text-[2rem] font-bold text-white leading-tight">Welcome back!</h1>
@@ -367,7 +367,7 @@ export default function LoginPage() {
               in seconds
             </h2>
             <p className="text-[14px] text-white/40 leading-relaxed">
-              Upload a simple photo and let Bizento AI generate professional catalog images, cinematic ads, and social media creatives.
+              Upload a simple photo and let Pixalera AI generate professional catalog images, cinematic ads, and social media creatives.
             </p>
           </div>
 

@@ -215,7 +215,7 @@ function SidebarInner({
             <div className="flex items-center gap-2.5">
               <BizentoIcon size={28} className="shrink-0" />
               <span className="text-base font-black tracking-tight whitespace-nowrap" style={{ color: "#F0EBD8", letterSpacing: "-0.02em" }}>
-                Bizento<span style={{ color: "#89E900" }}>.</span>
+                Pixalera<span style={{ color: "#89E900" }}>.</span>
               </span>
             </div>
             <button

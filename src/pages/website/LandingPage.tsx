@@ -49,10 +49,10 @@ function useTypingAnimation(prompts: string[]) {
 }
 
 const NAV_LINKS = [
-  { label: "Features", href: "/features" },
-  { label: "Resources", href: "/resources" },
-  { label: "How It Works", href: "/how-it-works" },
+  { label: "Features", href: "#features" },
+  { label: "How It Works", href: "#how-it-works" },
   { label: "Pricing", href: "/pricing" },
+  { label: "Resources", href: "/resources" },
 ];
 
 const BEFORE_AFTER = [
@@ -72,12 +72,60 @@ const FEATURES = [
 ];
 
 const USE_CASES = [
-  { icon: ShoppingBag, title: "Fashion & Apparel", desc: "Models, backdrops, and editorial styles for every clothing category." },
-  { icon: Droplets, title: "Beauty & Skincare", desc: "Clean flat-lays, lifestyle scenes, and ingredient-focused visuals." },
-  { icon: Monitor, title: "Electronics", desc: "Cinematic tech photography — floating devices, neon reflections, dark aesthetics." },
-  { icon: Sofa, title: "Furniture & Home", desc: "Styled room mockups and interior context for any furniture piece." },
-  { icon: Package, title: "D2C Brands", desc: "Consistent visual identity across all touchpoints — ads, catalog, social." },
-  { icon: UtensilsCrossed, title: "Food & Beverage", desc: "Mouth-watering food photography and packaging visuals without a food stylist." },
+  {
+    icon: ShoppingBag,
+    title: "Fashion & Apparel",
+    desc: "Dress your products on AI models, in lifestyle backdrops, and editorial scenes — across every clothing category.",
+    gradient: "linear-gradient(135deg, #1a0a2e 0%, #2d1a4a 50%, #3d1f5c 100%)",
+    accent: "#c084fc",
+    tag: "Most popular",
+    stat: "5× faster to market",
+  },
+  {
+    icon: Droplets,
+    title: "Beauty & Skincare",
+    desc: "Marble flat-lays, ingredient spotlights, and lifestyle imagery that sells your products' essence instantly.",
+    gradient: "linear-gradient(135deg, #0a1a2e 0%, #0e2d44 50%, #0f3352 100%)",
+    accent: "#38bdf8",
+    tag: "Highest CTR",
+    stat: "2× conversion uplift",
+  },
+  {
+    icon: Monitor,
+    title: "Electronics & Tech",
+    desc: "Cinematic floating devices, neon reflections, and dark-mode aesthetics that look CGI-rendered.",
+    gradient: "linear-gradient(135deg, #0a1a0a 0%, #0d2d15 50%, #0e3318 100%)",
+    accent: "#89E900",
+    tag: "CGI-quality",
+    stat: "80% cost savings",
+  },
+  {
+    icon: Sofa,
+    title: "Furniture & Home",
+    desc: "Styled room mockups, interior context shots, and on-model placement for any furniture or décor piece.",
+    gradient: "linear-gradient(135deg, #1a1000 0%, #2d1f00 50%, #3d2a00 100%)",
+    accent: "#f59e0b",
+    tag: "Scene-ready",
+    stat: "3× more engagement",
+  },
+  {
+    icon: Package,
+    title: "D2C Brands",
+    desc: "Consistent visual identity across every touchpoint — ads, catalogs, social, and packaging — in minutes.",
+    gradient: "linear-gradient(135deg, #1a0a0a 0%, #2d1010 50%, #3d1515 100%)",
+    accent: "#f87171",
+    tag: "Brand-consistent",
+    stat: "10× content velocity",
+  },
+  {
+    icon: UtensilsCrossed,
+    title: "Food & Beverage",
+    desc: "Mouth-watering food styling and packaging visuals that drive appetite and shelf appeal — no food stylist needed.",
+    gradient: "linear-gradient(135deg, #0f1a0a 0%, #192d10 50%, #1e3812 100%)",
+    accent: "#4ade80",
+    tag: "Appetite-driving",
+    stat: "4× social shares",
+  },
 ];
 
 const HOW_IT_WORKS = [
@@ -87,16 +135,16 @@ const HOW_IT_WORKS = [
 ];
 
 const TESTIMONIALS = [
-  { name: "Rahul Mehta", role: "Founder, StyleKart", avatar: "R", quote: "Bizento AI cut our photoshoot budget by 80%. We went from waiting 2 weeks for images to publishing same-day. The quality is genuinely indistinguishable from studio shots." },
-  { name: "Priya Sharma", role: "Head of Marketing, GlowBeauty", avatar: "P", quote: "Our CTR doubled after switching to Bizento AI-generated images. The AI understands our brand aesthetic perfectly. I couldn't run campaigns without it." },
-  { name: "James O'Brien", role: "E-commerce Director, TechMart UK", avatar: "J", quote: "We have 8,000+ SKUs. Bizento AI processed our entire catalog in a weekend. The results are stunning and perfectly consistent." },
+  { name: "Rahul Mehta", role: "Founder, StyleKart", avatar: "R", quote: "Pixalera cut our photoshoot budget by 80%. We went from waiting 2 weeks for images to publishing same-day. The quality is genuinely indistinguishable from studio shots." },
+  { name: "Priya Sharma", role: "Head of Marketing, GlowBeauty", avatar: "P", quote: "Our CTR doubled after switching to Pixalera-generated images. The AI understands our brand aesthetic perfectly. I couldn't run campaigns without it." },
+  { name: "James O'Brien", role: "E-commerce Director, TechMart UK", avatar: "J", quote: "We have 8,000+ SKUs. Pixalera processed our entire catalog in a weekend. The results are stunning and perfectly consistent." },
 ];
 
 const FAQ = [
-  { q: "How good is the image quality?", a: "Bizento AI generates images at professional studio quality — indistinguishable from traditional photoshoots. We use state-of-the-art diffusion models fine-tuned specifically for product photography." },
+  { q: "How good is the image quality?", a: "Pixalera generates images at professional studio quality — indistinguishable from traditional photoshoots. We use state-of-the-art diffusion models fine-tuned specifically for product photography." },
   { q: "Can I process images in bulk?", a: "Yes. Our batch processing feature lets you upload and process hundreds of images at once, applying consistent style settings across your entire catalog." },
   { q: "What file formats are supported?", a: "We support JPEG, PNG, WebP for input. Outputs are available in JPEG, PNG, and WebP at up to 4K resolution depending on your plan." },
-  { q: "Is there an API?", a: "Yes — our Pro plan includes API access, letting you integrate Bizento AI directly into your inventory management, CMS, or custom workflows." },
+  { q: "Is there an API?", a: "Yes — our Pro plan includes API access, letting you integrate Pixalera directly into your inventory management, CMS, or custom workflows." },
   { q: "Do you offer a satisfaction guarantee?", a: "Absolutely. All paid plans include a 14-day satisfaction guarantee. If you're not happy, we'll refund you in full." },
   { q: "How do I get started?", a: "Sign up free — 15 credits on us, no credit card required. Upload a product photo and you'll have studio-quality results in under a minute." },
 ];
@@ -208,14 +256,14 @@ export default function LandingPage() {
         style={{
           background: scrolled ? "rgba(13,15,20,0.92)" : "transparent",
           backdropFilter: scrolled ? "blur(20px)" : "none",
-          borderBottom: scrolled ? "1px solid rgba(255,255,255,0.06)" : "none",
+          borderBottom: `1px solid rgba(255,255,255,${scrolled ? 0.06 : 0})`,
         }}>
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
 
           <Link to="/" className="flex items-center gap-2.5">
             <BizentoIcon size={32} />
             <span className="text-[17px] font-black tracking-tight" style={{ color: "#F0EBD8", letterSpacing: "-0.02em" }}>
-              Bizento<span style={{ color: "#89E900" }}>.</span>
+              Pixalera<span style={{ color: "#89E900" }}>.</span>
             </span>
           </Link>
 
@@ -271,7 +319,7 @@ export default function LandingPage() {
                 <Link to="/" className="flex items-center gap-2.5" onClick={() => setMobileOpen(false)}>
                   <BizentoIcon size={28} />
                   <span className="font-black text-[16px]" style={{ color: "#F0EBD8" }}>
-                    Bizento<span style={{ color: "#89E900" }}>.</span>
+                    Pixalera<span style={{ color: "#89E900" }}>.</span>
                   </span>
                 </Link>
                 <div className="space-y-1">
@@ -432,7 +480,7 @@ export default function LandingPage() {
                     <p className="text-[12px] leading-relaxed" style={{ color: "#8A8F9E" }}>{item.before}</p>
                   </div>
                   <div className="p-4">
-                    <p className="text-[10px] font-bold tracking-widest uppercase mb-1.5" style={{ color: "#89E900" }}>Bizento AI</p>
+                    <p className="text-[10px] font-bold tracking-widest uppercase mb-1.5" style={{ color: "#89E900" }}>Pixalera AI</p>
                     <p className="text-[12px] leading-relaxed" style={{ color: "rgba(137,233,0,0.75)" }}>{item.after}</p>
                   </div>
                 </div>
@@ -443,7 +491,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── HOW IT WORKS ── */}
-      <section className="py-24 px-6" style={{ background: "#0A0C11" }}>
+      <section id="how-it-works" className="py-24 px-6" style={{ background: "#0A0C11" }}>
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-extrabold">How it works</h2>
@@ -470,7 +518,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── FEATURES ── */}
-      <section className="py-24 px-6">
+      <section id="features" className="py-24 px-6">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-extrabold">
@@ -518,20 +566,59 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-14">
             <h2 className="text-4xl md:text-5xl font-extrabold">Built for every category</h2>
-            <p className="mt-4 text-[16px]" style={{ color: "#8A8F9E" }}>Whatever you sell, Bizento AI creates the visuals.</p>
+            <p className="mt-4 text-[16px]" style={{ color: "#8A8F9E" }}>Whatever you sell, Pixalera creates the visuals.</p>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {USE_CASES.map((uc) => (
               <div key={uc.title}
-                className="rounded-2xl border p-5 flex gap-4 group hover:border-[#89E900]/20 transition-all"
-                style={{ background: "#12141A", borderColor: "#1E2028" }}>
-                <div className="h-10 w-10 shrink-0 rounded-xl flex items-center justify-center"
-                  style={{ background: "rgba(137,233,0,0.08)", border: "1px solid rgba(137,233,0,0.15)" }}>
-                  <uc.icon className="h-5 w-5" style={{ color: "#89E900" }} />
+                className="group relative rounded-2xl border overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl cursor-default"
+                style={{ borderColor: "#1E2028", background: "#12141A" }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = `${uc.accent}35`; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "#1E2028"; }}
+              >
+                {/* Gradient background panel */}
+                <div className="relative h-36 w-full overflow-hidden" style={{ background: uc.gradient }}>
+                  {/* Subtle radial glow */}
+                  <div className="absolute inset-0" style={{ background: `radial-gradient(circle at 70% 50%, ${uc.accent}20 0%, transparent 65%)` }} />
+                  {/* Grid texture */}
+                  <div className="absolute inset-0 opacity-10"
+                    style={{
+                      backgroundImage: `url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0h20M0 20h20M0 0v20M20 0v20' stroke='%23ffffff' stroke-width='0.3'/%3E%3C/svg%3E")`,
+                      backgroundSize: "20px 20px",
+                    }}
+                  />
+                  {/* Icon */}
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="h-14 w-14 rounded-2xl flex items-center justify-center backdrop-blur-sm"
+                        style={{ background: `${uc.accent}18`, border: `1.5px solid ${uc.accent}40` }}>
+                        <uc.icon className="h-7 w-7" style={{ color: uc.accent }} />
+                      </div>
+                    </div>
+                  </div>
+                  {/* Tag badge */}
+                  <div className="absolute top-3 left-3">
+                    <span className="text-[10px] font-bold tracking-wide uppercase px-2.5 py-1 rounded-full"
+                      style={{ background: `${uc.accent}18`, color: uc.accent, border: `1px solid ${uc.accent}30` }}>
+                      {uc.tag}
+                    </span>
+                  </div>
+                  {/* Stat badge */}
+                  <div className="absolute bottom-3 right-3">
+                    <span className="text-[10px] font-semibold px-2.5 py-1 rounded-lg"
+                      style={{ background: "rgba(0,0,0,0.5)", color: "rgba(255,255,255,0.8)", border: "1px solid rgba(255,255,255,0.1)", backdropFilter: "blur(8px)" }}>
+                      {uc.stat}
+                    </span>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-bold text-[15px] mb-1">{uc.title}</h3>
+                {/* Content */}
+                <div className="p-5">
+                  <h3 className="font-bold text-[16px] mb-2 text-white">{uc.title}</h3>
                   <p className="text-[13px] leading-relaxed" style={{ color: "#8A8F9E" }}>{uc.desc}</p>
+                  <div className="mt-4 flex items-center gap-1.5"
+                    style={{ color: uc.accent }}>
+                    <span className="text-[12px] font-semibold">Explore →</span>
+                  </div>
                 </div>
               </div>
             ))}
@@ -623,33 +710,6 @@ export default function LandingPage() {
       <footer className="border-t" style={{ borderColor: "#1E2028", background: "#111316" }}>
         <div className="max-w-6xl mx-auto px-6 py-16">
 
-          {/* Newsletter */}
-          <div className="rounded-2xl border p-6 mb-12 flex flex-col md:flex-row items-center justify-between gap-6"
-            style={{ background: "rgba(137,233,0,0.04)", borderColor: "rgba(137,233,0,0.12)" }}>
-            <div>
-              <h3 className="text-[17px] font-bold mb-1">Stay updated with AI ecommerce tips</h3>
-              <p className="text-[13px]" style={{ color: "#8A8F9E" }}>Guides, product updates, and ecommerce strategies — straight to your inbox.</p>
-            </div>
-            <div className="flex gap-2 w-full md:w-auto shrink-0">
-              <div className="flex-1 md:w-64 flex items-center gap-2 rounded-xl px-4 py-2.5"
-                style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)" }}>
-                <Mail className="h-4 w-4 shrink-0" style={{ color: "#8A8F9E" }} />
-                <input
-                  type="email"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  placeholder="Enter your email"
-                  className="flex-1 bg-transparent text-[13px] text-white placeholder-white/30 outline-none"
-                />
-              </div>
-              <button
-                className="px-5 py-2.5 rounded-xl text-[13px] font-semibold whitespace-nowrap transition-all hover:opacity-90"
-                style={{ background: "#89E900", color: "#0D0F14" }}>
-                Subscribe
-              </button>
-            </div>
-          </div>
-
           {/* Columns */}
           <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-12">
             {/* Brand column */}
@@ -657,7 +717,7 @@ export default function LandingPage() {
               <div className="flex items-center gap-2.5">
                 <BizentoIcon size={28} />
                 <span className="font-black text-[16px]" style={{ color: "#F0EBD8" }}>
-                  Bizento<span style={{ color: "#89E900" }}>.</span>
+                  Pixalera<span style={{ color: "#89E900" }}>.</span>
                 </span>
               </div>
               <p className="text-[13px] leading-relaxed" style={{ color: "#8A8F9E" }}>
@@ -704,12 +764,46 @@ export default function LandingPage() {
             ))}
           </div>
 
+          {/* Newsletter — between footer columns and copyright */}
+          <div className="rounded-2xl overflow-hidden mb-8" style={{ background: "linear-gradient(135deg, rgba(137,233,0,0.06) 0%, rgba(137,233,0,0.02) 100%)", border: "1px solid rgba(137,233,0,0.14)" }}>
+            <div className="flex flex-col md:flex-row items-center gap-6 px-6 py-5">
+              <div className="flex items-center gap-3 shrink-0">
+                <div className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0"
+                  style={{ background: "rgba(137,233,0,0.12)", border: "1px solid rgba(137,233,0,0.2)" }}>
+                  <Mail className="h-5 w-5" style={{ color: "#89E900" }} />
+                </div>
+                <div>
+                  <h3 className="text-[15px] font-bold text-white">Stay updated with AI ecommerce tips</h3>
+                  <p className="text-[12px]" style={{ color: "#8A8F9E" }}>Guides, product updates, and strategies — straight to your inbox.</p>
+                </div>
+              </div>
+              <div className="flex gap-2 w-full md:w-auto md:ml-auto shrink-0">
+                <div className="flex-1 md:w-60 flex items-center gap-2 rounded-xl px-3.5 py-2.5"
+                  style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.09)" }}>
+                  <Mail className="h-3.5 w-3.5 shrink-0" style={{ color: "#8A8F9E" }} />
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    placeholder="Enter your email"
+                    className="flex-1 bg-transparent text-[13px] text-white placeholder-white/30 outline-none min-w-0"
+                  />
+                </div>
+                <button
+                  className="px-5 py-2.5 rounded-xl text-[13px] font-semibold whitespace-nowrap transition-all hover:opacity-90 active:scale-95"
+                  style={{ background: "#89E900", color: "#0D0F14", boxShadow: "0 0 16px rgba(137,233,0,0.2)" }}>
+                  Subscribe
+                </button>
+              </div>
+            </div>
+          </div>
+
           {/* Bottom bar */}
-          <div className="flex flex-col sm:flex-row items-center justify-between pt-8 border-t gap-4" style={{ borderColor: "#1E2028" }}>
-            <p className="text-[13px]" style={{ color: "rgba(138,143,158,0.45)" }}>
-              © {new Date().getFullYear()} Bizento AI. All rights reserved.
+          <div className="flex flex-col sm:flex-row items-center justify-between pt-6 border-t gap-4" style={{ borderColor: "#1E2028" }}>
+            <p className="text-[12px]" style={{ color: "rgba(138,143,158,0.45)" }}>
+              © {new Date().getFullYear()} Pixalera AI. All rights reserved.
             </p>
-            <p className="text-[13px]" style={{ color: "rgba(138,143,158,0.45)" }}>
+            <p className="text-[12px]" style={{ color: "rgba(138,143,158,0.45)" }}>
               Built for ecommerce sellers 🚀
             </p>
           </div>

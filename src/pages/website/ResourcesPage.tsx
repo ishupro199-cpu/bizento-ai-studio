@@ -4,7 +4,7 @@ import {
   MessageCircle, ArrowRight, ChevronRight, Star,
   LayoutGrid, Camera, Clapperboard, Megaphone, Zap,
 } from "lucide-react";
-import { BizentoIcon } from "@/components/BizentoIcon";
+import { PixaleraIcon } from "@/components/PixaleraIcon";
 
 const GUIDES = [
   {
@@ -27,7 +27,7 @@ const GUIDES = [
     tag: "Advanced",
     tagColor: "#8B5CF6",
     title: "Batch processing 500 SKUs: a complete workflow guide",
-    desc: "How enterprise ecommerce teams use Bizento AI to process thousands of products per week.",
+    desc: "How enterprise ecommerce teams use Pixalera AI to process thousands of products per week.",
     readTime: "10 min read",
     icon: Zap,
   },
@@ -58,7 +58,7 @@ const GUIDES = [
 ];
 
 const VIDEOS = [
-  { title: "Bizento AI — 2-Minute Product Tour", duration: "2:14", thumbnail: "/hero-product.png" },
+  { title: "Pixalera AI — 2-Minute Product Tour", duration: "2:14", thumbnail: "/hero-product.png" },
   { title: "Catalog Generator Walkthrough", duration: "5:30", thumbnail: "/gen-beauty-product.png" },
   { title: "AI Fashion Models — Full Demo", duration: "4:45", thumbnail: "/gen-fashion-product.png" },
   { title: "Batch Processing 100 SKUs Live", duration: "8:12", thumbnail: "/gen-tech-product.png" },
@@ -66,7 +66,7 @@ const VIDEOS = [
 
 const FAQ = [
   { q: "How many credits does each generation use?", a: "Nano Bana Flash uses 1 credit per generation. Nano Bana Pro uses 2 credits and delivers higher detail and realism." },
-  { q: "Can I use Bizento AI for fashion with human models?", a: "Yes. Our AI Fashion Model tool lets you dress AI-generated models in your clothing, with full control over model appearance and styling." },
+  { q: "Can I use Pixalera AI for fashion with human models?", a: "Yes. Our AI Fashion Model tool lets you dress AI-generated models in your clothing, with full control over model appearance and styling." },
   { q: "What image size should I upload?", a: "For best results, upload images at 1000×1000px or larger, in JPEG or PNG format. The subject should be clearly visible with minimal background clutter." },
   { q: "How do I cancel my subscription?", a: "You can cancel anytime from Settings → Plan → Cancel Plan. Your credits remain active until the end of your billing period." },
   { q: "Is there a refund policy?", a: "Yes — all paid plans have a 14-day satisfaction guarantee. Contact support within 14 days of your first payment for a full refund." },
@@ -77,9 +77,9 @@ function WebsiteNav() {
     <nav className="border-b" style={{ borderColor: "#1E2028", background: "rgba(13,15,20,0.95)", backdropFilter: "blur(20px)" }}>
       <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2.5">
-          <BizentoIcon size={30} />
+          <PixaleraIcon size={30} />
           <span className="text-[16px] font-black" style={{ color: "#F0EBD8" }}>
-            Bizento<span style={{ color: "#89E900" }}>.</span>
+            Pixalera<span style={{ color: "#89E900" }}>.</span>
           </span>
         </Link>
         <div className="flex items-center gap-3">
@@ -115,7 +115,7 @@ export default function ResourcesPage() {
             <br /><span style={{ color: "#89E900" }}>create better</span>
           </h1>
           <p className="text-[17px] mb-10" style={{ color: "#8A8F9E" }}>
-            Guides, tutorials, and case studies to help you get the most out of Bizento AI.
+            Guides, tutorials, and case studies to help you get the most out of Pixalera AI.
           </p>
         </div>
       </section>
@@ -256,7 +256,7 @@ export default function ResourcesPage() {
           <Link to="/signup"
             className="inline-flex items-center gap-2 px-8 py-4 rounded-2xl text-[15px] font-bold transition-all"
             style={{ background: "#89E900", color: "#0D0F14", boxShadow: "0 4px 24px rgba(137,233,0,0.3)" }}>
-            <Sparkles className="h-4 w-4" /> Try Bizento AI Free
+            <Sparkles className="h-4 w-4" /> Try Pixalera AI Free
           </Link>
         </div>
       </section>

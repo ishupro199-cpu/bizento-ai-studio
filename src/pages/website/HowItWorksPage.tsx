@@ -3,7 +3,7 @@ import {
   Sparkles, Upload, Wand2, Download, ChevronRight,
   Check, Play, ArrowRight, Star, Zap,
 } from "lucide-react";
-import { BizentoIcon } from "@/components/BizentoIcon";
+import { PixaleraIcon } from "@/components/PixaleraIcon";
 
 const STEPS = [
   {
@@ -11,7 +11,7 @@ const STEPS = [
     icon: Upload,
     color: "#89E900",
     title: "Upload your product photo",
-    desc: "Drop in any product image — even a basic smartphone shot. Bizento AI works with any quality input. JPEG, PNG, or WebP.",
+    desc: "Drop in any product image — even a basic smartphone shot. Pixalera AI works with any quality input. JPEG, PNG, or WebP.",
     tips: [
       "Use a photo where the product is clearly visible",
       "Any background works — we remove it automatically",
@@ -39,7 +39,7 @@ const STEPS = [
     icon: Download,
     color: "#8B5CF6",
     title: "Generate, refine & download",
-    desc: "Bizento AI generates studio-quality visuals in seconds. Review, pick your favorites, and download at up to 4K resolution — ready to publish.",
+    desc: "Pixalera AI generates studio-quality visuals in seconds. Review, pick your favorites, and download at up to 4K resolution — ready to publish.",
     tips: [
       "Multiple variations generated per prompt",
       "One-click regenerate with different styles",
@@ -81,7 +81,7 @@ const MODELS = [
 
 const COMPARE = [
   { title: "Traditional Photoshoot", items: ["Setup: 2–3 weeks lead time", "Cost: ₹500–₹5,000 per image", "Reshoots: expensive and slow", "Scale: bottlenecked by studio time", "Consistency: hard to maintain"], negative: true },
-  { title: "Bizento AI", items: ["Setup: under 60 seconds", "Cost: from ₹2–₹10 per image", "Regenerate with one click", "Scale: unlimited, instant", "Consistency: guaranteed with presets"], negative: false },
+  { title: "Pixalera AI", items: ["Setup: under 60 seconds", "Cost: from ₹2–₹10 per image", "Regenerate with one click", "Scale: unlimited, instant", "Consistency: guaranteed with presets"], negative: false },
 ];
 
 const TESTIMONIALS = [
@@ -94,9 +94,9 @@ function WebsiteNav() {
     <nav className="border-b" style={{ borderColor: "#1E2028", background: "rgba(13,15,20,0.95)", backdropFilter: "blur(20px)" }}>
       <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2.5">
-          <BizentoIcon size={30} />
+          <PixaleraIcon size={30} />
           <span className="text-[16px] font-black" style={{ color: "#F0EBD8" }}>
-            Bizento<span style={{ color: "#89E900" }}>.</span>
+            Pixalera<span style={{ color: "#89E900" }}>.</span>
           </span>
         </Link>
         <div className="flex items-center gap-3">
