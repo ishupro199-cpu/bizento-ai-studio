@@ -1,0 +1,175 @@
+Build a secure authentication and data integration system for the "Pixalera" Admin Panel using Firebase.
+
+Tech stack:
+
+* Frontend: React (with modern UI)
+* Backend: Firebase (Auth + Firestore)
+* Environment: Replit
+
+---
+
+## 🔥 AUTHENTICATION SYSTEM (ADMIN ONLY)
+
+Implement a secure login system:
+
+* Login with email + password
+* Use Firebase Authentication
+* Only allow users with role = "admin" to access the admin panel
+* Redirect non-admin users to access denied page
+
+Features:
+
+* Login page UI (dark theme: #222222 + #89E900 accent)
+* Show error messages (invalid credentials, unauthorized)
+* Keep user logged in (session persistence)
+* Logout functionality
+
+---
+
+## 👤 ROLE-BASED ACCESS CONTROL (RBAC)
+
+In Firestore, create a "users" collection:
+
+Each user document should include:
+
+* uid
+* name
+* email
+* role ("admin", "user", "support")
+* plan
+* credits
+* createdAt
+
+Logic:
+
+* On login → fetch user role from Firestore
+* If role != admin → block access
+* If admin → allow full dashboard access
+
+---
+
+## 🔥 FIRESTORE DATABASE STRUCTURE
+
+Create collections:
+
+1. users
+2. plans
+3. transactions
+4. credits_logs
+5. projects
+6. prompts
+7. blogs
+8. notifications
+9. settings
+10. admin_logs
+
+Each collection should support:
+
+* CRUD operations
+* Real-time updates (use Firestore listeners)
+
+---
+
+## 🔄 REAL-TIME DATA SYNC
+
+* Use Firestore real-time listeners (onSnapshot)
+* Dashboard should auto-update:
+
+  * Users count
+  * Revenue
+  * Credits usage
+* No page reload required
+
+---
+
+## 🔗 CONNECT ADMIN PANEL WITH MAIN WEBSITE
+
+Ensure both admin panel and main website use SAME Firebase project.
+
+Flow:
+
+* Website users sign up → stored in Firestore (users collection)
+* Admin panel fetches same users data
+* Any admin changes (ban user, add credits) reflect instantly on website
+
+---
+
+## ⚡ ADMIN ACTIONS (LIVE EFFECT)
+
+From admin panel:
+
+* Update user plan
+* Add/remove credits
+* Ban/suspend users
+
+These changes must:
+
+* Update Firestore instantly
+* Reflect on website user dashboard in real-time
+
+---
+
+## 🔐 SECURITY RULES (IMPORTANT)
+
+Implement Firestore security rules:
+
+* Only admins can:
+
+  * Read/write all data
+* Users can:
+
+  * Read/write only their own data
+
+Example:
+
+* Match request.auth.uid with user document
+* Check role == admin for full access
+
+---
+
+## 🧾 LOGIN FLOW
+
+1. Admin opens login page
+2. Enters email/password
+3. Firebase authenticates
+4. Fetch role from Firestore
+5. If admin → redirect to dashboard
+6. Else → show "Access Denied"
+
+---
+
+## ⚙️ SETTINGS INTEGRATION
+
+* Fetch global settings from Firestore
+* Example:
+
+  * Maintenance mode → if ON, block users but allow admin
+* API keys stored securely
+
+---
+
+## 📢 NOTIFICATIONS INTEGRATION
+
+* Store notifications in Firestore
+* Admin can send notifications
+* Website users receive them in real-time
+
+---
+
+## 🧠 UX REQUIREMENTS
+
+* Loading states while fetching user
+* Protected routes (no direct URL access without login)
+* Clean error handling
+* Toast notifications for actions
+
+---
+
+## 🚀 FINAL GOAL
+
+Create a secure, scalable admin authentication system where:
+
+* Only admins can access dashboard
+* Data is synced in real-time
+* Admin panel and website are fully connected
+* System is production-ready and scalable
