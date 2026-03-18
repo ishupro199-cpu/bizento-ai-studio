@@ -155,11 +155,30 @@ const SOCIAL_LINKS = [
   { icon: Youtube, href: "#", label: "YouTube" },
 ];
 
-const FOOTER_COLS = {
-  Product: ["Features", "Pricing", "Demo", "How It Works"],
-  Tools: ["Catalog Generator", "Product Photography", "Cinematic Ads", "Ad Creatives"],
-  Resources: ["Help Center", "Guides", "Blog"],
-  Legal: ["Privacy Policy", "Terms & Conditions", "Refund Policy", "Cookies Policy"],
+const FOOTER_COLS: Record<string, { label: string; to: string }[]> = {
+  Product: [
+    { label: "Features", to: "/features" },
+    { label: "Pricing", to: "/pricing" },
+    { label: "Demo", to: "/demo" },
+    { label: "How It Works", to: "/how-it-works" },
+  ],
+  Tools: [
+    { label: "Catalog Generator", to: "/tools/catalog" },
+    { label: "Product Photography", to: "/tools/photo" },
+    { label: "Cinematic Ads", to: "/tools/cinematic" },
+    { label: "Ad Creatives", to: "/tools/creative" },
+  ],
+  Resources: [
+    { label: "Help Center", to: "/help" },
+    { label: "Guides", to: "/guides" },
+    { label: "Blog", to: "/blog" },
+  ],
+  Legal: [
+    { label: "Privacy Policy", to: "/privacy" },
+    { label: "Terms & Conditions", to: "/terms" },
+    { label: "Refund Policy", to: "/refund-policy" },
+    { label: "Cookies Policy", to: "/cookies" },
+  ],
 };
 
 function ProfileDropdown({ user, onClose }: { user: any; onClose: () => void }) {
@@ -750,13 +769,14 @@ export default function LandingPage() {
                 <p className="text-[12px] font-bold uppercase tracking-wider mb-4" style={{ color: "#8A8F9E" }}>{category}</p>
                 <ul className="space-y-3">
                   {links.map((link) => (
-                    <li key={link}>
-                      <button
+                    <li key={link.label}>
+                      <Link
+                        to={link.to}
                         className="text-[13px] transition-colors"
                         style={{ color: "rgba(138,143,158,0.65)" }}
                         onMouseEnter={e => (e.currentTarget.style.color = "#89E900")}
                         onMouseLeave={e => (e.currentTarget.style.color = "rgba(138,143,158,0.65)")}
-                      >{link}</button>
+                      >{link.label}</Link>
                     </li>
                   ))}
                 </ul>

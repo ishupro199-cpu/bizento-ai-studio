@@ -35,6 +35,14 @@ import HowItWorksPage from "@/pages/website/HowItWorksPage";
 import PricingPage from "@/pages/website/PricingPage";
 import LoginPage from "@/pages/website/LoginPage";
 import SignupPage from "@/pages/website/SignupPage";
+import DemoPage from "@/pages/website/DemoPage";
+import ToolDetailPage from "@/pages/website/ToolDetailPage";
+import HelpCenterPage from "@/pages/website/HelpCenterPage";
+import BlogPage from "@/pages/website/BlogPage";
+import PrivacyPolicyPage from "@/pages/website/PrivacyPolicyPage";
+import TermsPage from "@/pages/website/TermsPage";
+import RefundPolicyPage from "@/pages/website/RefundPolicyPage";
+import CookiesPolicyPage from "@/pages/website/CookiesPolicyPage";
 
 // App pages
 import WelcomeDashboard from "@/pages/app/WelcomeDashboard";
@@ -76,10 +84,19 @@ const App = () => (
             <Route path="/" element={<LandingPage />} />
             <Route path="/features" element={<FeaturesPage />} />
             <Route path="/resources" element={<ResourcesPage />} />
+            <Route path="/guides" element={<ResourcesPage />} />
             <Route path="/how-it-works" element={<HowItWorksPage />} />
             <Route path="/pricing" element={<PricingPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignupPage />} />
+            <Route path="/demo" element={<DemoPage />} />
+            <Route path="/tools/:slug" element={<ToolDetailPage />} />
+            <Route path="/help" element={<HelpCenterPage />} />
+            <Route path="/blog" element={<BlogPage />} />
+            <Route path="/privacy" element={<PrivacyPolicyPage />} />
+            <Route path="/terms" element={<TermsPage />} />
+            <Route path="/refund-policy" element={<RefundPolicyPage />} />
+            <Route path="/cookies" element={<CookiesPolicyPage />} />
 
             {/* App Dashboard — Protected */}
             <Route path="/app" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
