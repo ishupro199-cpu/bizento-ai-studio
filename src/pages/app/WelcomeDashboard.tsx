@@ -4,6 +4,7 @@ import {
   AlertTriangle, ChevronDown, Check, Plus,
   ChevronLeft, ChevronRight, RotateCcw, Upload,
 } from "lucide-react";
+import { useLocation } from "react-router-dom";
 import { GenerationLoading } from "@/components/app/GenerationLoading";
 import { GenerationResults } from "@/components/app/GenerationResults";
 import { useGenerationState } from "@/hooks/useGenerationState";
@@ -22,6 +23,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { GenerationSettings, type GenSettings } from "@/components/app/GenerationSettings";
+import { SmartStyleSuggestions } from "@/components/app/SmartStyleSuggestions";
 
 const tools = [
   { id: "catalog", name: "Generate Catalog", icon: LayoutGrid },
@@ -47,7 +50,16 @@ const ALL_EXAMPLE_PROMPTS = [
 
 const DEFAULT_WORKSPACES = ["My Workspace", "Brand Projects", "Client Work"];
 
-/* Truncate text for display, preserve full text for the prompt */
+const STYLE_ID_MAP: Record<string, string> = {
+  "high-conversion": "neon",
+  "amazon-bestseller": "minimal",
+  "premium-brand": "luxury",
+  "minimal-catalog": "minimal",
+  "lifestyle-scene": "beach",
+  "cinematic-cgi": "neon",
+  "viral-social": "neon",
+};
+
 function truncatePrompt(text: string, maxLen: number) {
   return text.length > maxLen ? text.slice(0, maxLen).trimEnd() + "…" : text;
 }
@@ -55,6 +67,8 @@ function truncatePrompt(text: string, maxLen: number) {
 export default function WelcomeDashboard() {
   const gen = useGenerationState();
   const { canGenerate, setShowUpgradeModal, user } = useAppContext();
+  const location = useLocation();
+
   const [inputPrompt, setInputPrompt] = useState("");
   const [selectedTool, setSelectedTool] = useState("catalog");
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -65,6 +79,16 @@ export default function WelcomeDashboard() {
   const [workspaces, setWorkspaces] = useState(DEFAULT_WORKSPACES);
   const [activeWorkspace, setActiveWorkspace] = useState(DEFAULT_WORKSPACES[0]);
   const [isMobile, setIsMobile] = useState(false);
+  const [showStyleSuggestions, setShowStyleSuggestions] = useState(false);
+  const [pendingGenerate, setPendingGenerate] = useState(false);
+
+  const [genSettings, setGenSettings] = useState<GenSettings>({
+    aspectRatio: "1:1",
+    numOutputs: 3,
+    quality: "1K",
+  });
+
+  const isPro = user.plan === "pro";
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 640);
@@ -73,8 +97,17 @@ export default function WelcomeDashboard() {
     return () => window.removeEventListener("resize", check);
   }, []);
 
+  // Accept prompt from navigation state (from Inspiration Hub)
+  useEffect(() => {
+    const state = location.state as { prompt?: string } | null;
+    if (state?.prompt) {
+      setInputPrompt(state.prompt);
+      window.history.replaceState({}, "");
+    }
+  }, [location.state]);
+
   const firstName = user.name?.split(" ")[0] || "there";
-  const isGenerating = gen.phase === "uploading" || gen.phase === "generating";
+  const isGenerating = gen.phase === "uploading" || gen.phase === "generating" || gen.phase === "analyzing" || gen.phase === "compositing" || gen.phase === "rendering" || gen.phase === "saving";
 
   const promptsPerPage = 3;
   const totalPages = Math.ceil(ALL_EXAMPLE_PROMPTS.length / promptsPerPage);
@@ -87,11 +120,31 @@ export default function WelcomeDashboard() {
     setPromptPage((p) => (p + 1) % totalPages);
   };
 
+  const triggerGeneration = (styleId?: string) => {
+    const toolName = tools.find((t) => t.id === selectedTool)?.name || "Generate Catalog";
+    const style = styleId || gen.selectedStyle;
+    gen.startGeneration(inputPrompt, toolName, style, uploadedUrl || "");
+  };
+
   const handleGenerate = () => {
-    if (inputPrompt.trim() && canGenerate) {
-      const toolName = tools.find((t) => t.id === selectedTool)?.name || "Generate Catalog";
-      gen.startGeneration(inputPrompt, toolName, gen.selectedStyle, uploadedUrl || "");
-    }
+    if (!inputPrompt.trim() || !canGenerate) return;
+    setPendingGenerate(true);
+    setShowStyleSuggestions(true);
+  };
+
+  const handleStyleSelected = (styleSuggestionId: string) => {
+    setShowStyleSuggestions(false);
+    setPendingGenerate(false);
+    const mappedStyle = STYLE_ID_MAP[styleSuggestionId] || "luxury";
+    gen.setSelectedStyle(mappedStyle);
+    const toolName = tools.find((t) => t.id === selectedTool)?.name || "Generate Catalog";
+    gen.startGeneration(inputPrompt, toolName, mappedStyle, uploadedUrl || "");
+  };
+
+  const handleStyleSkip = () => {
+    setShowStyleSuggestions(false);
+    setPendingGenerate(false);
+    triggerGeneration();
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -131,7 +184,7 @@ export default function WelcomeDashboard() {
     return (
       <div className="flex flex-col h-full">
         <div className="flex-1 overflow-auto">
-          <GenerationResults results={gen.results} onRegenerate={gen.reset} />
+          <GenerationResults results={gen.results} prompt={inputPrompt} onRegenerate={gen.reset} isPro={isPro} />
         </div>
       </div>
     );
@@ -143,6 +196,12 @@ export default function WelcomeDashboard() {
 
   return (
     <div className="flex flex-col h-full min-h-0">
+      <SmartStyleSuggestions
+        open={showStyleSuggestions}
+        onSelect={handleStyleSelected}
+        onSkip={handleStyleSkip}
+      />
+
       {/* Zero credits banner */}
       {!canGenerate && (
         <div className="mx-3 sm:mx-4 mt-3 sm:mt-4 bg-destructive/10 border border-destructive/20 rounded-xl p-3 flex items-center justify-between">
@@ -182,13 +241,23 @@ export default function WelcomeDashboard() {
                   </DropdownMenuItem>
                 ))}
                 <DropdownMenuSeparator className="bg-white/10" />
-                <DropdownMenuItem
-                  onClick={handleCreateWorkspace}
-                  className="flex items-center gap-2 cursor-pointer text-sm text-muted-foreground rounded-lg hover:bg-white/5"
-                >
-                  <Plus className="h-3.5 w-3.5 shrink-0" />
-                  Create new workspace
-                </DropdownMenuItem>
+                {isPro ? (
+                  <DropdownMenuItem
+                    onClick={handleCreateWorkspace}
+                    className="flex items-center gap-2 cursor-pointer text-sm text-muted-foreground rounded-lg hover:bg-white/5"
+                  >
+                    <Plus className="h-3.5 w-3.5 shrink-0" />
+                    Create new workspace
+                  </DropdownMenuItem>
+                ) : (
+                  <DropdownMenuItem
+                    onClick={() => setShowUpgradeModal(true)}
+                    className="flex items-center gap-2 cursor-pointer text-sm text-amber-400/80 rounded-lg hover:bg-white/5"
+                  >
+                    <Plus className="h-3.5 w-3.5 shrink-0" />
+                    Multiple workspaces (Pro)
+                  </DropdownMenuItem>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -252,7 +321,7 @@ export default function WelcomeDashboard() {
                     className="w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-foreground hover:bg-white/5 transition-colors"
                   >
                     <Upload className="h-4 w-4 text-muted-foreground shrink-0" />
-                    Upload Image
+                    Upload Product Image
                   </button>
                   <div className="h-px bg-white/8 my-1" />
                   {tools.map((tool) => (
@@ -275,11 +344,18 @@ export default function WelcomeDashboard() {
                 </PopoverContent>
               </Popover>
 
+              {/* Settings button */}
+              <GenerationSettings
+                settings={genSettings}
+                onChange={setGenSettings}
+                isPro={isPro}
+              />
+
               <textarea
                 value={inputPrompt}
                 onChange={(e) => setInputPrompt(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder={isMobile ? "Create With PixaLera" : "Describe your product (e.g. perfume bottle on marble...)"}
+                placeholder={isMobile ? "Describe your product..." : "Describe your product (e.g. perfume bottle on marble...)"}
                 rows={1}
                 className="flex-1 bg-transparent resize-none text-base sm:text-[17px] text-foreground placeholder:text-muted-foreground/50 outline-none leading-relaxed max-h-40 overflow-y-auto scrollbar-none py-0.5"
                 onInput={(e) => {
@@ -301,12 +377,11 @@ export default function WelcomeDashboard() {
 
             {/* Hint — desktop only */}
             <p className="hidden sm:block text-[11px] text-muted-foreground/50 text-right pr-1">
-              Press <kbd className="font-mono">Ctrl+Enter</kbd> to send
+              Press <kbd className="font-mono">Ctrl+Enter</kbd> to send · Click <span className="font-mono">⚙</span> for settings
             </p>
           </div>
 
           {/* 4. Tools selector */}
-          {/* Mobile: 2×2 grid | Desktop: horizontal scroll with arrows */}
           <div className="block sm:hidden">
             <div className="grid grid-cols-2 gap-2">
               {tools.map((tool) => (

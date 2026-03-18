@@ -41,6 +41,7 @@ import AdsPage from "@/pages/app/AdsPage";
 import ImagesPage from "@/pages/app/ImagesPage";
 import HistoryPage from "@/pages/app/HistoryPage";
 import PromptLibraryPage from "@/pages/app/PromptLibraryPage";
+import InspirationHubPage from "@/pages/app/InspirationHubPage";
 import CreditsPage from "@/pages/app/CreditsPage";
 import PlanPage from "@/pages/app/PlanPage";
 import SettingsPage from "@/pages/app/SettingsPage";
@@ -81,6 +82,7 @@ const App = () => (
             <Route path="/app" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
               <Route index element={<WelcomeDashboard />} />
               <Route path="prompts" element={<PromptLibraryPage />} />
+              <Route path="inspiration" element={<InspirationHubPage />} />
               <Route path="catalogs" element={<CatalogsPage />} />
               <Route path="ads" element={<AdsPage />} />
               <Route path="images" element={<ImagesPage />} />

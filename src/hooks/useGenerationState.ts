@@ -15,23 +15,21 @@ export interface GenerationStep {
 }
 
 const FLASH_STEPS: GenerationStep[] = [
-  { label: "Uploading Image", phase: "uploading", duration: 500 },
-  { label: "Analyzing Product", phase: "analyzing", duration: 600 },
-  { label: "Removing Background", phase: "generating", duration: 800 },
-  { label: "Generating Scene", phase: "generating", duration: 1200 },
-  { label: "Compositing Product", phase: "compositing", duration: 700 },
-  { label: "Rendering Final Images", phase: "rendering", duration: 600 },
-  { label: "Saving Results", phase: "saving", duration: 400 },
+  { label: "Analyzing your product...", phase: "uploading", duration: 700 },
+  { label: "Understanding product details...", phase: "analyzing", duration: 800 },
+  { label: "Identifying category, colors, materials...", phase: "generating", duration: 900 },
+  { label: "Matching high-performing ecommerce styles...", phase: "generating", duration: 1100 },
+  { label: "Creating high-quality scene...", phase: "compositing", duration: 900 },
+  { label: "Applying lighting and composition...", phase: "rendering", duration: 700 },
 ];
 
 const PRO_STEPS: GenerationStep[] = [
-  { label: "Uploading Image", phase: "uploading", duration: 600 },
-  { label: "Analyzing Product with Vision AI", phase: "analyzing", duration: 900 },
-  { label: "Removing Background (AI)", phase: "generating", duration: 1200 },
-  { label: "Generating High-Fidelity Scene", phase: "generating", duration: 1800 },
-  { label: "Compositing & Lighting Match", phase: "compositing", duration: 1000 },
-  { label: "Rendering 4K Variations", phase: "rendering", duration: 900 },
-  { label: "Saving to Firebase Storage", phase: "saving", duration: 500 },
+  { label: "Analyzing your product...", phase: "uploading", duration: 800 },
+  { label: "Understanding product details...", phase: "analyzing", duration: 1000 },
+  { label: "Identifying category, colors, materials...", phase: "generating", duration: 1200 },
+  { label: "Matching high-performing ecommerce styles...", phase: "generating", duration: 1500 },
+  { label: "Creating high-quality scene...", phase: "compositing", duration: 1200 },
+  { label: "Applying lighting and composition...", phase: "rendering", duration: 900 },
 ];
 
 export { FLASH_STEPS as GENERATION_STEPS };

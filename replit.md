@@ -95,3 +95,13 @@ Set the `REPLICATE_API_TOKEN` environment secret. Without it, the system runs in
 - Credit system with Free / Starter / Pro plans
 - Admin panel with real-time analytics, AI success rate, avg generation time
 - Generation results with real AI image display + download
+
+## New Features (v2)
+- **Inspiration Hub** (`/app/inspiration`): 12 visual style cards with gradient previews, conversion-focused labels, categories (Catalog, Ads, CGI, Fashion, Lifestyle, Minimal)
+- **Generation Settings Popup**: Aspect ratio (1:1, 4:5, 16:9, 9:16, 3:2), outputs (1–3), quality (720p/1K Free, 2K/4K Pro locked)
+- **Smart Design Suggestion System**: 7-style modal shown before generation (High Conversion Ad, Amazon Best Seller, Premium Brand, Minimal Catalog, Lifestyle Scene, Cinematic CGI, Viral Social)
+- **AI Thinking Experience**: 6-step animated flow with typing animation per step
+- **Approval System**: Approve/Regenerate buttons after image generation
+- **Platform Optimization**: After approval, select platforms (Amazon, Flipkart, Meesho, Myntra, Others). Generates: SEO title, bullet points, description, 5 keywords, attributes, USPs, emotional hook. Free=1 platform, Pro=multiple
+- **Sidebar**: "New Generate" (+) button, "Inspiration Hub", "History", "Settings" nav items
+- **History Page**: Search, filter by tool, rename/archive/delete per session with dropdown menu

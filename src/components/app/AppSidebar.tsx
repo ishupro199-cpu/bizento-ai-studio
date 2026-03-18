@@ -1,24 +1,24 @@
 import { useState } from "react";
 import {
-  Sparkles, FolderOpen, Megaphone, Image,
-  CreditCard, BookOpen, ChevronRight, ChevronLeft, X, Clock
+  FolderOpen, Megaphone, Image,
+  CreditCard, Lightbulb, ChevronRight, ChevronLeft, X, Clock,
+  Settings, Plus, History
 } from "lucide-react";
 import { PixaLeraIcon } from "@/components/PixaLeraIcon";
 import { NavLink } from "@/components/NavLink";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Separator } from "@/components/ui/separator";
 import { useAppContext } from "@/contexts/AppContext";
 import { HistoryPanel } from "@/components/app/HistoryPanel";
 import { ProfileMenu } from "@/components/app/ProfileMenu";
 
 const navItems = [
-  { title: "Generate", url: "/app", icon: Sparkles },
-  { title: "Prompt Library", url: "/app/prompts", icon: BookOpen },
+  { title: "Inspiration Hub", url: "/app/inspiration", icon: Lightbulb },
   { title: "My Catalogs", url: "/app/catalogs", icon: FolderOpen },
   { title: "My Ads", url: "/app/ads", icon: Megaphone },
   { title: "Images", url: "/app/images", icon: Image },
+  { title: "History", url: "/app/history", icon: History },
 ];
-
 
 interface AppSidebarProps {
   collapsed: boolean;
@@ -27,7 +27,6 @@ interface AppSidebarProps {
   onMobileClose: () => void;
 }
 
-/* Reusable inner content — rendered in both desktop and mobile sidebars */
 function SidebarInner({
   collapsed,
   onToggle,
@@ -40,6 +39,7 @@ function SidebarInner({
   isMobile?: boolean;
 }) {
   const location = useLocation();
+  const navigate = useNavigate();
   const { user, generations } = useAppContext();
   const [selectedGenId, setSelectedGenId] = useState<string | null>(null);
   const [panelOpen, setPanelOpen] = useState(false);
@@ -55,7 +55,11 @@ function SidebarInner({
     if (isMobile) onClose();
   };
 
-  /* On mobile, sidebar is always "expanded" (show full labels) */
+  const handleNewGenerate = () => {
+    navigate("/app");
+    if (isMobile) onClose();
+  };
+
   const isCollapsed = isMobile ? false : collapsed;
 
   return (
@@ -97,18 +101,33 @@ function SidebarInner({
           )}
         </div>
 
-        {/* Scrollable area */}
-        <div className="flex-1 overflow-y-auto overflow-x-hidden py-2 px-2 space-y-0.5 sidebar-scroll">
+        {/* New Generate button */}
+        <div className={`px-2 pb-2 ${isCollapsed ? "flex justify-center" : ""}`}>
+          <button
+            onClick={handleNewGenerate}
+            title="New Generate"
+            className={`flex items-center gap-2.5 rounded-xl transition-all duration-150 font-semibold text-sm ${
+              isCollapsed
+                ? "justify-center h-9 w-9 bg-primary/15 hover:bg-primary/25 text-primary"
+                : "w-full px-3 py-2.5 bg-primary/10 hover:bg-primary/18 text-primary border border-primary/20 hover:border-primary/35"
+            }`}
+          >
+            <Plus className="h-4 w-4 shrink-0" />
+            {!isCollapsed && <span>New Generate</span>}
+          </button>
+        </div>
+
+        <Separator className="mx-3 w-auto bg-[hsl(var(--sidebar-border))] mb-2" />
+
+        {/* Scrollable nav area */}
+        <div className="flex-1 overflow-y-auto overflow-x-hidden py-1 px-2 space-y-0.5 sidebar-scroll">
           {navItems.map((item) => {
-            const isActive =
-              item.url === "/app"
-                ? location.pathname === "/app"
-                : location.pathname.startsWith(item.url);
+            const isActive = location.pathname.startsWith(item.url);
             return (
               <NavLink
                 key={item.title}
                 to={item.url}
-                end={item.url === "/app"}
+                end={false}
                 onClick={handleNavClick}
                 title={isCollapsed ? item.title : undefined}
                 className={`flex items-center gap-3 rounded-lg py-2 text-sm font-medium transition-colors duration-150 ${
@@ -125,38 +144,33 @@ function SidebarInner({
             );
           })}
 
-          {/* History section */}
-          {!isCollapsed && (
+          {/* Recent generations in sidebar */}
+          {!isCollapsed && generations.length > 0 && (
             <>
               <div className="pt-4 pb-1 px-3 flex items-center gap-2">
                 <Clock className="h-3.5 w-3.5 text-muted-foreground/70 shrink-0" />
-                <span className="text-[11px] font-semibold text-muted-foreground/70 uppercase tracking-wider">History</span>
+                <span className="text-[11px] font-semibold text-muted-foreground/70 uppercase tracking-wider">Recent</span>
               </div>
-
-              {generations.length === 0 ? (
-                <p className="px-3 py-2 text-xs text-muted-foreground/50">No generations yet.</p>
-              ) : (
-                generations.slice(0, 20).map((gen) => (
-                  <button
-                    key={gen.id}
-                    onClick={() => handleHistoryClick(gen.id)}
-                    className="w-full flex items-center gap-2.5 rounded-lg px-3 py-2 text-left hover:bg-white/5 transition-colors"
-                  >
-                    <div
-                      className="h-6 w-6 shrink-0 rounded-md"
-                      style={{ background: gen.gradient || "linear-gradient(135deg,#89E900 0%,#222 100%)" }}
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs text-[hsl(var(--sidebar-foreground))] truncate leading-snug">{gen.prompt}</p>
-                      <p className="text-[10px] text-muted-foreground/60 truncate">
-                        {gen.date instanceof Date
-                          ? gen.date.toLocaleDateString(undefined, { month: "short", day: "numeric" })
-                          : ""}
-                      </p>
-                    </div>
-                  </button>
-                ))
-              )}
+              {generations.slice(0, 8).map((gen) => (
+                <button
+                  key={gen.id}
+                  onClick={() => handleHistoryClick(gen.id)}
+                  className="w-full flex items-center gap-2.5 rounded-lg px-3 py-2 text-left hover:bg-white/5 transition-colors"
+                >
+                  <div
+                    className="h-6 w-6 shrink-0 rounded-md"
+                    style={{ background: gen.gradient || "linear-gradient(135deg,#89E900 0%,#222 100%)" }}
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-[hsl(var(--sidebar-foreground))] truncate leading-snug">{gen.prompt}</p>
+                    <p className="text-[10px] text-muted-foreground/60 truncate">
+                      {gen.date instanceof Date
+                        ? gen.date.toLocaleDateString(undefined, { month: "short", day: "numeric" })
+                        : ""}
+                    </p>
+                  </div>
+                </button>
+              ))}
             </>
           )}
 
@@ -174,7 +188,7 @@ function SidebarInner({
 
         <Separator className="mx-3 w-auto bg-[hsl(var(--sidebar-border))]" />
 
-        {/* Account / Plan */}
+        {/* Account / Plan / Settings */}
         <div className="px-2 py-2 space-y-0.5">
           {!isCollapsed && (
             <p className="px-3 py-1 text-[10px] text-muted-foreground/70 uppercase tracking-wider">Account</p>
@@ -193,6 +207,21 @@ function SidebarInner({
           >
             <CreditCard className="h-5 w-5 shrink-0" />
             {!isCollapsed && <span className="whitespace-nowrap">Plan</span>}
+          </NavLink>
+          <NavLink
+            to="/app/settings"
+            onClick={handleNavClick}
+            title={isCollapsed ? "Settings" : undefined}
+            className={`flex items-center gap-3 rounded-lg py-2 text-sm font-medium transition-colors duration-150 ${
+              isCollapsed ? "justify-center px-0 w-full" : "px-3"
+            } ${
+              location.pathname.startsWith("/app/settings")
+                ? "bg-primary/10 text-primary"
+                : "text-[hsl(var(--sidebar-foreground))] hover:bg-white/5"
+            }`}
+          >
+            <Settings className="h-5 w-5 shrink-0" />
+            {!isCollapsed && <span className="whitespace-nowrap">Settings</span>}
           </NavLink>
         </div>
 
@@ -216,7 +245,7 @@ function SidebarInner({
 export function AppSidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: AppSidebarProps) {
   return (
     <>
-      {/* ── Desktop sidebar — in normal flex flow, hidden on mobile ── */}
+      {/* Desktop sidebar */}
       <div className="hidden sm:flex shrink-0 h-screen sticky top-0">
         <SidebarInner
           collapsed={collapsed}
@@ -226,16 +255,14 @@ export function AppSidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: A
         />
       </div>
 
-      {/* ── Mobile drawer overlay ── */}
+      {/* Mobile drawer overlay */}
       <div className="sm:hidden">
-        {/* Backdrop */}
         <div
           className={`fixed inset-0 bg-black/60 z-40 transition-opacity duration-300 ${
             mobileOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
           }`}
           onClick={onMobileClose}
         />
-        {/* Drawer */}
         <div
           className={`fixed inset-y-0 left-0 z-50 flex h-full transition-transform duration-300 ease-in-out ${
             mobileOpen ? "translate-x-0" : "-translate-x-full"
