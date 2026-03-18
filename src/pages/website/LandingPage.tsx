@@ -1,17 +1,15 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
-  Sparkles, ArrowRight, Check, Star, X, CheckCircle2, XCircle,
+  Sparkles, ArrowRight, Check, Star, X,
   Camera, Layers, Users, Palette, Zap, Shield, ShoppingBag,
   Droplets, Monitor, Sofa, Package, UtensilsCrossed, Menu,
-  ChevronRight, Mail, Twitter, Instagram, Linkedin, Github,
-  Plus, Send, LayoutGrid, Clapperboard, Megaphone, Image as ImageIcon,
-  Settings, LogOut, Crown, ChevronDown,
+  ChevronRight, Twitter, Instagram, Youtube,
+  Settings, LogOut, LayoutGrid, Clapperboard, Megaphone,
+  ChevronDown, Send, Mail,
 } from "lucide-react";
 import { BizentoIcon } from "@/components/BizentoIcon";
-import {
-  Accordion, AccordionContent, AccordionItem, AccordionTrigger,
-} from "@/components/ui/accordion";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useAuth } from "@/contexts/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -50,29 +48,12 @@ function useTypingAnimation(prompts: string[]) {
   return text;
 }
 
-const TOOLS = [
-  { id: "catalog", name: "Generate Catalog", icon: LayoutGrid },
-  { id: "photo", name: "Product Photography", icon: Camera },
-  { id: "cinematic", name: "Cinematic Ads", icon: Clapperboard },
-  { id: "creative", name: "Ad Creatives", icon: Megaphone },
+const NAV_LINKS = [
+  { label: "Features", href: "/features" },
+  { label: "Resources", href: "/resources" },
+  { label: "How It Works", href: "/how-it-works" },
+  { label: "Pricing", href: "/pricing" },
 ];
-const MODELS = [
-  { id: "flash", name: "Flash" },
-  { id: "pro", name: "Pro" },
-];
-const QUALITIES = [
-  { id: "1K", label: "1K", bonus: 0 },
-  { id: "2K", label: "2K", bonus: 2 },
-  { id: "4K", label: "4K", bonus: 6 },
-];
-
-function calcCredits(tool: string, model: string, quality: string): number {
-  const base = model === "flash"
-    ? (tool === "catalog" ? 5 : 3)
-    : (tool === "catalog" ? 10 : 5);
-  const bonus = quality === "2K" ? 2 : quality === "4K" ? 6 : 0;
-  return base + bonus;
-}
 
 const BEFORE_AFTER = [
   { category: "Fashion", before: "Plain white background, wrinkled fabric, poor lighting", after: "Model wearing it in Manhattan streets, golden hour glow", image: "/gen-fashion-product.png" },
@@ -82,21 +63,21 @@ const BEFORE_AFTER = [
 ];
 
 const FEATURES = [
-  { icon: Camera, title: "AI Background Generation", desc: "Transform plain product photos with AI-generated backgrounds that match your brand — marble, studio, nature, urban, abstract and more.", image: "/gen-beauty-product.png" },
-  { icon: Layers, title: "Multi-Angle Rendering", desc: "Generate multiple angles and perspectives from a single product photo. Show your product from every angle without a full shoot.", image: "/hero-product.png" },
-  { icon: Users, title: "AI Fashion Models", desc: "Place apparel and accessories on realistic AI-generated models of any size, shape, and ethnicity — without hiring a single model.", image: "/gen-fashion-product.png" },
-  { icon: Palette, title: "Style Variations", desc: "Create multiple style variations from a single photo — lifestyle, editorial, catalog, social — all consistent with your brand.", image: "/gen-tech-product.png" },
-  { icon: Zap, title: "Batch Processing", desc: "Process hundreds of product images simultaneously with the same style settings. Go from raw uploads to finished catalog in minutes.", image: "/gen-beauty-product.png" },
-  { icon: Shield, title: "Brand Consistency", desc: "Save brand presets and apply them to every image instantly. Your entire catalog stays visually cohesive at all times.", image: "/gen-fashion-product.png" },
+  { icon: Camera, title: "AI Background Generation", desc: "Transform plain product photos with AI-generated backgrounds — marble, studio, nature, urban, abstract and more.", image: "/gen-beauty-product.png" },
+  { icon: Layers, title: "Multi-Angle Rendering", desc: "Generate multiple angles and perspectives from a single product photo, without a full photoshoot.", image: "/hero-product.png" },
+  { icon: Users, title: "AI Fashion Models", desc: "Place apparel on realistic AI-generated models of any size, shape, and ethnicity — instantly.", image: "/gen-fashion-product.png" },
+  { icon: Palette, title: "Style Variations", desc: "Create lifestyle, editorial, catalog, and social variations — all consistent with your brand.", image: "/gen-tech-product.png" },
+  { icon: Zap, title: "Batch Processing", desc: "Process hundreds of product images simultaneously. Go from raw uploads to finished catalog in minutes.", image: "/gen-beauty-product.png" },
+  { icon: Shield, title: "Brand Consistency", desc: "Save brand presets and apply them to every image instantly. Your catalog stays cohesive.", image: "/gen-fashion-product.png" },
 ];
 
 const USE_CASES = [
-  { icon: ShoppingBag, title: "Fashion & Apparel", desc: "Models, backdrops, and editorial styles for every clothing category.", image: "/gen-fashion-product.png" },
-  { icon: Droplets, title: "Beauty & Skincare", desc: "Clean flat-lays, lifestyle scenes, and ingredient-focused visuals.", image: "/gen-beauty-product.png" },
-  { icon: Monitor, title: "Electronics", desc: "Cinematic tech photography — floating devices, neon reflections, dark aesthetics.", image: "/gen-tech-product.png" },
-  { icon: Sofa, title: "Furniture & Home", desc: "Styled room mockups and interior context for any furniture piece.", image: "/hero-product.png" },
-  { icon: Package, title: "D2C Brands", desc: "Consistent visual identity across all touchpoints — ads, catalog, social.", image: "/gen-beauty-product.png" },
-  { icon: UtensilsCrossed, title: "Food & Beverage", desc: "Mouth-watering food photography and packaging visuals without a food stylist.", image: "/gen-fashion-product.png" },
+  { icon: ShoppingBag, title: "Fashion & Apparel", desc: "Models, backdrops, and editorial styles for every clothing category." },
+  { icon: Droplets, title: "Beauty & Skincare", desc: "Clean flat-lays, lifestyle scenes, and ingredient-focused visuals." },
+  { icon: Monitor, title: "Electronics", desc: "Cinematic tech photography — floating devices, neon reflections, dark aesthetics." },
+  { icon: Sofa, title: "Furniture & Home", desc: "Styled room mockups and interior context for any furniture piece." },
+  { icon: Package, title: "D2C Brands", desc: "Consistent visual identity across all touchpoints — ads, catalog, social." },
+  { icon: UtensilsCrossed, title: "Food & Beverage", desc: "Mouth-watering food photography and packaging visuals without a food stylist." },
 ];
 
 const HOW_IT_WORKS = [
@@ -107,8 +88,8 @@ const HOW_IT_WORKS = [
 
 const TESTIMONIALS = [
   { name: "Rahul Mehta", role: "Founder, StyleKart", avatar: "R", quote: "Bizento AI cut our photoshoot budget by 80%. We went from waiting 2 weeks for images to publishing same-day. The quality is genuinely indistinguishable from studio shots." },
-  { name: "Priya Sharma", role: "Head of Marketing, GlowBeauty", avatar: "P", quote: "Our CTR doubled after switching to Bizento AI-generated images. The AI understands our brand aesthetic perfectly. I use it daily — couldn't run campaigns without it." },
-  { name: "James O'Brien", role: "E-commerce Director, TechMart UK", avatar: "J", quote: "We have 8,000+ SKUs. Bizento AI processed our entire catalog in a weekend. The results are stunning and consistent." },
+  { name: "Priya Sharma", role: "Head of Marketing, GlowBeauty", avatar: "P", quote: "Our CTR doubled after switching to Bizento AI-generated images. The AI understands our brand aesthetic perfectly. I couldn't run campaigns without it." },
+  { name: "James O'Brien", role: "E-commerce Director, TechMart UK", avatar: "J", quote: "We have 8,000+ SKUs. Bizento AI processed our entire catalog in a weekend. The results are stunning and perfectly consistent." },
 ];
 
 const FAQ = [
@@ -120,18 +101,17 @@ const FAQ = [
   { q: "How do I get started?", a: "Sign up free — 15 credits on us, no credit card required. Upload a product photo and you'll have studio-quality results in under a minute." },
 ];
 
-const NAV_LINKS = [
-  { label: "Features", href: "#features" },
-  { label: "Resources", href: "#resources" },
-  { label: "How It Works", href: "#how-it-works" },
-  { label: "Pricing", href: "/pricing" },
+const SOCIAL_LINKS = [
+  { icon: Twitter, href: "#", label: "X (Twitter)" },
+  { icon: Instagram, href: "#", label: "Instagram" },
+  { icon: Youtube, href: "#", label: "YouTube" },
 ];
 
-const FOOTER_LINKS = {
-  Product: ["Features", "Pricing", "Changelog", "API Docs"],
-  Resources: ["Blog", "Case Studies", "Documentation", "Community"],
-  Company: ["About Us", "Careers", "Press Kit", "Contact"],
-  Legal: ["Privacy Policy", "Terms of Service", "Cookie Policy", "GDPR"],
+const FOOTER_COLS = {
+  Product: ["Features", "Pricing", "Demo", "How It Works"],
+  Tools: ["Catalog Generator", "Product Photography", "Cinematic Ads", "Ad Creatives"],
+  Resources: ["Help Center", "Guides", "Blog"],
+  Legal: ["Privacy Policy", "Terms & Conditions", "Refund Policy", "Cookies Policy"],
 };
 
 function ProfileDropdown({ user, onClose }: { user: any; onClose: () => void }) {
@@ -146,31 +126,23 @@ function ProfileDropdown({ user, onClose }: { user: any; onClose: () => void }) 
   };
 
   return (
-    <div
-      className="absolute right-0 top-10 w-56 rounded-2xl border border-white/10 shadow-2xl py-2 z-50"
-      style={{ background: "rgba(20,22,28,0.97)", backdropFilter: "blur(28px)" }}
-    >
+    <div className="absolute right-0 top-11 w-56 rounded-2xl border border-white/10 shadow-2xl py-2 z-50"
+      style={{ background: "rgba(20,22,28,0.97)", backdropFilter: "blur(28px)" }}>
       <div className="px-4 py-3 border-b border-white/8 mb-1">
         <p className="text-[13px] font-semibold text-white truncate">{user.displayName || "User"}</p>
         {user.email && <p className="text-[11px] text-white/35 truncate mt-0.5">{user.email}</p>}
       </div>
-      <button
-        onClick={() => { onClose(); navigate("/app"); }}
-        className="w-full flex items-center gap-2.5 px-4 py-2 text-[13px] text-white/65 hover:bg-white/5 hover:text-white transition-colors"
-      >
+      <button onClick={() => { onClose(); navigate("/app"); }}
+        className="w-full flex items-center gap-2.5 px-4 py-2 text-[13px] text-white/65 hover:bg-white/5 hover:text-white transition-colors">
         <LayoutGrid className="h-4 w-4 shrink-0" /> Go to Dashboard
       </button>
-      <button
-        onClick={() => { onClose(); navigate("/app/settings"); }}
-        className="w-full flex items-center gap-2.5 px-4 py-2 text-[13px] text-white/65 hover:bg-white/5 hover:text-white transition-colors"
-      >
+      <button onClick={() => { onClose(); navigate("/app/settings"); }}
+        className="w-full flex items-center gap-2.5 px-4 py-2 text-[13px] text-white/65 hover:bg-white/5 hover:text-white transition-colors">
         <Settings className="h-4 w-4 shrink-0" /> Settings
       </button>
       <div className="h-px bg-white/8 my-1 mx-3" />
-      <button
-        onClick={handleLogout}
-        className="w-full flex items-center gap-2.5 px-4 py-2 text-[13px] text-white/45 hover:bg-red-500/10 hover:text-red-400 transition-colors"
-      >
+      <button onClick={handleLogout}
+        className="w-full flex items-center gap-2.5 px-4 py-2 text-[13px] text-white/45 hover:bg-red-500/10 hover:text-red-400 transition-colors">
         <LogOut className="h-4 w-4 shrink-0" /> Log out
       </button>
     </div>
@@ -182,22 +154,11 @@ export default function LandingPage() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [promptText, setPromptText] = useState("");
+  const [email, setEmail] = useState("");
   const profileRef = useRef<HTMLDivElement>(null);
-
   const { user, signOut, loading } = useAuth();
   const navigate = useNavigate();
-
-  // Prompt box state
-  const [promptText, setPromptText] = useState("");
-  const [selectedTool, setSelectedTool] = useState("catalog");
-  const [selectedModel, setSelectedModel] = useState("flash");
-  const [selectedQuality, setSelectedQuality] = useState("1K");
-  const [toolsOpen, setToolsOpen] = useState(false);
-  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const toolsRef = useRef<HTMLDivElement>(null);
-
-  const creditCost = calcCredits(selectedTool, selectedModel, selectedQuality);
 
   useEffect(() => {
     const handler = () => setScrolled(window.scrollY > 20);
@@ -205,11 +166,9 @@ export default function LandingPage() {
     return () => window.removeEventListener("scroll", handler);
   }, []);
 
-  // Close dropdowns on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (profileRef.current && !profileRef.current.contains(e.target as Node)) setProfileOpen(false);
-      if (toolsRef.current && !toolsRef.current.contains(e.target as Node)) setToolsOpen(false);
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
@@ -224,13 +183,7 @@ export default function LandingPage() {
     setMobileOpen(false);
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) setUploadedImage(URL.createObjectURL(file));
-    if (fileInputRef.current) fileInputRef.current.value = "";
-  };
-
-  const handleSend = () => {
+  const handleGenerate = () => {
     if (!user) { navigate("/signup"); return; }
     navigate("/app");
   };
@@ -242,9 +195,7 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen font-bricolage" style={{ background: "#0D0F14", color: "#E8EAF0" }}>
 
-      <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
-
-      {/* Global grid pattern */}
+      {/* Subtle grid */}
       <div className="fixed inset-0 pointer-events-none opacity-[0.025]"
         style={{
           backgroundImage: `url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0h40M0 40h40M0 0v40M40 0v40' stroke='%2389E900' stroke-width='0.5'/%3E%3C/svg%3E")`,
@@ -253,15 +204,14 @@ export default function LandingPage() {
       />
 
       {/* ── NAVBAR ── */}
-      <nav
-        className="fixed top-0 inset-x-0 z-50 transition-all duration-300"
+      <nav className="fixed top-0 inset-x-0 z-50 transition-all duration-300"
         style={{
-          background: scrolled ? "rgba(13,15,20,0.9)" : "transparent",
+          background: scrolled ? "rgba(13,15,20,0.92)" : "transparent",
           backdropFilter: scrolled ? "blur(20px)" : "none",
           borderBottom: scrolled ? "1px solid rgba(255,255,255,0.06)" : "none",
-        }}
-      >
+        }}>
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+
           <Link to="/" className="flex items-center gap-2.5">
             <BizentoIcon size={32} />
             <span className="text-[17px] font-black tracking-tight" style={{ color: "#F0EBD8", letterSpacing: "-0.02em" }}>
@@ -271,23 +221,19 @@ export default function LandingPage() {
 
           <div className="hidden md:flex items-center gap-7">
             {NAV_LINKS.map((l) => (
-              <button key={l.label}
-                onClick={() => scrollTo(l.href)}
-                className="text-[14px] font-medium transition-colors duration-150"
-                style={{ color: "#8A8F9E" }}
-                onMouseEnter={e => (e.currentTarget.style.color = "#E8EAF0")}
-                onMouseLeave={e => (e.currentTarget.style.color = "#8A8F9E")}
-              >{l.label}</button>
+              <button key={l.label} onClick={() => scrollTo(l.href)}
+                className="text-[14px] font-medium transition-colors duration-150 hover:text-white"
+                style={{ color: "#8A8F9E" }}>
+                {l.label}
+              </button>
             ))}
           </div>
 
           <div className="hidden md:flex items-center gap-3">
             {!loading && user ? (
               <div className="relative" ref={profileRef}>
-                <button
-                  onClick={() => setProfileOpen(v => !v)}
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-xl transition-all hover:bg-white/5"
-                >
+                <button onClick={() => setProfileOpen(v => !v)}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-xl hover:bg-white/5 transition-all">
                   <Avatar className="h-8 w-8 ring-2 ring-[#89E900]/30">
                     {user.photoURL && <AvatarImage src={user.photoURL} referrerPolicy="no-referrer" />}
                     <AvatarFallback className="bg-[#89E900]/15 text-[#89E900] text-xs font-bold">{initials}</AvatarFallback>
@@ -299,24 +245,24 @@ export default function LandingPage() {
             ) : (
               <>
                 <Link to="/login"
-                  className="text-[14px] font-medium px-4 py-2 rounded-xl transition-colors"
-                  style={{ color: "#8A8F9E" }}
-                  onMouseEnter={e => (e.currentTarget.style.color = "#E8EAF0")}
-                  onMouseLeave={e => (e.currentTarget.style.color = "#8A8F9E")}
-                >Log in</Link>
+                  className="text-[14px] font-medium px-4 py-2 rounded-xl hover:text-white transition-colors"
+                  style={{ color: "#8A8F9E" }}>
+                  Log in
+                </Link>
                 <Link to="/signup"
-                  className="text-[14px] font-semibold px-5 py-2.5 rounded-xl transition-all duration-150 flex items-center gap-1.5"
+                  className="text-[14px] font-semibold px-5 py-2.5 rounded-xl flex items-center gap-1.5 transition-all"
                   style={{ background: "#89E900", color: "#0D0F14", boxShadow: "0 0 24px rgba(137,233,0,0.2)" }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = "0 0 40px rgba(137,233,0,0.4)"; (e.currentTarget as HTMLElement).style.background = "#9FFF00"; }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = "0 0 24px rgba(137,233,0,0.2)"; (e.currentTarget as HTMLElement).style.background = "#89E900"; }}
-                >Get Started <ArrowRight className="h-3.5 w-3.5" /></Link>
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "#9FFF00"; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "#89E900"; }}>
+                  Get Started <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
               </>
             )}
           </div>
 
           <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
             <SheetTrigger asChild>
-              <button className="md:hidden p-2 rounded-lg" style={{ color: "#8A8F9E" }}>
+              <button className="md:hidden p-2 rounded-lg hover:bg-white/5" style={{ color: "#8A8F9E" }}>
                 <Menu className="h-5 w-5" />
               </button>
             </SheetTrigger>
@@ -331,27 +277,29 @@ export default function LandingPage() {
                 <div className="space-y-1">
                   {NAV_LINKS.map((l) => (
                     <button key={l.label} onClick={() => scrollTo(l.href)}
-                      className="block w-full text-left px-4 py-3 rounded-xl text-[15px] font-medium transition-colors"
-                      style={{ color: "#8A8F9E" }}
-                    >{l.label}</button>
+                      className="block w-full text-left px-4 py-3 rounded-xl text-[15px] font-medium hover:text-white transition-colors"
+                      style={{ color: "#8A8F9E" }}>{l.label}</button>
                   ))}
                 </div>
                 <div className="space-y-3 pt-4 border-t" style={{ borderColor: "#1E2028" }}>
                   {user ? (
                     <Link to="/app" onClick={() => setMobileOpen(false)}
                       className="block w-full text-center py-3 rounded-xl text-[14px] font-semibold"
-                      style={{ background: "#89E900", color: "#0D0F14" }}
-                    >Go to Dashboard</Link>
+                      style={{ background: "#89E900", color: "#0D0F14" }}>
+                      Go to Dashboard
+                    </Link>
                   ) : (
                     <>
                       <Link to="/login" onClick={() => setMobileOpen(false)}
                         className="block w-full text-center py-3 rounded-xl text-[14px] font-medium border"
-                        style={{ color: "#8A8F9E", borderColor: "#1E2028" }}
-                      >Log in</Link>
+                        style={{ color: "#8A8F9E", borderColor: "#1E2028" }}>
+                        Log in
+                      </Link>
                       <Link to="/signup" onClick={() => setMobileOpen(false)}
                         className="block w-full text-center py-3 rounded-xl text-[14px] font-semibold"
-                        style={{ background: "#89E900", color: "#0D0F14" }}
-                      >Get Started</Link>
+                        style={{ background: "#89E900", color: "#0D0F14" }}>
+                        Get Started
+                      </Link>
                     </>
                   )}
                 </div>
@@ -361,27 +309,22 @@ export default function LandingPage() {
         </div>
       </nav>
 
-      {/* ── HERO SECTION ── */}
+      {/* ── HERO ── */}
       <section className="relative min-h-screen flex flex-col justify-center overflow-hidden">
-
         <img src="/hero-studio-bg.png" alt="" aria-hidden="true"
           className="absolute inset-0 w-full h-full object-cover object-center pointer-events-none"
-          style={{ opacity: 0.85 }}
-        />
+          style={{ opacity: 0.85 }} />
         <div className="absolute inset-0 pointer-events-none"
           style={{ background: "linear-gradient(to bottom, rgba(10,11,15,0.55) 0%, rgba(10,11,15,0.25) 50%, rgba(10,11,15,0.72) 100%)" }} />
         <div className="absolute inset-0 pointer-events-none"
           style={{ background: "linear-gradient(to right, rgba(10,11,15,0.4) 0%, transparent 60%, rgba(10,11,15,0.2) 100%)" }} />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none"
           style={{ width: 700, height: 700, background: "radial-gradient(circle, rgba(137,233,0,0.07) 0%, transparent 70%)" }} />
-
         <img src="/hero-perfume-bottle.png" alt="AI product photography"
           className="absolute pointer-events-none hidden md:block"
-          style={{ bottom: "-2%", right: "-2%", width: "38%", maxWidth: 480, objectFit: "contain", objectPosition: "bottom right", zIndex: 5, filter: "drop-shadow(0 30px 60px rgba(0,0,0,0.7))" }}
-        />
+          style={{ bottom: "-2%", right: "-2%", width: "38%", maxWidth: 480, objectFit: "contain", zIndex: 5, filter: "drop-shadow(0 30px 60px rgba(0,0,0,0.7))" }} />
 
-        <div className="relative z-10 w-full max-w-5xl mx-auto px-6 pt-28 pb-24 text-left">
-
+        <div className="relative z-10 w-full max-w-5xl mx-auto px-6 pt-28 pb-24">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-8 border text-[13px] font-medium"
             style={{ background: "rgba(137,233,0,0.07)", borderColor: "rgba(137,233,0,0.25)", color: "#89E900", backdropFilter: "blur(8px)" }}>
             <Sparkles className="h-3.5 w-3.5" />
@@ -399,151 +342,54 @@ export default function LandingPage() {
             <br className="hidden sm:block" /> and marketing creatives — powered by AI, in seconds.
           </p>
 
-          {/* ── ChatGPT-style Prompt Box ── */}
-          <div className="max-w-[580px]">
-            {/* Image preview (when uploaded) */}
-            {uploadedImage && (
-              <div className="flex items-center gap-2 mb-2">
-                <div className="relative">
-                  <img src={uploadedImage} alt="Upload" className="h-12 w-12 rounded-xl object-cover border border-white/20" />
-                  <button
-                    onClick={() => setUploadedImage(null)}
-                    className="absolute -top-1 -right-1 h-4 w-4 bg-black/80 border border-white/20 rounded-full flex items-center justify-center text-white/70 text-[10px] hover:text-white"
-                  >×</button>
-                </div>
-                <span className="text-[11px] text-white/40">Product image attached</span>
-              </div>
-            )}
-
-            {/* Input box */}
+          {/* ── Prompt box + CTA row ── */}
+          <div className="flex items-center gap-3 max-w-[780px]">
+            {/* Prompt box */}
             <div
-              className="rounded-2xl flex items-center gap-2 transition-all duration-150"
+              className="flex-1 flex items-center gap-3 rounded-2xl transition-all duration-150"
               style={{
                 background: "rgba(16,18,24,0.88)",
                 border: "1px solid rgba(255,255,255,0.12)",
                 backdropFilter: "blur(16px)",
-                padding: "10px 12px",
+                padding: "12px 14px",
                 boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
               }}
             >
-              {/* + button */}
-              <div className="relative shrink-0" ref={toolsRef}>
-                <button
-                  onClick={() => setToolsOpen(v => !v)}
-                  disabled={!!uploadedImage}
-                  title="Tools / Upload"
-                  className="h-9 w-9 flex items-center justify-center rounded-xl transition-all hover:bg-white/8 disabled:opacity-40"
-                  style={{ border: "1px solid rgba(255,255,255,0.10)", color: "#8A8F9E" }}
-                >
-                  <Plus className="h-4 w-4" />
-                </button>
-                {toolsOpen && (
-                  <div
-                    className="absolute left-0 bottom-11 w-56 rounded-2xl border border-white/10 py-2 shadow-2xl z-50"
-                    style={{ background: "rgba(18,20,26,0.98)", backdropFilter: "blur(24px)" }}
-                  >
-                    <p className="text-[9px] font-bold uppercase tracking-widest text-white/30 px-4 pt-1 pb-1.5">Upload</p>
-                    <button
-                      onClick={() => { fileInputRef.current?.click(); setToolsOpen(false); }}
-                      className="w-full flex items-center gap-2.5 px-4 py-2 text-[13px] text-white/65 hover:bg-white/5 hover:text-white transition-colors"
-                    >
-                      <ImageIcon className="h-4 w-4 shrink-0" /> Upload Image
-                    </button>
-                    <div className="h-px bg-white/8 my-1 mx-3" />
-                    <p className="text-[9px] font-bold uppercase tracking-widest text-white/30 px-4 pt-1 pb-1.5">Tools</p>
-                    {TOOLS.map(t => (
-                      <button key={t.id}
-                        onClick={() => { setSelectedTool(t.id); setToolsOpen(false); }}
-                        className={`w-full flex items-center gap-2.5 px-4 py-2 text-[13px] transition-colors ${selectedTool === t.id ? "text-primary bg-primary/8" : "text-white/65 hover:bg-white/5 hover:text-white"}`}
-                      >
-                        <t.icon className="h-4 w-4 shrink-0" />
-                        {t.name}
-                        {selectedTool === t.id && <Check className="h-3.5 w-3.5 ml-auto text-primary" />}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Text input */}
               <input
                 value={promptText}
                 onChange={e => setPromptText(e.target.value)}
-                onKeyDown={e => { if (e.key === "Enter") handleSend(); }}
-                placeholder={`Describe your ${TOOLS.find(t => t.id === selectedTool)?.name.toLowerCase() || "creation"}...`}
-                className="flex-1 bg-transparent text-[14px] text-white placeholder-white/30 outline-none"
+                onKeyDown={e => { if (e.key === "Enter") handleGenerate(); }}
+                placeholder={typedText || "Describe your product scene..."}
+                className="flex-1 bg-transparent text-[14px] text-white placeholder-white/30 outline-none min-w-0"
               />
-
-              {/* Credit display */}
-              <div
-                className="shrink-0 flex items-center gap-1 px-2.5 py-1 rounded-lg text-[12px] font-semibold"
-                style={{ background: "rgba(137,233,0,0.08)", color: "#89E900", border: "1px solid rgba(137,233,0,0.15)" }}
-              >
-                <Zap className="h-3 w-3" />
-                {creditCost} cr
-              </div>
-
-              {/* Send button */}
               <button
-                onClick={handleSend}
-                className="h-9 w-9 shrink-0 flex items-center justify-center rounded-xl transition-all duration-150 hover:scale-105"
+                onClick={handleGenerate}
+                className="h-9 w-9 shrink-0 flex items-center justify-center rounded-xl transition-all duration-150 hover:scale-105 active:scale-95"
                 style={{ background: "#89E900", color: "#0D0F14", boxShadow: "0 0 16px rgba(137,233,0,0.3)" }}
+                title="Generate"
               >
-                <ArrowRight className="h-4 w-4" />
+                <Send className="h-4 w-4" />
               </button>
             </div>
 
-            {/* Controls row */}
-            <div className="flex flex-wrap items-center gap-2 mt-2.5">
-              {/* Model selector */}
-              <div className="flex items-center gap-1 rounded-lg p-0.5" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}>
-                {MODELS.map(m => (
-                  <button key={m.id}
-                    onClick={() => setSelectedModel(m.id)}
-                    className="px-2.5 py-1 rounded-md text-[11px] font-medium transition-all"
-                    style={selectedModel === m.id
-                      ? { background: "#89E900", color: "#0D0F14" }
-                      : { color: "#8A8F9E" }
-                    }
-                  >{m.name}</button>
-                ))}
-              </div>
-
-              {/* Quality selector */}
-              <div className="flex items-center gap-1 rounded-lg p-0.5" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}>
-                {QUALITIES.map(q => (
-                  <button key={q.id}
-                    onClick={() => setSelectedQuality(q.id)}
-                    className="px-2.5 py-1 rounded-md text-[11px] font-medium transition-all"
-                    style={selectedQuality === q.id
-                      ? { background: "#89E900", color: "#0D0F14" }
-                      : { color: "#8A8F9E" }
-                    }
-                  >{q.label}</button>
-                ))}
-              </div>
-
-              {/* CTA buttons */}
-              <div className="flex items-center gap-2 ml-auto">
-                <Link to="/signup"
-                  className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-[12px] font-semibold transition-all"
-                  style={{ background: "#89E900", color: "#0D0F14", boxShadow: "0 0 16px rgba(137,233,0,0.2)" }}
-                >
-                  Get Started
-                </Link>
-                <Link to="/features"
-                  className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-[12px] font-medium border transition-all"
-                  style={{ color: "#8A8F9E", borderColor: "rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.04)" }}
-                >
-                  Demo
-                </Link>
-              </div>
-            </div>
-
-            <p className="text-[11px] mt-2.5" style={{ color: "rgba(138,143,158,0.5)" }}>
-              No credit card required · 15 free credits · Cancel anytime
-            </p>
+            {/* CTA buttons — outside prompt box, right side */}
+            <Link to="/signup"
+              className="shrink-0 flex items-center gap-1.5 px-5 py-3.5 rounded-2xl text-[14px] font-semibold whitespace-nowrap transition-all duration-150"
+              style={{ background: "#89E900", color: "#0D0F14", boxShadow: "0 0 20px rgba(137,233,0,0.25)" }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "#9FFF00"; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "#89E900"; }}>
+              Get Started
+            </Link>
+            <Link to="/features"
+              className="shrink-0 flex items-center gap-1.5 px-5 py-3.5 rounded-2xl text-[14px] font-medium whitespace-nowrap border transition-all duration-150 hover:border-white/20 hover:text-white"
+              style={{ color: "#8A8F9E", borderColor: "rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.04)" }}>
+              Demo
+            </Link>
           </div>
+
+          <p className="text-[11px] mt-3" style={{ color: "rgba(138,143,158,0.5)" }}>
+            No credit card required · 15 free credits · Cancel anytime
+          </p>
         </div>
       </section>
 
@@ -580,12 +426,12 @@ export default function LandingPage() {
                     </span>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 divide-x" style={{ borderTop: "1px solid #1E2028" }}>
+                <div className="grid grid-cols-2 divide-x" style={{ borderTop: "1px solid #1E2028", borderColor: "#1E2028" }}>
                   <div className="p-4">
                     <p className="text-[10px] font-bold tracking-widest uppercase mb-1.5" style={{ color: "#8A8F9E" }}>Raw Input</p>
                     <p className="text-[12px] leading-relaxed" style={{ color: "#8A8F9E" }}>{item.before}</p>
                   </div>
-                  <div className="p-4" style={{ borderColor: "#1E2028" }}>
+                  <div className="p-4">
                     <p className="text-[10px] font-bold tracking-widest uppercase mb-1.5" style={{ color: "#89E900" }}>Bizento AI</p>
                     <p className="text-[12px] leading-relaxed" style={{ color: "rgba(137,233,0,0.75)" }}>{item.after}</p>
                   </div>
@@ -597,7 +443,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── HOW IT WORKS ── */}
-      <section id="how-it-works" className="py-24 px-6" style={{ background: "#0A0C11" }}>
+      <section className="py-24 px-6" style={{ background: "#0A0C11" }}>
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-extrabold">How it works</h2>
@@ -605,7 +451,7 @@ export default function LandingPage() {
           </div>
           <div className="grid md:grid-cols-3 gap-6">
             {HOW_IT_WORKS.map((step) => (
-              <div key={step.num} className="rounded-2xl border p-6 transition-all duration-300 hover:border-[rgba(137,233,0,0.2)]"
+              <div key={step.num} className="rounded-2xl border p-6 hover:border-[rgba(137,233,0,0.2)] transition-all"
                 style={{ background: "#12141A", borderColor: "#1E2028" }}>
                 <div className="text-[40px] font-extrabold mb-4 leading-none" style={{ color: step.color, opacity: 0.6 }}>{step.num}</div>
                 <h3 className="text-[18px] font-bold mb-2">{step.title}</h3>
@@ -613,11 +459,18 @@ export default function LandingPage() {
               </div>
             ))}
           </div>
+          <div className="text-center mt-12">
+            <Link to="/how-it-works"
+              className="inline-flex items-center gap-2 text-[14px] font-medium hover:text-white transition-colors"
+              style={{ color: "#89E900" }}>
+              See full walkthrough <ChevronRight className="h-4 w-4" />
+            </Link>
+          </div>
         </div>
       </section>
 
       {/* ── FEATURES ── */}
-      <section id="features" className="py-24 px-6">
+      <section className="py-24 px-6">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-extrabold">
@@ -650,11 +503,18 @@ export default function LandingPage() {
               </div>
             ))}
           </div>
+          <div className="text-center mt-12">
+            <Link to="/features"
+              className="inline-flex items-center gap-2 text-[14px] font-medium hover:text-white transition-colors"
+              style={{ color: "#89E900" }}>
+              View all features <ChevronRight className="h-4 w-4" />
+            </Link>
+          </div>
         </div>
       </section>
 
       {/* ── USE CASES ── */}
-      <section id="resources" className="py-24 px-6" style={{ background: "#0A0C11" }}>
+      <section className="py-24 px-6" style={{ background: "#0A0C11" }}>
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-14">
             <h2 className="text-4xl md:text-5xl font-extrabold">Built for every category</h2>
@@ -663,7 +523,7 @@ export default function LandingPage() {
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {USE_CASES.map((uc) => (
               <div key={uc.title}
-                className="rounded-2xl border p-5 flex gap-4 group transition-all duration-300 hover:border-[#89E900]/20"
+                className="rounded-2xl border p-5 flex gap-4 group hover:border-[#89E900]/20 transition-all"
                 style={{ background: "#12141A", borderColor: "#1E2028" }}>
                 <div className="h-10 w-10 shrink-0 rounded-xl flex items-center justify-center"
                   style={{ background: "rgba(137,233,0,0.08)", border: "1px solid rgba(137,233,0,0.15)" }}>
@@ -688,21 +548,15 @@ export default function LandingPage() {
           <div className="grid md:grid-cols-3 gap-5">
             {TESTIMONIALS.map((t) => (
               <div key={t.name}
-                className="rounded-2xl border p-6 space-y-4 transition-all duration-300 hover:border-[#89E900]/20"
+                className="rounded-2xl border p-6 space-y-4 hover:border-[#89E900]/20 transition-all"
                 style={{ background: "#12141A", borderColor: "#1E2028" }}>
                 <div className="flex gap-1">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="h-4 w-4 fill-[#89E900] text-[#89E900]" />
-                  ))}
+                  {[...Array(5)].map((_, i) => <Star key={i} className="h-4 w-4 fill-[#89E900] text-[#89E900]" />)}
                 </div>
-                <p className="text-[14px] leading-relaxed italic" style={{ color: "rgba(200,205,215,0.75)" }}>
-                  "{t.quote}"
-                </p>
+                <p className="text-[14px] leading-relaxed italic" style={{ color: "rgba(200,205,215,0.75)" }}>"{t.quote}"</p>
                 <div className="flex items-center gap-3">
                   <div className="h-9 w-9 rounded-full flex items-center justify-center text-sm font-bold text-black shrink-0"
-                    style={{ background: "#89E900" }}>
-                    {t.avatar}
-                  </div>
+                    style={{ background: "#89E900" }}>{t.avatar}</div>
                   <div>
                     <p className="text-[13px] font-semibold">{t.name}</p>
                     <p className="text-[11px]" style={{ color: "#8A8F9E" }}>{t.role}</p>
@@ -722,12 +576,9 @@ export default function LandingPage() {
           </div>
           <Accordion type="single" collapsible className="space-y-3">
             {FAQ.map((item, i) => (
-              <AccordionItem
-                key={i}
-                value={`faq-${i}`}
+              <AccordionItem key={i} value={`faq-${i}`}
                 className="rounded-2xl border px-5 overflow-hidden"
-                style={{ background: "#12141A", borderColor: "#1E2028" }}
-              >
+                style={{ background: "#12141A", borderColor: "#1E2028" }}>
                 <AccordionTrigger className="text-[15px] font-semibold py-4 hover:no-underline text-left">
                   {item.q}
                 </AccordionTrigger>
@@ -752,18 +603,16 @@ export default function LandingPage() {
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link to="/signup"
-              className="flex items-center gap-2 px-8 py-4 rounded-2xl text-[15px] font-bold transition-all duration-150"
+              className="flex items-center gap-2 px-8 py-4 rounded-2xl text-[15px] font-bold transition-all"
               style={{ background: "#89E900", color: "#0D0F14", boxShadow: "0 4px 30px rgba(137,233,0,0.3)" }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "#9FFF00"; (e.currentTarget as HTMLElement).style.boxShadow = "0 4px 50px rgba(137,233,0,0.55)"; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "#89E900"; (e.currentTarget as HTMLElement).style.boxShadow = "0 4px 30px rgba(137,233,0,0.3)"; }}
-            >
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "#9FFF00"; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "#89E900"; }}>
               <Sparkles className="h-4 w-4" />
               Get Started Free
             </Link>
             <Link to="/pricing"
-              className="flex items-center gap-2 px-8 py-4 rounded-2xl text-[15px] font-medium border transition-all duration-150"
-              style={{ color: "#8A8F9E", borderColor: "#1E2028" }}
-            >
+              className="flex items-center gap-2 px-8 py-4 rounded-2xl text-[15px] font-medium border transition-all hover:border-white/20 hover:text-white"
+              style={{ color: "#8A8F9E", borderColor: "#1E2028" }}>
               View Pricing <ChevronRight className="h-4 w-4" />
             </Link>
           </div>
@@ -771,37 +620,82 @@ export default function LandingPage() {
       </section>
 
       {/* ── FOOTER ── */}
-      <footer className="border-t py-16 px-6" style={{ borderColor: "#1E2028", background: "#0A0C11" }}>
-        <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-10 mb-12">
-            <div className="col-span-2 md:col-span-1">
-              <div className="flex items-center gap-2.5 mb-4">
+      <footer className="border-t" style={{ borderColor: "#1E2028", background: "#111316" }}>
+        <div className="max-w-6xl mx-auto px-6 py-16">
+
+          {/* Newsletter */}
+          <div className="rounded-2xl border p-6 mb-12 flex flex-col md:flex-row items-center justify-between gap-6"
+            style={{ background: "rgba(137,233,0,0.04)", borderColor: "rgba(137,233,0,0.12)" }}>
+            <div>
+              <h3 className="text-[17px] font-bold mb-1">Stay updated with AI ecommerce tips</h3>
+              <p className="text-[13px]" style={{ color: "#8A8F9E" }}>Guides, product updates, and ecommerce strategies — straight to your inbox.</p>
+            </div>
+            <div className="flex gap-2 w-full md:w-auto shrink-0">
+              <div className="flex-1 md:w-64 flex items-center gap-2 rounded-xl px-4 py-2.5"
+                style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)" }}>
+                <Mail className="h-4 w-4 shrink-0" style={{ color: "#8A8F9E" }} />
+                <input
+                  type="email"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  placeholder="Enter your email"
+                  className="flex-1 bg-transparent text-[13px] text-white placeholder-white/30 outline-none"
+                />
+              </div>
+              <button
+                className="px-5 py-2.5 rounded-xl text-[13px] font-semibold whitespace-nowrap transition-all hover:opacity-90"
+                style={{ background: "#89E900", color: "#0D0F14" }}>
+                Subscribe
+              </button>
+            </div>
+          </div>
+
+          {/* Columns */}
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-12">
+            {/* Brand column */}
+            <div className="col-span-2 md:col-span-1 space-y-4">
+              <div className="flex items-center gap-2.5">
                 <BizentoIcon size={28} />
                 <span className="font-black text-[16px]" style={{ color: "#F0EBD8" }}>
                   Bizento<span style={{ color: "#89E900" }}>.</span>
                 </span>
               </div>
               <p className="text-[13px] leading-relaxed" style={{ color: "#8A8F9E" }}>
-                AI-powered product photography and creative automation for modern brands.
+                AI-powered product photography and catalog generation for ecommerce sellers.
               </p>
-              <div className="flex gap-3 mt-5">
-                {[Twitter, Instagram, Linkedin, Github].map((Icon, i) => (
-                  <button key={i} className="h-8 w-8 rounded-lg flex items-center justify-center transition-colors hover:bg-white/8"
-                    style={{ background: "rgba(255,255,255,0.05)", color: "#8A8F9E" }}>
-                    <Icon className="h-3.5 w-3.5" />
-                  </button>
+              <div className="flex gap-2.5">
+                {SOCIAL_LINKS.map(({ icon: Icon, href, label }) => (
+                  <a key={label} href={href} aria-label={label}
+                    className="h-9 w-9 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110"
+                    style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", color: "#8A8F9E" }}
+                    onMouseEnter={e => {
+                      (e.currentTarget as HTMLElement).style.background = "rgba(137,233,0,0.12)";
+                      (e.currentTarget as HTMLElement).style.borderColor = "rgba(137,233,0,0.3)";
+                      (e.currentTarget as HTMLElement).style.color = "#89E900";
+                    }}
+                    onMouseLeave={e => {
+                      (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.06)";
+                      (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,255,255,0.08)";
+                      (e.currentTarget as HTMLElement).style.color = "#8A8F9E";
+                    }}>
+                    <Icon className="h-4 w-4" />
+                  </a>
                 ))}
               </div>
             </div>
-            {Object.entries(FOOTER_LINKS).map(([category, links]) => (
+
+            {/* Link columns */}
+            {Object.entries(FOOTER_COLS).map(([category, links]) => (
               <div key={category}>
                 <p className="text-[12px] font-bold uppercase tracking-wider mb-4" style={{ color: "#8A8F9E" }}>{category}</p>
-                <ul className="space-y-2.5">
+                <ul className="space-y-3">
                   {links.map((link) => (
                     <li key={link}>
-                      <button className="text-[13px] transition-colors" style={{ color: "rgba(138,143,158,0.6)" }}
-                        onMouseEnter={e => (e.currentTarget.style.color = "#E8EAF0")}
-                        onMouseLeave={e => (e.currentTarget.style.color = "rgba(138,143,158,0.6)")}
+                      <button
+                        className="text-[13px] transition-colors"
+                        style={{ color: "rgba(138,143,158,0.65)" }}
+                        onMouseEnter={e => (e.currentTarget.style.color = "#89E900")}
+                        onMouseLeave={e => (e.currentTarget.style.color = "rgba(138,143,158,0.65)")}
                       >{link}</button>
                     </li>
                   ))}
@@ -809,14 +703,15 @@ export default function LandingPage() {
               </div>
             ))}
           </div>
+
+          {/* Bottom bar */}
           <div className="flex flex-col sm:flex-row items-center justify-between pt-8 border-t gap-4" style={{ borderColor: "#1E2028" }}>
             <p className="text-[13px]" style={{ color: "rgba(138,143,158,0.45)" }}>
               © {new Date().getFullYear()} Bizento AI. All rights reserved.
             </p>
-            <div className="flex items-center gap-2">
-              <div className="h-1.5 w-1.5 rounded-full animate-pulse" style={{ background: "#89E900" }} />
-              <span className="text-[12px]" style={{ color: "rgba(137,233,0,0.6)" }}>All systems operational</span>
-            </div>
+            <p className="text-[13px]" style={{ color: "rgba(138,143,158,0.45)" }}>
+              Built for ecommerce sellers 🚀
+            </p>
           </div>
         </div>
       </footer>

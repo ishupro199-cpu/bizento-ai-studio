@@ -30,6 +30,8 @@ import { AdminLayout } from "@/layouts/AdminLayout";
 // Website pages
 import LandingPage from "@/pages/website/LandingPage";
 import FeaturesPage from "@/pages/website/FeaturesPage";
+import ResourcesPage from "@/pages/website/ResourcesPage";
+import HowItWorksPage from "@/pages/website/HowItWorksPage";
 import PricingPage from "@/pages/website/PricingPage";
 import LoginPage from "@/pages/website/LoginPage";
 import SignupPage from "@/pages/website/SignupPage";
@@ -73,6 +75,8 @@ const App = () => (
             {/* Marketing Website */}
             <Route path="/" element={<LandingPage />} />
             <Route path="/features" element={<FeaturesPage />} />
+            <Route path="/resources" element={<ResourcesPage />} />
+            <Route path="/how-it-works" element={<HowItWorksPage />} />
             <Route path="/pricing" element={<PricingPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignupPage />} />
