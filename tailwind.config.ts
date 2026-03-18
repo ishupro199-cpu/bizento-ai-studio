@@ -15,6 +15,7 @@ export default {
     extend: {
       fontFamily: {
         sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'SF Pro Display', 'sans-serif'],
+        bricolage: ['"Bricolage Grotesque"', 'sans-serif'],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -84,12 +85,22 @@ export default {
           "0%, 100%": { boxShadow: "0 0 20px hsl(85 100% 45% / 0.15)" },
           "50%": { boxShadow: "0 0 30px hsl(85 100% 45% / 0.3)" },
         },
+        "marquee": {
+          "0%": { transform: "translateX(0)" },
+          "100%": { transform: "translateX(-50%)" },
+        },
+        "pulse-kiwi": {
+          "0%, 100%": { boxShadow: "0 0 24px rgba(137,233,0,0.2), 0 0 48px rgba(137,233,0,0.08)" },
+          "50%": { boxShadow: "0 0 48px rgba(137,233,0,0.45), 0 0 96px rgba(137,233,0,0.18)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "fade-in": "fade-in 0.5s ease-out forwards",
         "pulse-glow": "pulse-glow 2s ease-in-out infinite",
+        "marquee": "marquee 18s linear infinite",
+        "pulse-kiwi": "pulse-kiwi 2.5s ease-in-out infinite",
       },
     },
   },

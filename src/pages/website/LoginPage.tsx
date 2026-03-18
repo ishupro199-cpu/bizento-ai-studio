@@ -96,7 +96,7 @@ export default function LoginPage() {
       const { signInWithEmailAndPassword, sendEmailVerification, signOut } = await import("firebase/auth");
       const { auth } = await import("@/lib/firebase");
       const cred = await signInWithEmailAndPassword(auth, email, password);
-      await sendEmailVerification(cred.user, { url: `${window.location.origin}/login` });
+      await sendEmailVerification(cred.user);
       await signOut(auth);
       toast.success("Verification email resent! Check your inbox.");
       setUnverifiedEmail(false);

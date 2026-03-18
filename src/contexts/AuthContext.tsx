@@ -114,12 +114,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signUp = async (email: string, password: string, name: string): Promise<{ needsVerification: boolean }> => {
     try {
       const cred = await createUserWithEmailAndPassword(auth, email, password);
-      await updateProfile(cred.user, { displayName: name });
-      await sendEmailVerification(cred.user, {
-        url: `${window.location.origin}/login`,
-        handleCodeInApp: false,
-      });
-      await ensureUserDoc(cred.user, { name });
+      try { await updateProfile(cred.user, { displayName: name }); } catch {}
+      try { await sendEmailVerification(cred.user); } catch {}
+      try { await ensureUserDoc(cred.user, { name }); } catch {}
       await firebaseSignOut(auth);
       return { needsVerification: true };
     } catch (err: any) {
@@ -166,10 +163,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const resendVerificationEmail = async () => {
     try {
       if (auth.currentUser) {
-        await sendEmailVerification(auth.currentUser, {
-          url: `${window.location.origin}/login`,
-          handleCodeInApp: false,
-        });
+        await sendEmailVerification(auth.currentUser);
       }
     } catch (err: any) {
       throw new Error(mapFirebaseError(err));

@@ -1,0 +1,198 @@
+
+
+---
+
+## 🎯 Complete Landing Page Prompt — Pixalera
+
+### Design System
+
+- **Theme:** Dark mode only ("Obsidian Kiwi")
+- **Background:** Deep night black `#0D0F14` (HSL: 220 30% 6%)
+- **Primary Accent:** Electric Kiwi `#89E900` (HSL: 85 100% 46%)
+- **Primary Foreground (text on kiwi buttons):** `#0D0F14`
+- **Card Background:** `#12141A` | Border: `#1E2028`
+- **Muted Foreground:** `#8A8F9E`
+- **Typography:**
+  - Headings: **Bricolage Grotesque** (Google Fonts), font-extrabold, tight tracking
+  - Body: **Geist Sans** (system/loaded)
+  - Code/Prompts: **Geist Mono** (monospace)
+- **Glow Utilities:** Kiwi box-shadow glows (`0 0 40px hsl(85 100% 46% / 0.15)`), text-shadow glows
+- **Grid Pattern:** Subtle `.bg-grid` using repeating SVG lines at low opacity
+- **Border Radius:** `0.75rem` (12px) default
+
+---
+
+### Section 1 — NAVBAR (Sticky)
+- **Position:** Fixed top, `backdrop-blur-md`, semi-transparent background
+- **Left:** Logo text "Pixalera" in Bricolage Grotesque bold, with Kiwi dot accent
+- **Center:** Nav links — Features, Use Cases, How It Works, Pricing (smooth scroll anchors)
+- **Right:** "Get Started" button — Kiwi background, dark text, rounded-lg
+- **Mobile:** Hamburger menu (Sheet component sliding from right)
+
+---
+
+### Section 2 — HERO
+- **Layout:** Centered text, max-width 4xl
+- **Badge:** Small pill at top — "AI-Powered Product Photography" with Sparkles icon, Kiwi border/bg tint
+- **Headline:** `text-4xl sm:text-5xl md:text-7xl` — "Your product. **Any scene.** Instant reality." — "Any scene." in Kiwi with glow text effect
+- **Subheading:** `text-lg md:text-xl` muted — "Transform simple product photos into stunning, studio-quality images and marketing creatives — powered by AI, in seconds."
+- **AI Prompt Input:** Rounded-xl bordered container with:
+  - Left: Geist Mono typing animation cycling through 4 prompts (35ms per char, 2.5s pause between)
+  - Right: Kiwi "Generate" button with Sparkles icon
+- **Prompts cycle:** sneaker on marble, dress on AI model downtown, watch on beach sunset, skincare flat-lay
+- **Sub-text:** "No credit card required · 10 free generations · Cancel anytime"
+- **Hero Image:** Below text — large rounded-2xl card with `aspect-video` image showing AI product transformation, Kiwi blur glow behind it (`bg-primary/10 blur-[60px]`)
+
+---
+
+### Section 3 — SOCIAL PROOF BAR
+- **Layout:** Horizontal bar with `border-y border-border/50`
+- **Left:** 5 filled Kiwi stars + "Trusted by **10,000+** sellers worldwide"
+- **Right:** Infinite marquee animation (15s linear loop) of brand names: Shopify, Amazon, Flipkart, Myntra, Nykaa, Meesho
+  - Uppercase, tracking-wider, muted/50 opacity
+  - Fade gradient overlays on both edges (from-background to transparent)
+  - Logos duplicated for seamless loop
+
+---
+
+### Section 4 — BEFORE / AFTER
+- **Heading:** "See the **transformation**" (transformation in Kiwi)
+- **Subheading:** "From raw product photos to stunning, ready-to-publish creatives — across every category."
+- **Layout:** 2-column grid (`md:grid-cols-2`), max-width 5xl, 4 cards
+- **Each Card:**
+  - Top-left: Category label (Fashion/Beauty/Electronics/Jewelry) in Kiwi uppercase, tracking-wider
+  - Center: `aspect-video` image showing before→after transformation
+  - Bottom: Split 2-column bar:
+    - Left: "RAW INPUT" label (muted) + description text
+    - Right: "PIXALERA AI" label (Kiwi) + description text (Kiwi/80)
+  - Divider between columns using `bg-border` gap trick
+- **Hover:** `border-primary/20` transition
+
+---
+
+### Section 5 — PROBLEM → SOLUTION
+- **Layout:** 2-column grid at `lg` breakpoint
+- **Left Column — "The Problem":**
+  - Red-tinted header with X icon
+  - 4 pain points, each with XCircle icon (destructive color) + title + description
+  - Items: Expensive photoshoots ($500-2000), Slow turnaround (1-2 weeks), Inconsistent quality, Limited scalability
+- **Right Column — "The Pixalera Solution":**
+  - Kiwi-tinted header with CheckCircle icon
+  - 4 solutions matching each problem, CheckCircle2 icon (Kiwi)
+  - Items: AI-generated ($0.50/image), Instant results (seconds), Consistent studio-quality, Unlimited scale
+
+---
+
+### Section 6 — FEATURES (Individual Cards with Images)
+- **Heading:** "Everything you need to **scale visuals**"
+- **Layout:** 6 feature cards in alternating layout — each full-width with image + text side by side
+- **Each Card:** `rounded-2xl border border-border bg-card/30 backdrop-blur-sm overflow-hidden`
+  - Alternating: image-left/text-right, then image-right/text-left (using `md:flex-row-reverse` on even items)
+  - Image: `aspect-[4/3] object-cover` with gradient overlay
+  - Text side: Icon in Kiwi/10 rounded-lg box, title (text-xl font-bold), description (muted-foreground)
+  - Hover: `border-primary/20`, `glow-kiwi-sm` effect
+- **6 Features:**
+  1. AI Background Generation — "Transform plain product photos with AI-generated backgrounds..."
+  2. Multi-Angle Rendering — "Generate multiple angles and perspectives..."
+  3. AI Fashion Models — "Place apparel on realistic AI-generated models..."
+  4. Style Variations — "Create multiple style variations from a single photo..."
+  5. Batch Processing — "Process hundreds of product images simultaneously..."
+  6. Brand Consistency — "Maintain consistent brand aesthetics across all visuals..."
+
+---
+
+### Section 7 — USE CASES
+- **Heading:** "Built for **every industry**" (every industry in Kiwi)
+- **Layout:** 3-column grid (`sm:grid-cols-2 lg:grid-cols-3`), 6 cards
+- **Each Card:**
+  - Top: `aspect-[4/3]` image with `group-hover:scale-105` zoom effect + gradient overlay from bottom
+  - Bottom: Lucide icon in Kiwi/10 box + title + description
+  - Hover: Kiwi border glow
+- **6 Industries:** Fashion & Apparel, Beauty & Skincare, Electronics, Furniture & Home, D2C Brands, Food & Beverage
+
+---
+
+### Section 8 — HOW IT WORKS
+- **Heading:** "How it **works**"
+- **Layout:** 3-column grid, 3 steps
+- **Each Step:**
+  - Large Kiwi step number ("01", "02", "03") in `text-6xl font-extrabold text-primary/20`
+  - `aspect-[4/3]` rounded image
+  - Title + description
+- **Steps:**
+  1. Upload Your Product — "Upload any product photo..."
+  2. Choose Your Style — "Select from templates or describe your vision..."
+  3. Generate & Download — "AI generates studio-quality images in seconds..."
+
+---
+
+### Section 9 — COMPARISON TABLE
+- **Heading:** "Why choose **Pixalera**?"
+- **Layout:** Styled table with 2 columns — Traditional Photoshoot vs Pixalera
+- **Header:** Traditional = muted bg, Pixalera = Kiwi/10 bg with Kiwi text
+- **5 Rows:** Cost, Time, Scalability, Consistency, Effort
+  - Traditional values: muted styling
+  - Pixalera values: Kiwi text color, bold font
+- **Table:** Rounded-xl border, alternating row backgrounds
+
+---
+
+### Section 10 — TESTIMONIALS
+- **Heading:** "Loved by **sellers worldwide**"
+- **Layout:** 3-column grid, 3 testimonial cards
+- **Each Card:** `bg-card/50 backdrop-blur-sm border border-border rounded-xl p-6`
+  - 5 Kiwi filled stars
+  - Quote text in `text-sm leading-relaxed`
+  - Author: Bold name + muted role/company
+- **Hover:** `border-primary/20` transition
+
+---
+
+### Section 11 — PRICING
+- **Heading:** "Simple, transparent **pricing**"
+- **Layout:** 3 cards — Basic ($29/mo), Pro ($79/mo, highlighted), Scale ($199/mo)
+- **Pro Card:** Kiwi border, "Most Popular" badge, `scale-105` on lg
+- **Each Card:**
+  - Plan name, price in `text-4xl font-extrabold tabular-nums`
+  - "/month" suffix, description text
+  - Feature list with Check icons (Kiwi for Pro)
+  - CTA button: Pro = filled Kiwi, others = outline
+- **Sub-text:** "All plans include 14-day free trial..."
+
+---
+
+### Section 12 — FAQ
+- **Heading:** "Frequently asked **questions**"
+- **Layout:** Accordion (Radix), max-width 3xl centered
+- **6 Questions:** Image quality, bulk processing, file formats, API access, satisfaction guarantee, getting started
+- **Style:** `border-b border-border`, smooth expand/collapse
+
+---
+
+### Section 13 — FINAL CTA
+- **Background:** Kiwi/5 blur glow (600px circle) centered
+- **Heading:** "Ready to transform your **product visuals**?"
+- **Subheading:** "Join 10,000+ sellers..."
+- **CTA:** Large Kiwi button "Start Free Trial" with ArrowRight icon, `animate-pulse-kiwi`
+- **Sub-text:** "No credit card required · 10 free generations"
+
+---
+
+### Section 14 — FOOTER
+- **Layout:** 4-column grid — Brand column + 3 link columns (Product, Company, Legal)
+- **Brand Column:** "Pixalera" logo + tagline
+- **Bottom bar:** Copyright text, centered, `border-t border-border`
+- **Link hover:** `text-foreground` transition
+
+---
+
+### Global Effects
+- **Marquee animation:** `@keyframes marquee { 0% translateX(0) → 100% translateX(-50%) }` 15s linear infinite
+- **Typing animation:** Character-by-character reveal at 35ms, 2.5s hold, then reset cycle
+- **Kiwi pulse glow:** `@keyframes pulse-kiwi` alternating box-shadow intensity
+- **Fade-in-up:** `translateY(30px) opacity:0 → translateY(0) opacity:1` on scroll
+- **Hover glow classes:** `.glow-kiwi-sm`, `.glow-kiwi`, `.glow-kiwi-text`
+
+---
+
+

@@ -30,6 +30,7 @@ export default function SignupPage() {
   const [verificationSent, setVerificationSent] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   const { signUp, signInWithGoogle, signInWithApple } = useAuth();
   const navigate = useNavigate();
@@ -93,7 +94,7 @@ export default function SignupPage() {
       const { signInWithEmailAndPassword, sendEmailVerification, signOut } = await import("firebase/auth");
       const { auth } = await import("@/lib/firebase");
       const cred = await signInWithEmailAndPassword(auth, email, password);
-      await sendEmailVerification(cred.user, { url: `${window.location.origin}/login` });
+      await sendEmailVerification(cred.user);
       await signOut(auth);
       toast.success("Verification email resent!");
       setResendCooldown(60);
@@ -290,27 +291,43 @@ export default function SignupPage() {
                   )}
                 </div>
 
+                <label className="flex items-start gap-3 cursor-pointer group mt-1">
+                  <div
+                    onClick={() => setAgreedToTerms((v) => !v)}
+                    className="flex-shrink-0 h-5 w-5 rounded-md border mt-0.5 flex items-center justify-center transition-all duration-150"
+                    style={{
+                      background: agreedToTerms ? "#89E900" : "rgba(255,255,255,0.05)",
+                      borderColor: agreedToTerms ? "#89E900" : "rgba(255,255,255,0.15)",
+                    }}
+                  >
+                    {agreedToTerms && (
+                      <svg viewBox="0 0 12 12" className="h-3 w-3" fill="none">
+                        <path d="M2 6l3 3 5-5" stroke="#0D0F14" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    )}
+                  </div>
+                  <span className="text-[12px] text-white/40 leading-relaxed group-hover:text-white/55 transition-colors select-none" onClick={() => setAgreedToTerms((v) => !v)}>
+                    I agree to the{" "}
+                    <span className="text-white/65 underline" onClick={e => e.stopPropagation()}>Terms of Service</span>{" "}
+                    and{" "}
+                    <span className="text-white/65 underline" onClick={e => e.stopPropagation()}>Privacy Policy</span>
+                  </span>
+                </label>
+
                 <button
                   type="submit"
-                  disabled={loading}
-                  className="w-full h-12 rounded-2xl text-[14px] font-semibold text-black transition-all duration-150 flex items-center justify-center gap-2 mt-2 disabled:opacity-60"
+                  disabled={loading || !agreedToTerms}
+                  className="w-full h-12 rounded-2xl text-[14px] font-semibold text-black transition-all duration-150 flex items-center justify-center gap-2 mt-2 disabled:opacity-40 disabled:cursor-not-allowed"
                   style={{
                     background: "linear-gradient(135deg, #89E900 0%, #6BBF00 100%)",
-                    boxShadow: "0 4px 24px rgba(137,233,0,0.25)",
+                    boxShadow: agreedToTerms ? "0 4px 24px rgba(137,233,0,0.25)" : "none",
                   }}
-                  onMouseEnter={e => !loading && ((e.currentTarget as HTMLElement).style.boxShadow = "0 6px 32px rgba(137,233,0,0.40)")}
-                  onMouseLeave={e => ((e.currentTarget as HTMLElement).style.boxShadow = "0 4px 24px rgba(137,233,0,0.25)")}
+                  onMouseEnter={e => (!loading && agreedToTerms) && ((e.currentTarget as HTMLElement).style.boxShadow = "0 6px 32px rgba(137,233,0,0.40)")}
+                  onMouseLeave={e => ((e.currentTarget as HTMLElement).style.boxShadow = agreedToTerms ? "0 4px 24px rgba(137,233,0,0.25)" : "none")}
                 >
                   {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
                   {loading ? "Creating account…" : "Create account"}
                 </button>
-
-                <p className="text-center text-[11px] text-white/25 leading-relaxed">
-                  By creating an account you agree to our{" "}
-                  <span className="text-white/40 underline cursor-pointer">Terms of Service</span>{" "}
-                  and{" "}
-                  <span className="text-white/40 underline cursor-pointer">Privacy Policy</span>.
-                </p>
               </form>
             ) : (
               <PhoneAuthPanel mode="signup" nameForSignup={name || undefined} />
