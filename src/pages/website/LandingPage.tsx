@@ -278,97 +278,105 @@ export default function LandingPage() {
       </nav>
 
       {/* ── HERO SECTION ── */}
-      <section
-        className="relative min-h-screen flex items-center overflow-hidden"
-        style={{
-          background: "linear-gradient(135deg, #0a0b0f 0%, #0d1a00 60%, #0a0b0f 100%)",
-        }}
-      >
-        {/* Background product image - full bleed right side */}
-        <div className="absolute right-0 top-0 bottom-0 w-full md:w-[55%] pointer-events-none">
-          <div
-            className="absolute inset-0"
-            style={{
-              background: "linear-gradient(to right, #0D0F14 0%, #0D0F14 5%, transparent 40%)",
-              zIndex: 2,
-            }}
-          />
-          <div
-            className="absolute inset-0"
-            style={{
-              background: "linear-gradient(to top, #0D0F14 0%, transparent 30%)",
-              zIndex: 2,
-            }}
-          />
-          <img
-            src="/hero-product.png"
-            alt="Product photography"
-            className="w-full h-full object-cover object-center opacity-80"
-          />
-        </div>
+      <section className="relative min-h-screen flex flex-col justify-center overflow-hidden">
 
-        {/* Ambient glow */}
-        <div className="absolute top-1/2 left-1/4 -translate-x-1/2 -translate-y-1/2 h-[600px] w-[600px] rounded-full blur-[200px] pointer-events-none" style={{ background: "rgba(137,233,0,0.05)", zIndex: 1 }} />
+        {/* Full-cover dark studio background */}
+        <img
+          src="/hero-studio-bg.png"
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 w-full h-full object-cover object-center pointer-events-none"
+          style={{ opacity: 0.85 }}
+        />
 
-        <div className="max-w-7xl mx-auto px-6 pt-32 pb-20 relative z-10 w-full">
-          <div className="max-w-xl">
-            {/* Badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-8 border text-[13px] font-medium"
-              style={{ background: "rgba(137,233,0,0.06)", borderColor: "rgba(137,233,0,0.2)", color: "#89E900" }}>
-              <Sparkles className="h-3.5 w-3.5" />
-              AI-Powered Product Photography
-            </div>
+        {/* Darkening overlays for text readability */}
+        <div className="absolute inset-0 pointer-events-none"
+          style={{ background: "linear-gradient(to bottom, rgba(10,11,15,0.55) 0%, rgba(10,11,15,0.25) 50%, rgba(10,11,15,0.72) 100%)" }} />
+        <div className="absolute inset-0 pointer-events-none"
+          style={{ background: "linear-gradient(to right, rgba(10,11,15,0.4) 0%, transparent 60%, rgba(10,11,15,0.2) 100%)" }} />
 
-            {/* Headline */}
-            <h1 className="text-5xl sm:text-6xl md:text-[64px] font-extrabold leading-[1.02] tracking-tight mb-6">
-              Your product.{" "}
-              <span style={{ color: "#89E900", textShadow: "0 0 60px rgba(137,233,0,0.4)" }}>
-                Any scene.
-              </span>
-              {" "}Instant reality.
-            </h1>
+        {/* Subtle green glow in center */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none"
+          style={{ width: 700, height: 700, background: "radial-gradient(circle, rgba(137,233,0,0.07) 0%, transparent 70%)" }} />
 
-            <p className="text-[17px] leading-relaxed mb-10 max-w-lg" style={{ color: "#8A8F9E" }}>
-              Transform simple product photos into stunning, studio-quality images and marketing creatives — powered by AI, in seconds.
-            </p>
+        {/* Perfume bottle — bottom-right, partially off-screen */}
+        <img
+          src="/hero-perfume-bottle.png"
+          alt="AI product photography"
+          className="absolute pointer-events-none hidden md:block"
+          style={{
+            bottom: "-2%",
+            right: "-2%",
+            width: "38%",
+            maxWidth: 480,
+            objectFit: "contain",
+            objectPosition: "bottom right",
+            zIndex: 5,
+            filter: "drop-shadow(0 30px 60px rgba(0,0,0,0.7))",
+          }}
+        />
 
-            {/* Typing prompt input */}
-            <div className="max-w-lg mb-4">
-              <div className="flex items-center gap-0 rounded-2xl border overflow-hidden"
-                style={{ background: "rgba(18,20,26,0.9)", borderColor: "#2A2D38", backdropFilter: "blur(12px)" }}>
-                <div className="flex-1 px-5 py-4 text-[14px] font-mono text-left min-h-[56px] flex items-center"
-                  style={{ color: "#8A8F9E" }}>
-                  <span>{typedText}</span>
-                  <span className="ml-0.5 inline-block w-0.5 h-4 rounded-sm animate-pulse" style={{ background: "#89E900" }} />
-                </div>
-                <Link to="/signup"
-                  className="flex items-center gap-2 px-5 py-4 text-[14px] font-semibold whitespace-nowrap transition-all duration-150 m-1.5 rounded-xl"
-                  style={{ background: "#89E900", color: "#0D0F14" }}
-                  onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "#9FFF00"}
-                  onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "#89E900"}
-                >
-                  <Sparkles className="h-4 w-4" />
-                  Generate
-                </Link>
+        {/* Main content — centered */}
+        <div className="relative z-10 w-full max-w-5xl mx-auto px-6 pt-28 pb-24 text-center">
+
+          {/* Badge */}
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-8 border text-[13px] font-medium"
+            style={{ background: "rgba(137,233,0,0.07)", borderColor: "rgba(137,233,0,0.25)", color: "#89E900", backdropFilter: "blur(8px)" }}>
+            <Sparkles className="h-3.5 w-3.5" />
+            AI-Powered Product Photography
+          </div>
+
+          {/* Headline */}
+          <h1 className="text-5xl sm:text-6xl md:text-[72px] font-extrabold leading-[1.0] tracking-tight mb-6 text-white">
+            Your product.{" "}
+            <span style={{ color: "#89E900", textShadow: "0 0 80px rgba(137,233,0,0.5)" }}>
+              Any scene.
+            </span>
+            <br />Instant reality.
+          </h1>
+
+          {/* Description */}
+          <p className="text-[17px] md:text-[18px] leading-relaxed mb-10 max-w-2xl mx-auto" style={{ color: "rgba(200,205,215,0.85)" }}>
+            Transform simple product photos into stunning, studio-quality images
+            <br className="hidden sm:block" /> and marketing creatives — powered by AI, in seconds.
+          </p>
+
+          {/* Input row — card + generate button side by side */}
+          <div className="flex flex-col sm:flex-row items-stretch gap-3 max-w-xl mx-auto md:mx-0 md:ml-0 md:max-w-[560px]">
+            {/* Input card */}
+            <div
+              className="flex-1 rounded-2xl text-left flex flex-col justify-between"
+              style={{
+                background: "rgba(16,18,24,0.82)",
+                border: "1px solid rgba(255,255,255,0.1)",
+                backdropFilter: "blur(14px)",
+                padding: "14px 18px 12px",
+                minHeight: 78,
+              }}
+            >
+              <div className="flex items-center min-h-[28px]">
+                <span className="text-[14px] font-mono leading-snug" style={{ color: "#C8CDD7" }}>{typedText}</span>
+                <span className="ml-0.5 inline-block w-0.5 h-4 rounded-sm animate-pulse shrink-0" style={{ background: "#89E900" }} />
+              </div>
+              <div className="flex items-center justify-between mt-2 pt-2" style={{ borderTop: "1px solid rgba(255,255,255,0.07)" }}>
+                <p className="text-[11px] leading-tight" style={{ color: "rgba(138,143,158,0.7)" }}>
+                  No credit card required · 10 free generations · Cancel anytime
+                </p>
+                <ArrowRight className="h-3.5 w-3.5 shrink-0 ml-2" style={{ color: "rgba(138,143,158,0.5)" }} />
               </div>
             </div>
-            <p className="text-[12px]" style={{ color: "#8A8F9E" }}>
-              No credit card required · 10 free generations · Cancel anytime
-            </p>
 
-            {/* Stats */}
-            <div className="flex items-center gap-8 mt-12 pt-8 border-t" style={{ borderColor: "rgba(255,255,255,0.07)" }}>
-              {[
-                { value: "10K+", label: "Active sellers" },
-                { value: "2M+", label: "Images generated" },
-                { value: "< 60s", label: "Per image" },
-              ].map((stat) => (
-                <div key={stat.label}>
-                  <p className="text-2xl font-extrabold text-white">{stat.value}</p>
-                  <p className="text-[12px] mt-0.5" style={{ color: "#8A8F9E" }}>{stat.label}</p>
-                </div>
-              ))}
-            </div>
+            {/* Generate button */}
+            <Link
+              to="/signup"
+              className="flex items-center justify-center gap-2 px-7 py-4 rounded-2xl text-[15px] font-bold whitespace-nowrap transition-all duration-150 shrink-0"
+              style={{ background: "#89E900", color: "#0D0F14", boxShadow: "0 4px 30px rgba(137,233,0,0.3)" }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "#9FFF00"; (e.currentTarget as HTMLElement).style.boxShadow = "0 4px 50px rgba(137,233,0,0.55)"; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "#89E900"; (e.currentTarget as HTMLElement).style.boxShadow = "0 4px 30px rgba(137,233,0,0.3)"; }}
+            >
+              <Sparkles className="h-4 w-4" />
+              Generate
+            </Link>
           </div>
         </div>
       </section>
