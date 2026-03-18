@@ -51,6 +51,11 @@ import AdminUsersPage from "@/pages/admin/AdminUsersPage";
 import AdminModerationPage from "@/pages/admin/AdminModerationPage";
 import AdminAnalyticsPage from "@/pages/admin/AdminAnalyticsPage";
 import AdminSystemPage from "@/pages/admin/AdminSystemPage";
+import AdminBillingPage from "@/pages/admin/AdminBillingPage";
+import AdminCreditsPage from "@/pages/admin/AdminCreditsPage";
+import AdminNotificationsPage from "@/pages/admin/AdminNotificationsPage";
+import AdminSettingsPage from "@/pages/admin/AdminSettingsPage";
+import AdminLogsPage from "@/pages/admin/AdminLogsPage";
 
 import NotFound from "@/pages/NotFound";
 
@@ -88,8 +93,8 @@ const App = () => (
             <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
               <Route index element={<AdminDashboard />} />
               <Route path="users" element={<AdminUsersPage />} />
-              <Route path="billing" element={<AdminPlaceholder title="Billing & Plans" />} />
-              <Route path="credits" element={<AdminPlaceholder title="Credits" />} />
+              <Route path="billing" element={<AdminBillingPage />} />
+              <Route path="credits" element={<AdminCreditsPage />} />
               <Route path="ai-tools" element={<AdminPlaceholder title="AI Tools" />} />
               <Route path="projects" element={<AdminPlaceholder title="Projects" />} />
               <Route path="analytics" element={<AdminAnalyticsPage />} />
@@ -97,10 +102,10 @@ const App = () => (
               <Route path="cms" element={<AdminPlaceholder title="CMS" />} />
               <Route path="blog" element={<AdminPlaceholder title="Blog" />} />
               <Route path="prompts" element={<AdminPlaceholder title="Prompt Library" />} />
-              <Route path="notifications" element={<AdminPlaceholder title="Notifications" />} />
-              <Route path="settings" element={<AdminPlaceholder title="Settings" />} />
+              <Route path="notifications" element={<AdminNotificationsPage />} />
+              <Route path="settings" element={<AdminSettingsPage />} />
               <Route path="support" element={<AdminPlaceholder title="Support" />} />
-              <Route path="logs" element={<AdminPlaceholder title="Logs" />} />
+              <Route path="logs" element={<AdminLogsPage />} />
               <Route path="moderation" element={<AdminModerationPage />} />
               <Route path="system" element={<AdminSystemPage />} />
             </Route>

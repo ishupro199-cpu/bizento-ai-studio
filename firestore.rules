@@ -25,18 +25,6 @@ service cloud.firestore {
          request.auth.token.firebase.sign_in_provider in ['google.com', 'apple.com']);
     }
 
-    function hasField(data, field) {
-      return field in data;
-    }
-
-    function isValidUserData(data) {
-      return hasField(data, 'name') && data.name is string && data.name.size() > 0 &&
-             hasField(data, 'plan') && data.plan in ['free', 'pro', 'enterprise'] &&
-             hasField(data, 'role') && data.role in ['user', 'admin'] &&
-             hasField(data, 'creditsRemaining') && data.creditsRemaining is int &&
-             hasField(data, 'creditsUsed') && data.creditsUsed is int;
-    }
-
     // ── Users collection ──────────────────────────────────────────────────────
     match /users/{uid} {
       allow get: if isOwner(uid) || isAdmin();
@@ -57,18 +45,81 @@ service cloud.firestore {
     }
 
     // ── Admin stats ───────────────────────────────────────────────────────────
-    // /admin/stats — authenticated users can increment counters, only admins read
     match /admin/stats {
       allow read: if isAdmin();
       allow write: if isLoggedIn();
     }
 
-    // All other /admin/* docs — admin only
     match /admin/{docId} {
       allow read, write: if isAdmin();
     }
 
-    // ── Orders collection (payments) ──────────────────────────────────────────
+    // ── Plans collection (subscription plans) ────────────────────────────────
+    match /plans/{planId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // ── Transactions collection ───────────────────────────────────────────────
+    match /transactions/{txId} {
+      allow read: if isLoggedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isLoggedIn() && isVerifiedUser();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // ── Credits logs ─────────────────────────────────────────────────────────
+    match /credits_logs/{logId} {
+      allow read: if isLoggedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow list: if isAdmin();
+      allow create: if isLoggedIn();
+      allow update, delete: if isAdmin();
+    }
+
+    // ── Projects collection ───────────────────────────────────────────────────
+    match /projects/{projectId} {
+      allow read: if isLoggedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow list: if isAdmin();
+      allow create: if isLoggedIn() && isVerifiedUser();
+      allow update: if isLoggedIn() && resource.data.userId == request.auth.uid;
+      allow delete: if isLoggedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+    }
+
+    // ── Prompts collection ────────────────────────────────────────────────────
+    match /prompts/{promptId} {
+      allow read: if isLoggedIn();
+      allow write: if isAdmin();
+    }
+
+    // ── Blogs collection ──────────────────────────────────────────────────────
+    match /blogs/{blogId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // ── Notifications collection ──────────────────────────────────────────────
+    match /notifications/{notifId} {
+      allow read: if isLoggedIn() && (resource.data.target == 'all' || resource.data.target == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.plan || isAdmin());
+      allow list: if isAdmin();
+      allow create: if isAdmin();
+      allow update: if isLoggedIn() && (resource.data.target == 'all' || isAdmin());
+      allow delete: if isAdmin();
+    }
+
+    // ── Settings collection ───────────────────────────────────────────────────
+    match /settings/{settingId} {
+      allow read: if isAdmin();
+      allow write: if isAdmin();
+    }
+
+    // ── Admin Logs collection ─────────────────────────────────────────────────
+    match /admin_logs/{logId} {
+      allow read: if isAdmin();
+      allow create: if isAdmin();
+      allow update, delete: if false;
+    }
+
+    // ── Orders collection ─────────────────────────────────────────────────────
     match /orders/{orderId} {
       allow read: if isLoggedIn() && (resource.data.userId == request.auth.uid || isAdmin());
       allow create: if isLoggedIn() && isVerifiedUser() &&
@@ -77,13 +128,13 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
-    // ── Payments collection (webhook records) ─────────────────────────────────
+    // ── Payments collection ───────────────────────────────────────────────────
     match /payments/{paymentId} {
       allow read: if isLoggedIn() && (resource.data.userId == request.auth.uid || isAdmin());
       allow write: if isAdmin();
     }
 
-    // ── Public config (read-only for everyone) ─────────────────────────────────
+    // ── Public config ─────────────────────────────────────────────────────────
     match /config/{docId} {
       allow read: if true;
       allow write: if isAdmin();
