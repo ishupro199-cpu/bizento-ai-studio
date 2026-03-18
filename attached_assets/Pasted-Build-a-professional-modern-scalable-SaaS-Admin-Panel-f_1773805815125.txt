@@ -1,0 +1,270 @@
+Build a professional, modern, scalable SaaS Admin Panel for an AI-powered ecommerce automation platform named "Pixalera".
+
+The design must be clean, minimal, and premium like Stripe, Shopify, and Notion dashboards. Use a dark theme with primary colors:
+
+* Background: #222222 (Night)
+* Accent: #89E900 (Kiwi)
+* Rounded corners, soft shadows, smooth hover effects
+* Fully responsive (desktop-first)
+
+---
+
+## 🧩 GLOBAL LAYOUT STRUCTURE
+
+Create a fixed sidebar on the left and a top navbar.
+
+Sidebar Menu:
+
+* Dashboard
+* Users
+* Billing & Plans
+* Credits
+* AI Tools
+* Projects
+* Analytics
+* Marketing
+* CMS
+* Blog
+* Prompt Library
+* Notifications
+* Settings
+* Support
+* Logs
+
+Top Navbar:
+
+* Search bar
+* Notifications bell icon
+* Admin profile dropdown
+* Quick actions button (Send Notification, Add User, etc.)
+
+---
+
+## 📊 DASHBOARD (HOME)
+
+Show key metrics:
+
+* Total Users (active/new/churned)
+* Revenue (MRR, ARR, daily)
+* Credits usage
+* Feature usage stats
+* Recent activities
+* Alerts (low credits, spikes)
+
+Include charts:
+
+* Revenue graph
+* User growth graph
+* Feature usage graph
+
+---
+
+## 👤 USERS MANAGEMENT
+
+* Table with users (search, filter, pagination)
+* User profile view:
+
+  * Name, email
+  * Plan
+  * Credits
+  * Usage
+* Actions:
+
+  * Ban / Suspend / Delete
+  * Reset password
+  * Login as user
+* User activity timeline
+
+---
+
+## 💳 BILLING & PLANS
+
+* Create/edit/delete plans
+* Monthly/yearly pricing toggle
+* Credit-based pricing system
+* Assign plans manually
+* Coupons & discounts
+* Payment history
+* Refund management
+
+---
+
+## ⚡ CREDITS SYSTEM
+
+* Define credit cost per feature
+* Add/remove credits manually
+* Auto refill logic
+* Credit usage logs
+
+---
+
+## 🤖 AI TOOLS CONTROL
+
+* Enable/disable tools:
+
+  * Catalog generator
+  * Image generator
+  * CGI ads
+  * Fashion AI
+* Set cost per usage
+* Manage prompt templates
+
+---
+
+## 📦 PROJECTS / OUTPUTS
+
+* Track generated images/videos
+* User project history
+* Delete/moderate outputs
+
+---
+
+## 📊 ANALYTICS
+
+* Revenue analytics
+* User growth
+* Conversion rates
+* Feature usage
+* Export reports
+
+---
+
+## 📢 MARKETING
+
+* Email campaigns
+* Referral tracking
+* Affiliate system
+* Promo banners
+
+---
+
+## 🧾 CMS
+
+* Manage landing pages
+* FAQs
+* Terms & Privacy
+* Announcement bar
+
+---
+
+## 📝 BLOG MANAGEMENT
+
+* Create/edit/delete blog posts
+* Rich text editor
+* Categories & tags
+* SEO fields (meta title, description)
+* Draft/publish/schedule
+
+---
+
+## 🧠 PROMPT LIBRARY
+
+* Add/edit/delete prompts
+* Categories
+* Tags
+* Mark as featured/premium
+* Assign prompts to plans
+* Prompt usage analytics
+* One-click apply prompt
+
+---
+
+## 🔔 NOTIFICATIONS SYSTEM
+
+* Send to:
+
+  * All users
+  * Specific users
+  * Plan-based users
+* Notification types:
+
+  * In-app
+  * Email
+* Schedule notifications
+* Templates with dynamic variables
+* Analytics (open rate, click rate)
+
+---
+
+## ⚙️ SETTINGS PANEL
+
+Include:
+
+1. General Settings
+
+* App name, logo, theme
+
+2. Maintenance Mode
+
+* Toggle ON/OFF
+* Custom message
+* Allow admin bypass
+
+3. Billing Settings
+
+* Payment gateway config
+* Currency & tax
+
+4. AI Settings
+
+* API keys
+* Cost control
+
+5. Email Settings
+
+* SMTP config
+
+6. Notification Settings
+
+* Enable/disable channels
+
+7. Security Settings
+
+* Session control
+* Admin protection
+
+8. Feature Flags
+
+* Enable/disable features globally
+
+9. Integrations
+
+* Webhooks
+* API access
+
+10. Legal
+
+* Terms, Privacy, Cookies
+
+---
+
+## 🎧 SUPPORT SYSTEM
+
+* User tickets
+* Status tracking
+* Resolve/escalate
+
+---
+
+## 🧾 LOGS & TRACKING
+
+* Payment logs
+* Credit logs
+* Admin activity logs
+* API usage logs
+
+---
+
+## 🧠 UX BEHAVIOR
+
+* Smooth transitions
+* Hover animations
+* Toast notifications
+* Loading skeletons
+* Empty states
+
+---
+
+## 🚀 GOAL
+
+Make the admin panel feel like a premium SaaS product used by global companies. It should be powerful yet simple, highly structured, and visually clean.

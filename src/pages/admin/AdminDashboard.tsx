@@ -1,15 +1,24 @@
+import { Card, Row, Col, Statistic, Tag, Skeleton, Typography, Progress } from "antd";
 import {
-  Users, Zap, CreditCard, TrendingUp, BarChart3, Clock,
-  LayoutGrid, Camera, Clapperboard, Megaphone, Sparkles, Timer,
-} from "lucide-react";
+  UsersIcon,
+  BoltIcon,
+  CreditCardIcon,
+  SparklesIcon,
+  ClockIcon,
+  CheckCircleIcon,
+  ArrowTrendingUpIcon,
+  CameraIcon,
+  FilmIcon,
+  MegaphoneIcon,
+  Squares2X2Icon,
+} from "@heroicons/react/24/outline";
 import { useAdminStats } from "@/hooks/useAdminStats";
 
-const TOOL_ICONS: Record<string, React.ElementType> = {
-  "Generate Catalog": LayoutGrid,
-  "Product Photography": Camera,
-  "Cinematic Ads": Clapperboard,
-  "Ad Creatives": Megaphone,
-};
+const ACCENT = "#89E900";
+const CARD_BG = "#2a2a2a";
+const BORDER = "#333";
+
+const { Title, Text } = Typography;
 
 function timeAgo(date: Date): string {
   const diff = Math.floor((Date.now() - date.getTime()) / 1000);
@@ -17,6 +26,55 @@ function timeAgo(date: Date): string {
   if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
   if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
   return `${Math.floor(diff / 86400)}d ago`;
+}
+
+const TOOL_ICONS: Record<string, React.ElementType> = {
+  "Generate Catalog": Squares2X2Icon,
+  "Product Photography": CameraIcon,
+  "Cinematic Ads": FilmIcon,
+  "Ad Creatives": MegaphoneIcon,
+};
+
+interface StatCardProps {
+  label: string;
+  value: string | number;
+  icon: React.ElementType;
+  iconColor: string;
+  iconBg: string;
+  loading: boolean;
+  suffix?: string;
+}
+
+function StatCard({ label, value, icon: Icon, iconColor, iconBg, loading, suffix }: StatCardProps) {
+  return (
+    <Card
+      style={{ background: CARD_BG, border: `1px solid ${BORDER}`, borderRadius: 12 }}
+      styles={{ body: { padding: "18px 20px" } }}
+    >
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
+        <div>
+          <Text style={{ fontSize: 12, color: "rgba(255,255,255,0.45)", letterSpacing: "0.3px", display: "block", marginBottom: 8 }}>
+            {label}
+          </Text>
+          {loading ? (
+            <Skeleton.Input active style={{ width: 80, height: 28 }} />
+          ) : (
+            <div style={{ fontSize: 26, fontWeight: 700, color: "#fff", letterSpacing: "-0.5px", lineHeight: 1 }}>
+              {value}
+              {suffix && <span style={{ fontSize: 14, fontWeight: 400, color: "rgba(255,255,255,0.5)", marginLeft: 4 }}>{suffix}</span>}
+            </div>
+          )}
+        </div>
+        <div style={{ width: 40, height: 40, borderRadius: 10, background: iconBg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+          <Icon style={{ width: 20, height: 20, color: iconColor }} />
+        </div>
+      </div>
+      <div style={{ marginTop: 12, display: "flex", alignItems: "center", gap: 6 }}>
+        <span style={{ width: 6, height: 6, borderRadius: "50%", background: ACCENT, display: "inline-block", animation: "pulse 2s infinite" }} />
+        <Text style={{ fontSize: 11, color: "rgba(255,255,255,0.3)" }}>Live</Text>
+      </div>
+    </Card>
+  );
 }
 
 export default function AdminDashboard() {
@@ -29,174 +87,222 @@ export default function AdminDashboard() {
   const aiRate = aiSuccessRate();
 
   const statCards = [
-    { label: "Total Users", value: stats.loading ? "—" : stats.totalUsers.toLocaleString(), icon: Users, color: "text-blue-400" },
-    { label: "Total Generations", value: stats.loading ? "—" : stats.totalGenerations.toLocaleString(), icon: Zap, color: "text-primary" },
-    { label: "Credits Used", value: stats.loading ? "—" : stats.totalCreditsUsed.toLocaleString(), icon: CreditCard, color: "text-amber-400" },
-    { label: "Flash Gens", value: stats.loading ? "—" : stats.flashGenerations.toLocaleString(), icon: TrendingUp, color: "text-green-400" },
-    { label: "Pro Gens", value: stats.loading ? "—" : stats.proGenerations.toLocaleString(), icon: BarChart3, color: "text-purple-400" },
-    { label: "Real AI Images", value: stats.loading ? "—" : stats.realImageGenerations.toLocaleString(), icon: Sparkles, color: "text-primary" },
+    { label: "Total Users", value: stats.totalUsers.toLocaleString(), icon: UsersIcon, iconColor: "#60a5fa", iconBg: "rgba(96,165,250,0.12)" },
+    { label: "Total Generations", value: stats.totalGenerations.toLocaleString(), icon: BoltIcon, iconColor: ACCENT, iconBg: "rgba(137,233,0,0.12)" },
+    { label: "Credits Used", value: stats.totalCreditsUsed.toLocaleString(), icon: CreditCardIcon, iconColor: "#f59e0b", iconBg: "rgba(245,158,11,0.12)" },
+    { label: "Flash Gens", value: stats.flashGenerations.toLocaleString(), icon: ArrowTrendingUpIcon, iconColor: "#34d399", iconBg: "rgba(52,211,153,0.12)" },
+    { label: "Pro Gens", value: stats.proGenerations.toLocaleString(), icon: SparklesIcon, iconColor: "#a78bfa", iconBg: "rgba(167,139,250,0.12)" },
+    { label: "Real AI Images", value: stats.realImageGenerations.toLocaleString(), icon: CameraIcon, iconColor: ACCENT, iconBg: "rgba(137,233,0,0.08)" },
   ];
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
+    <div style={{ fontFamily: '"SF Pro Display", -apple-system, BlinkMacSystemFont, "Inter", sans-serif' }}>
+      <div style={{ marginBottom: 24, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div>
+          <Title level={3} style={{ color: "#fff", margin: 0, fontWeight: 700, letterSpacing: "-0.5px" }}>
+            Dashboard
+          </Title>
+          <Text style={{ color: "rgba(255,255,255,0.4)", fontSize: 13 }}>
+            Welcome back — here's what's happening at Pixalera.
+          </Text>
+        </div>
+        <Tag color={ACCENT} style={{ color: "#000", fontWeight: 600, borderRadius: 20, fontSize: 11, padding: "3px 10px", border: "none" }}>
+          ● Live Data
+        </Tag>
+      </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-        {statCards.map((stat) => (
-          <div key={stat.label} className="glass rounded-xl p-4">
-            <div className="flex items-center justify-between mb-2">
-              <stat.icon className={`h-4 w-4 ${stat.color}`} />
-              <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-            </div>
-            <p className="text-xl font-bold text-foreground">{stat.value}</p>
-            <p className="text-xs text-muted-foreground mt-0.5">{stat.label}</p>
-          </div>
+      <Row gutter={[14, 14]} style={{ marginBottom: 20 }}>
+        {statCards.map((card) => (
+          <Col key={card.label} xs={12} sm={8} lg={4}>
+            <StatCard {...card} loading={stats.loading} />
+          </Col>
         ))}
-      </div>
+      </Row>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div className="glass rounded-xl p-4 flex items-center gap-4">
-          <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-            <Timer className="h-5 w-5 text-primary" />
-          </div>
-          <div>
-            <p className="text-xl font-bold text-foreground">
-              {stats.loading ? "—" : avgTime > 0 ? `${avgTime}s` : "N/A"}
-            </p>
-            <p className="text-xs text-muted-foreground">Avg. Generation Time</p>
-          </div>
-        </div>
-        <div className="glass rounded-xl p-4 flex items-center gap-4">
-          <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-            <Sparkles className="h-5 w-5 text-primary" />
-          </div>
-          <div>
-            <p className="text-xl font-bold text-foreground">
-              {stats.loading ? "—" : `${aiRate}%`}
-            </p>
-            <p className="text-xs text-muted-foreground">AI Image Success Rate</p>
-          </div>
-        </div>
-      </div>
+      <Row gutter={[14, 14]} style={{ marginBottom: 20 }}>
+        <Col xs={24} sm={12}>
+          <Card style={{ background: CARD_BG, border: `1px solid ${BORDER}`, borderRadius: 12 }} styles={{ body: { padding: 20 } }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <div style={{ width: 44, height: 44, borderRadius: 12, background: "rgba(137,233,0,0.12)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <ClockIcon style={{ width: 22, height: 22, color: ACCENT }} />
+              </div>
+              <div>
+                <Text style={{ fontSize: 12, color: "rgba(255,255,255,0.4)", display: "block" }}>Avg. Generation Time</Text>
+                <div style={{ fontSize: 24, fontWeight: 700, color: "#fff", letterSpacing: "-0.5px" }}>
+                  {stats.loading ? "—" : avgTime > 0 ? `${avgTime}s` : "N/A"}
+                </div>
+              </div>
+            </div>
+          </Card>
+        </Col>
+        <Col xs={24} sm={12}>
+          <Card style={{ background: CARD_BG, border: `1px solid ${BORDER}`, borderRadius: 12 }} styles={{ body: { padding: 20 } }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <div style={{ width: 44, height: 44, borderRadius: 12, background: "rgba(137,233,0,0.12)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <CheckCircleIcon style={{ width: 22, height: 22, color: ACCENT }} />
+              </div>
+              <div>
+                <Text style={{ fontSize: 12, color: "rgba(255,255,255,0.4)", display: "block" }}>AI Success Rate</Text>
+                <div style={{ fontSize: 24, fontWeight: 700, color: "#fff", letterSpacing: "-0.5px" }}>
+                  {stats.loading ? "—" : `${aiRate}%`}
+                </div>
+              </div>
+            </div>
+          </Card>
+        </Col>
+      </Row>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="glass rounded-xl p-6">
-          <h3 className="text-sm font-semibold mb-4 flex items-center gap-2 text-foreground">
-            <BarChart3 className="h-4 w-4 text-primary" /> Daily Generations (last 7 days)
-          </h3>
-          <div className="flex items-end gap-2 h-32">
-            {dailyData.map((d) => (
-              <div key={d.day} className="flex-1 flex flex-col items-center gap-1">
-                <span className="text-[10px] text-muted-foreground">{d.count}</span>
-                <div
-                  className="w-full rounded-t-md bg-primary/80 transition-all duration-500"
-                  style={{ height: `${Math.max((d.count / maxDaily) * 100, d.count > 0 ? 6 : 0)}%` }}
+      <Row gutter={[14, 14]} style={{ marginBottom: 20 }}>
+        <Col xs={24} lg={14}>
+          <Card
+            title={<span style={{ color: "#fff", fontSize: 13, fontWeight: 600 }}>Daily Generations — Last 7 Days</span>}
+            style={{ background: CARD_BG, border: `1px solid ${BORDER}`, borderRadius: 12 }}
+            styles={{ header: { background: "transparent", borderBottom: `1px solid ${BORDER}`, minHeight: 48 }, body: { padding: 20 } }}
+          >
+            <div style={{ display: "flex", alignItems: "flex-end", gap: 6, height: 130 }}>
+              {dailyData.map((d) => (
+                <div key={d.day} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+                  <span style={{ fontSize: 10, color: "rgba(255,255,255,0.4)" }}>{d.count || ""}</span>
+                  <div
+                    style={{
+                      width: "100%",
+                      borderRadius: "4px 4px 0 0",
+                      background: `linear-gradient(180deg, ${ACCENT} 0%, rgba(137,233,0,0.6) 100%)`,
+                      transition: "height 0.5s ease",
+                      height: `${Math.max((d.count / maxDaily) * 100, d.count > 0 ? 6 : 0)}%`,
+                      minHeight: d.count > 0 ? 4 : 0,
+                    }}
+                  />
+                  <span style={{ fontSize: 10, color: "rgba(255,255,255,0.4)" }}>{d.label}</span>
+                </div>
+              ))}
+            </div>
+            {stats.totalGenerations === 0 && !stats.loading && (
+              <Text style={{ fontSize: 12, color: "rgba(255,255,255,0.3)", display: "block", textAlign: "center", marginTop: 12 }}>
+                No generations yet — data appears here in real time
+              </Text>
+            )}
+          </Card>
+        </Col>
+
+        <Col xs={24} lg={10}>
+          <Card
+            title={<span style={{ color: "#fff", fontSize: 13, fontWeight: 600 }}>Model Usage</span>}
+            style={{ background: CARD_BG, border: `1px solid ${BORDER}`, borderRadius: 12, height: "100%" }}
+            styles={{ header: { background: "transparent", borderBottom: `1px solid ${BORDER}`, minHeight: 48 }, body: { padding: 20 } }}
+          >
+            <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+              <div>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+                  <Text style={{ fontSize: 13, color: "rgba(255,255,255,0.6)" }}>Flash Model</Text>
+                  <Text style={{ fontSize: 13, color: "#fff", fontWeight: 600 }}>{flashPct}%</Text>
+                </div>
+                <Progress
+                  percent={flashPct}
+                  showInfo={false}
+                  strokeColor={ACCENT}
+                  trailColor="rgba(255,255,255,0.08)"
+                  size={{ height: 8 }}
                 />
-                <span className="text-[10px] text-muted-foreground">{d.label}</span>
+                <Text style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", marginTop: 4, display: "block" }}>
+                  {stats.flashGenerations} jobs
+                </Text>
               </div>
-            ))}
-          </div>
-          {stats.totalGenerations === 0 && !stats.loading && (
-            <p className="text-xs text-muted-foreground text-center mt-3">
-              No generations yet — data appears here in real time after users generate
-            </p>
-          )}
-        </div>
-
-        <div className="glass rounded-xl p-6 space-y-4">
-          <h3 className="text-sm font-semibold text-foreground">Model Usage</h3>
-          <div className="space-y-3">
-            <div>
-              <div className="flex items-center justify-between text-sm mb-1.5">
-                <span className="text-muted-foreground">Flash (Nano Bana Flash)</span>
-                <span className="text-foreground font-medium">{flashPct}%</span>
+              <div>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+                  <Text style={{ fontSize: 13, color: "rgba(255,255,255,0.6)" }}>Pro Model</Text>
+                  <Text style={{ fontSize: 13, color: "#fff", fontWeight: 600 }}>{proPct}%</Text>
+                </div>
+                <Progress
+                  percent={proPct}
+                  showInfo={false}
+                  strokeColor="rgba(137,233,0,0.55)"
+                  trailColor="rgba(255,255,255,0.08)"
+                  size={{ height: 8 }}
+                />
+                <Text style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", marginTop: 4, display: "block" }}>
+                  {stats.proGenerations} jobs
+                </Text>
               </div>
-              <div className="h-2.5 rounded-full bg-muted overflow-hidden">
-                <div
-                  className="h-full rounded-full bg-primary transition-all duration-700"
-                  style={{ width: `${flashPct}%` }}
+              <div style={{ borderTop: `1px solid ${BORDER}`, paddingTop: 16 }}>
+                <Text style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", textTransform: "uppercase", letterSpacing: "0.5px", display: "block", marginBottom: 10 }}>
+                  AI Pipeline
+                </Text>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+                  <Text style={{ fontSize: 12, color: "rgba(255,255,255,0.6)" }}>Real AI Images</Text>
+                  <Text style={{ fontSize: 12, color: ACCENT, fontWeight: 600 }}>{aiRate}%</Text>
+                </div>
+                <Progress
+                  percent={aiRate}
+                  showInfo={false}
+                  strokeColor={ACCENT}
+                  trailColor="rgba(255,255,255,0.08)"
+                  size={{ height: 6 }}
                 />
               </div>
             </div>
-            <div>
-              <div className="flex items-center justify-between text-sm mb-1.5">
-                <span className="text-muted-foreground">Pro (Nano Bana Pro)</span>
-                <span className="text-foreground font-medium">{proPct}%</span>
-              </div>
-              <div className="h-2.5 rounded-full bg-muted overflow-hidden">
-                <div
-                  className="h-full rounded-full bg-primary/60 transition-all duration-700"
-                  style={{ width: `${proPct}%` }}
-                />
-              </div>
-            </div>
-          </div>
-          <div className="pt-2 border-t border-white/5">
-            <div className="flex justify-between text-xs text-muted-foreground">
-              <span>{stats.flashGenerations} Flash jobs</span>
-              <span>{stats.proGenerations} Pro jobs</span>
-            </div>
-          </div>
+          </Card>
+        </Col>
+      </Row>
 
-          <div className="pt-2 space-y-2">
-            <h4 className="text-xs font-medium text-muted-foreground/70 uppercase tracking-wider">AI Pipeline</h4>
-            <div>
-              <div className="flex items-center justify-between text-xs mb-1">
-                <span className="text-muted-foreground">Real AI Images</span>
-                <span className="text-primary font-medium">{aiRate}%</span>
-              </div>
-              <div className="h-2 rounded-full bg-muted overflow-hidden">
-                <div
-                  className="h-full rounded-full bg-primary/80 transition-all duration-700"
-                  style={{ width: `${aiRate}%` }}
-                />
-              </div>
-            </div>
+      <Card
+        title={
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <ClockIcon style={{ width: 15, height: 15, color: ACCENT }} />
+            <span style={{ color: "#fff", fontSize: 13, fontWeight: 600 }}>Recent Activity</span>
           </div>
-        </div>
-      </div>
-
-      <div className="glass rounded-xl p-6">
-        <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
-          <Clock className="h-4 w-4 text-primary" /> Recent Activity
-        </h3>
+        }
+        style={{ background: CARD_BG, border: `1px solid ${BORDER}`, borderRadius: 12 }}
+        styles={{ header: { background: "transparent", borderBottom: `1px solid ${BORDER}`, minHeight: 48 }, body: { padding: 20 } }}
+      >
         {activityLoading ? (
-          <div className="space-y-3">
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="h-8 rounded-lg bg-white/5 animate-pulse" />
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {[...Array(5)].map((_, i) => (
+              <Skeleton.Input key={i} active style={{ width: "100%", height: 36 }} />
             ))}
           </div>
         ) : recentActivity.length === 0 ? (
-          <p className="text-sm text-muted-foreground text-center py-4">
+          <Text style={{ fontSize: 13, color: "rgba(255,255,255,0.3)", display: "block", textAlign: "center", padding: "20px 0" }}>
             No activity yet — generations will appear here in real time
-          </p>
+          </Text>
         ) : (
-          <div className="space-y-2.5">
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {recentActivity.slice(0, 8).map((a) => {
-              const Icon = TOOL_ICONS[a.tool] || Zap;
+              const Icon = TOOL_ICONS[a.tool] || BoltIcon;
               return (
-                <div key={a.id} className="flex items-center gap-3 text-sm">
-                  <div className="h-7 w-7 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                    <Icon className="h-3.5 w-3.5 text-primary" />
+                <div
+                  key={a.id}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 12,
+                    padding: "8px 12px",
+                    borderRadius: 10,
+                    background: "rgba(255,255,255,0.03)",
+                    border: `1px solid rgba(255,255,255,0.05)`,
+                  }}
+                >
+                  <div style={{ width: 32, height: 32, borderRadius: 8, background: "rgba(137,233,0,0.1)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    <Icon style={{ width: 15, height: 15, color: ACCENT }} />
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <span className="text-muted-foreground truncate block">{a.description}</span>
-                    <span className="text-[10px] text-muted-foreground/60">
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <Text style={{ fontSize: 13, color: "rgba(255,255,255,0.8)", display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {a.description}
+                    </Text>
+                    <Text style={{ fontSize: 11, color: "rgba(255,255,255,0.35)" }}>
                       {a.tool} · {a.model === "pro" ? "Pro" : "Flash"}
-                      {a.hasRealImages && (
-                        <span className="text-primary ml-1">· AI image</span>
-                      )}
-                    </span>
+                      {a.hasRealImages && <span style={{ color: ACCENT, marginLeft: 6 }}>· AI image</span>}
+                    </Text>
                   </div>
-                  <span className="text-[10px] text-muted-foreground/50 shrink-0">
+                  <Text style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", flexShrink: 0 }}>
                     {timeAgo(a.timestamp)}
-                  </span>
+                  </Text>
                 </div>
               );
             })}
           </div>
         )}
-      </div>
+      </Card>
     </div>
   );
 }

@@ -88,11 +88,20 @@ const App = () => (
             <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
               <Route index element={<AdminDashboard />} />
               <Route path="users" element={<AdminUsersPage />} />
+              <Route path="billing" element={<AdminPlaceholder title="Billing & Plans" />} />
               <Route path="credits" element={<AdminPlaceholder title="Credits" />} />
-              <Route path="billing" element={<AdminPlaceholder title="Billing" />} />
+              <Route path="ai-tools" element={<AdminPlaceholder title="AI Tools" />} />
+              <Route path="projects" element={<AdminPlaceholder title="Projects" />} />
               <Route path="analytics" element={<AdminAnalyticsPage />} />
-              <Route path="moderation" element={<AdminModerationPage />} />
+              <Route path="marketing" element={<AdminPlaceholder title="Marketing" />} />
+              <Route path="cms" element={<AdminPlaceholder title="CMS" />} />
+              <Route path="blog" element={<AdminPlaceholder title="Blog" />} />
+              <Route path="prompts" element={<AdminPlaceholder title="Prompt Library" />} />
+              <Route path="notifications" element={<AdminPlaceholder title="Notifications" />} />
+              <Route path="settings" element={<AdminPlaceholder title="Settings" />} />
               <Route path="support" element={<AdminPlaceholder title="Support" />} />
+              <Route path="logs" element={<AdminPlaceholder title="Logs" />} />
+              <Route path="moderation" element={<AdminModerationPage />} />
               <Route path="system" element={<AdminSystemPage />} />
             </Route>
 
