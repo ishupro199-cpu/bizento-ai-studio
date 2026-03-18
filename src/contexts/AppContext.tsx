@@ -4,24 +4,118 @@ import { useUserProfile, useGenerations, updateAdminStats } from "@/hooks/useFir
 
 export type PlanId = "free" | "starter" | "pro";
 export type ModelId = "flash" | "pro";
+export type ToolId = "catalog" | "photo" | "creative" | "cinematic";
+export type QualityId = "720p" | "1K" | "2K" | "4K";
 
 export interface PlanConfig {
   id: PlanId;
   name: string;
   credits: number;
+  bonusCredits: number;
   price: string;
+  priceAmount: number;
+  billingPeriod: string;
   features: string[];
   allowPro: boolean;
   watermark: boolean;
+  maxQuality: QualityId;
+  allowedTools: ToolId[];
 }
 
 export const PLANS: Record<PlanId, PlanConfig> = {
-  free: { id: "free", name: "Free", credits: 3, price: "$0", features: ["3 credits/month", "Flash model only", "Watermark on images", "Basic support"], allowPro: false, watermark: true },
-  starter: { id: "starter", name: "Starter", credits: 20, price: "$9", features: ["20 credits/month", "Flash model only", "No watermark", "Priority support"], allowPro: false, watermark: false },
-  pro: { id: "pro", name: "Pro", credits: 50, price: "$29", features: ["50 credits/month", "Flash + Pro models", "No watermark", "Priority support", "Early access to features"], allowPro: true, watermark: false },
+  free: {
+    id: "free",
+    name: "Free",
+    credits: 15,
+    bonusCredits: 0,
+    price: "₹0",
+    priceAmount: 0,
+    billingPeriod: "month",
+    features: [
+      "15 credits/month",
+      "Catalog generation (limited)",
+      "Flash model only",
+      "Max quality: 1080p",
+      "No prompt library",
+    ],
+    allowPro: false,
+    watermark: true,
+    maxQuality: "1K",
+    allowedTools: ["catalog", "photo", "creative"],
+  },
+  starter: {
+    id: "starter",
+    name: "Starter",
+    credits: 100,
+    bonusCredits: 20,
+    price: "₹99",
+    priceAmount: 99,
+    billingPeriod: "month",
+    features: [
+      "100 credits/month",
+      "+20 bonus credits on purchase",
+      "Catalog, Photography, Ad Creatives",
+      "Flash + Pro models",
+      "Max quality: 2K",
+      "Basic Prompt Library",
+      "SEO title & description",
+      "Full history access",
+    ],
+    allowPro: true,
+    watermark: false,
+    maxQuality: "2K",
+    allowedTools: ["catalog", "photo", "creative"],
+  },
+  pro: {
+    id: "pro",
+    name: "Pro",
+    credits: 450,
+    bonusCredits: 50,
+    price: "₹399",
+    priceAmount: 399,
+    billingPeriod: "3 months",
+    features: [
+      "450 credits (3 months)",
+      "+50 bonus credits",
+      "All tools unlocked",
+      "Cinematic Ads (CGI Ads)",
+      "Flash + Pro models",
+      "Max quality: 4K",
+      "Full Prompt Library",
+      "AI prompt suggestions",
+      "Advanced SEO listings",
+      "Priority processing",
+    ],
+    allowPro: true,
+    watermark: false,
+    maxQuality: "4K",
+    allowedTools: ["catalog", "photo", "creative", "cinematic"],
+  },
 };
 
-export const CREDIT_COSTS: Record<ModelId, number> = { flash: 1, pro: 2 };
+export const TOOL_CREDIT_COSTS: Record<ToolId, Record<ModelId, number>> = {
+  catalog:   { flash: 5,  pro: 10 },
+  photo:     { flash: 3,  pro: 5  },
+  creative:  { flash: 3,  pro: 5  },
+  cinematic: { flash: 30, pro: 50 },
+};
+
+export const QUALITY_ADDON_COSTS: Record<QualityId, number> = {
+  "720p": 0,
+  "1K":   0,
+  "2K":   4,
+  "4K":   8,
+};
+
+export function calculateCreditCost(
+  tool: ToolId,
+  model: ModelId,
+  quality: QualityId
+): number {
+  const base = TOOL_CREDIT_COSTS[tool]?.[model] ?? 3;
+  const addon = QUALITY_ADDON_COSTS[quality] ?? 0;
+  return base + addon;
+}
 
 export interface GenerationRecord {
   id: string;
@@ -66,6 +160,7 @@ interface AppContextType {
   switchPlan: (plan: PlanId) => void;
   canGenerate: boolean;
   creditCost: number;
+  getCreditCost: (tool: ToolId, model: ModelId, quality: QualityId) => number;
   firestoreLoading: boolean;
 }
 
@@ -82,7 +177,7 @@ const DEFAULT_USER: UserProfile = {
   email: "",
   photoURL: "",
   plan: "free",
-  creditsRemaining: 3,
+  creditsRemaining: 15,
   creditsUsed: 0,
   flashGenerations: 0,
   proGenerations: 0,
@@ -102,7 +197,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         email: profile.email || authUser?.email || "",
         photoURL: profile.photoURL || authUser?.photoURL || "",
         plan: (profile.plan as PlanId) || "free",
-        creditsRemaining: profile.creditsRemaining ?? 3,
+        creditsRemaining: profile.creditsRemaining ?? 15,
         creditsUsed: profile.creditsUsed ?? 0,
         flashGenerations: profile.flashGenerations ?? 0,
         proGenerations: profile.proGenerations ?? 0,
@@ -123,7 +218,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     imageUrls: g.imageUrls,
   }));
 
-  const creditCost = CREDIT_COSTS[selectedModel];
+  const creditCost = calculateCreditCost("catalog", selectedModel, "1K");
   const canGenerate = user.creditsRemaining >= creditCost;
 
   const setSelectedModel = useCallback((model: ModelId): boolean => {
@@ -137,7 +232,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const addGeneration = useCallback(
     (record: Omit<GenerationRecord, "id" | "creditsConsumed">) => {
-      const cost = CREDIT_COSTS[record.model];
+      const toolId = Object.entries({
+        "Generate Catalog": "catalog",
+        "Product Photography": "photo",
+        "Ad Creatives": "creative",
+        "Cinematic Ads": "cinematic",
+      }).find(([name]) => record.tool === name)?.[1] as ToolId ?? "catalog";
+      const cost = calculateCreditCost(toolId, record.model, "1K");
       firestoreAdd({
         prompt: record.prompt,
         augmentedPrompt: record.augmentedPrompt || "",
@@ -168,7 +269,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const switchPlan = useCallback((plan: PlanId) => {
     const planConfig = PLANS[plan];
-    firestoreSwitchPlan(plan, planConfig.credits);
+    firestoreSwitchPlan(plan, planConfig.credits + planConfig.bonusCredits);
     if (!planConfig.allowPro && selectedModel === "pro") {
       setSelectedModelState("flash");
     }
@@ -185,7 +286,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       value={{
         user, selectedModel, setSelectedModel, generations, addGeneration, deleteGeneration,
         catalogs, ads, allImages, showUpgradeModal, setShowUpgradeModal, switchPlan,
-        canGenerate, creditCost, firestoreLoading: false,
+        canGenerate, creditCost, getCreditCost: calculateCreditCost, firestoreLoading: false,
       }}
     >
       {children}

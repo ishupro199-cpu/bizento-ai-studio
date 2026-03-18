@@ -2,11 +2,13 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import {
   Send, LayoutGrid, Camera, Clapperboard, Megaphone,
   AlertTriangle, Check, Plus, Upload, Image as ImageIcon,
-  RotateCcw, Sparkles, ThumbsUp, ChevronDown,
-  X, Link2, Settings2, Lock,
+  RotateCcw, Sparkles, ThumbsUp, Zap,
+  X, Link2, Settings2, Lock, Info,
 } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { useAppContext } from "@/contexts/AppContext";
+import type { ToolId, QualityId, ModelId } from "@/contexts/AppContext";
+import { TOOL_CREDIT_COSTS, QUALITY_ADDON_COSTS, PLANS, calculateCreditCost } from "@/contexts/AppContext";
 import { useChatContext } from "@/contexts/ChatContext";
 import { Button } from "@/components/ui/button";
 import { useImageUpload } from "@/hooks/useImageUpload";
@@ -22,11 +24,40 @@ import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { storage } from "@/lib/firebase";
 import { PlatformOptimization } from "@/components/app/PlatformOptimization";
 
-const tools = [
-  { id: "catalog", name: "Generate Catalog", icon: LayoutGrid },
-  { id: "photo", name: "Product Photography", icon: Camera },
-  { id: "cinematic", name: "Cinematic Ads", icon: Clapperboard },
-  { id: "creative", name: "Ad Creatives", icon: Megaphone },
+const TOOL_DEFS: Array<{
+  id: ToolId;
+  name: string;
+  icon: React.ElementType;
+  desc: string;
+  tooltip?: string;
+  proOnly?: boolean;
+}> = [
+  {
+    id: "catalog",
+    name: "Catalog Generator",
+    icon: LayoutGrid,
+    desc: "Auto-generate studio-quality product catalog images for marketplaces",
+  },
+  {
+    id: "photo",
+    name: "Product Photography",
+    icon: Camera,
+    desc: "Transform raw product shots into professional lifestyle photography",
+  },
+  {
+    id: "creative",
+    name: "Ad Creatives",
+    icon: Megaphone,
+    desc: "Design scroll-stopping image ads optimised for social & paid channels",
+  },
+  {
+    id: "cinematic",
+    name: "Cinematic Ads",
+    icon: Clapperboard,
+    desc: "Generate high-quality cinematic CGI product ads with lighting, depth, and premium environments",
+    tooltip: "Create cinematic CGI ads with advanced lighting, shadows, and realistic environments",
+    proOnly: true,
+  },
 ];
 
 const THINKING_STEPS = [
@@ -39,11 +70,11 @@ const THINKING_STEPS = [
 ];
 
 const STYLE_CARDS = [
-  { id: "luxury",   label: "Luxury Studio",        sublabel: "Premium brand style",    gradient: "linear-gradient(135deg,#1a1400 0%,#7a5500 100%)" },
-  { id: "minimal",  label: "Amazon Clean",          sublabel: "Marketplace ready",       gradient: "linear-gradient(135deg,#f1f3f5 0%,#dee2e6 100%)" },
-  { id: "neon",     label: "Neon Futuristic",       sublabel: "Bold & viral",            gradient: "linear-gradient(135deg,#0d0221 0%,#2d0041 100%)" },
-  { id: "floral",   label: "Floral Lifestyle",      sublabel: "Soft & natural",          gradient: "linear-gradient(135deg,#fce4ec 0%,#e8f5e9 100%)" },
-  { id: "beach",    label: "Beach Campaign",        sublabel: "Warm lifestyle",          gradient: "linear-gradient(135deg,#0077b6 0%,#f9c74f 100%)" },
+  { id: "luxury",   label: "Luxury Studio",   sublabel: "Premium brand style",  gradient: "linear-gradient(135deg,#1a1400 0%,#7a5500 100%)" },
+  { id: "minimal",  label: "Amazon Clean",    sublabel: "Marketplace ready",     gradient: "linear-gradient(135deg,#f1f3f5 0%,#dee2e6 100%)" },
+  { id: "neon",     label: "Neon Futuristic", sublabel: "Bold & viral",          gradient: "linear-gradient(135deg,#0d0221 0%,#2d0041 100%)" },
+  { id: "floral",   label: "Floral Lifestyle",sublabel: "Soft & natural",        gradient: "linear-gradient(135deg,#fce4ec 0%,#e8f5e9 100%)" },
+  { id: "beach",    label: "Beach Campaign",  sublabel: "Warm lifestyle",        gradient: "linear-gradient(135deg,#0077b6 0%,#f9c74f 100%)" },
 ];
 
 const GRADIENTS = [
@@ -53,11 +84,12 @@ const GRADIENTS = [
 ];
 
 const ASPECT_RATIOS = ["1:1", "4:5", "16:9", "9:16", "3:2"];
-const QUALITIES = [
-  { id: "720p", label: "720p", pro: false },
-  { id: "1K",   label: "1K",   pro: false },
-  { id: "2K",   label: "2K",   pro: true  },
-  { id: "4K",   label: "4K",   pro: true  },
+
+const QUALITY_OPTIONS: Array<{ id: QualityId; label: string; minPlan: "free" | "starter" | "pro" }> = [
+  { id: "720p", label: "720p", minPlan: "free"    },
+  { id: "1K",   label: "1K",   minPlan: "free"    },
+  { id: "2K",   label: "2K",   minPlan: "starter" },
+  { id: "4K",   label: "4K",   minPlan: "pro"     },
 ];
 
 type ChatPhase = "idle" | "thinking" | "show-styles" | "generating" | "results" | "approved";
@@ -65,7 +97,7 @@ type ChatPhase = "idle" | "thinking" | "show-styles" | "generating" | "results" 
 interface GenSettings {
   aspectRatio: string;
   numOutputs: number;
-  quality: string;
+  quality: QualityId;
 }
 
 interface GeneratedImage {
@@ -75,7 +107,6 @@ interface GeneratedImage {
   isReal: boolean;
 }
 
-// ------- typing text animation -------
 function TypingText({ text, active }: { text: string; active: boolean }) {
   const [displayed, setDisplayed] = useState(active ? "" : text);
   const [idx, setIdx] = useState(active ? 0 : text.length);
@@ -101,26 +132,27 @@ async function saveBlobToFirebase(blobUrl: string, userId: string, filename: str
   } catch { return blobUrl; }
 }
 
+const PLAN_ORDER: Record<string, number> = { free: 0, starter: 1, pro: 2 };
+
 export default function WelcomeDashboard() {
-  const { canGenerate, setShowUpgradeModal, user, selectedModel, addGeneration } = useAppContext();
+  const { canGenerate, setShowUpgradeModal, user, selectedModel, setSelectedModel, addGeneration } = useAppContext();
   const { user: authUser } = useAuth();
   const { createSession, startNewChat } = useChatContext();
   const location = useLocation();
 
-  // input state
   const [inputPrompt, setInputPrompt] = useState("");
-  const [selectedTool, setSelectedTool] = useState("catalog");
+  const [selectedTool, setSelectedTool] = useState<ToolId>("catalog");
+  const [toolSelectorOpen, setToolSelectorOpen] = useState(false);
   const [plusOpen, setPlusOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [genSettings, setGenSettings] = useState<GenSettings>({ aspectRatio: "1:1", numOutputs: 3, quality: "1K" });
+  const [cinematicTooltip, setCinematicTooltip] = useState(false);
 
-  // images
   const productRef = useRef<HTMLInputElement>(null);
   const referenceRef = useRef<HTMLInputElement>(null);
   const { upload: uploadProduct, uploading: uploadingProduct, previewUrl: productPreview, uploadedUrl: productUrl, clearUpload: clearProduct } = useImageUpload();
   const [referencePreview, setReferencePreview] = useState<string | null>(null);
 
-  // chat
   const [phase, setPhase] = useState<ChatPhase>("idle");
   const [sentPrompt, setSentPrompt] = useState("");
   const [sentProductPreview, setSentProductPreview] = useState<string | null>(null);
@@ -138,13 +170,18 @@ export default function WelcomeDashboard() {
   const isPro = user.plan === "pro";
   const isStarter = user.plan === "starter";
   const isGenerating = phase === "thinking" || phase === "generating";
+  const planLevel = PLAN_ORDER[user.plan] ?? 0;
 
-  // scroll to bottom when chat updates
+  const currentCreditCost = calculateCreditCost(selectedTool, selectedModel as ModelId, genSettings.quality as QualityId);
+  const hasEnoughCredits = user.creditsRemaining >= currentCreditCost;
+  const canSend = inputPrompt.trim().length > 0 && hasEnoughCredits && !isGenerating;
+
+  const currentTool = TOOL_DEFS.find(t => t.id === selectedTool)!;
+
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [phase, thinkingStep, generatedImages, showApprovedPlatform]);
 
-  // accept prompt from Inspiration Hub navigation
   useEffect(() => {
     const state = location.state as { prompt?: string } | null;
     if (state?.prompt) { setInputPrompt(state.prompt); window.history.replaceState({}, ""); }
@@ -170,14 +207,10 @@ export default function WelcomeDashboard() {
   }, []);
 
   const handleSend = async () => {
-    if (!inputPrompt.trim() || !canGenerate || isGenerating) return;
+    if (!inputPrompt.trim() || !hasEnoughCredits || isGenerating) return;
 
     const prompt = inputPrompt.trim();
-
-    // Create a new chat session in the sidebar when sending the first message
-    if (phase === "idle") {
-      createSession(prompt);
-    }
+    if (phase === "idle") createSession(prompt);
 
     setSentPrompt(prompt);
     setSentProductPreview(productPreview);
@@ -189,15 +222,9 @@ export default function WelcomeDashboard() {
     setSelectedStyle(null);
     setShowApprovedPlatform(false);
 
-    // resize textarea
-    if (textareaRef.current) { textareaRef.current.style.height = "auto"; }
-
+    if (textareaRef.current) textareaRef.current.style.height = "auto";
     setPhase("thinking");
-
-    // run thinking animation
     await runThinkingAnimation();
-
-    // show style selection
     setPhase("show-styles");
   };
 
@@ -206,10 +233,10 @@ export default function WelcomeDashboard() {
     setThinkingStep(0);
     setThinkingDone(false);
 
-    const toolName = tools.find(t => t.id === selectedTool)?.name || "Generate Catalog";
+    const toolDef = TOOL_DEFS.find(t => t.id === selectedTool);
+    const toolName = toolDef?.name || "Catalog Generator";
     const augmented = augmentPrompt(prompt, style, toolName);
 
-    // run generating animation in parallel with API
     const animPromise = runThinkingAnimation();
     const apiPromise = callGenerationApi({
       imageUrl: productUrl || undefined,
@@ -276,15 +303,8 @@ export default function WelcomeDashboard() {
     await startGeneration("luxury", sentPrompt);
   };
 
-  const handleApprove = () => {
-    setPhase("approved");
-    setShowApprovedPlatform(true);
-  };
-
-  const handleRegenerate = () => {
-    const style = selectedStyle || "luxury";
-    startGeneration(style, sentPrompt);
-  };
+  const handleApprove = () => { setPhase("approved"); setShowApprovedPlatform(true); };
+  const handleRegenerate = () => { const style = selectedStyle || "luxury"; startGeneration(style, sentPrompt); };
 
   const handleReset = () => {
     if (timerRef.current) clearTimeout(timerRef.current);
@@ -306,12 +326,20 @@ export default function WelcomeDashboard() {
     if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); handleSend(); }
   };
 
+  const handleToolSelect = (toolId: ToolId) => {
+    const toolDef = TOOL_DEFS.find(t => t.id === toolId);
+    if (toolDef?.proOnly && !isPro) {
+      setShowUpgradeModal(true);
+      return;
+    }
+    setSelectedTool(toolId);
+    setToolSelectorOpen(false);
+  };
+
   const firstName = user.name?.split(" ")[0] || "there";
 
-  // ─────────────────── RENDER ───────────────────
   return (
     <div className="flex flex-col h-full min-h-0 relative">
-      {/* ── Hidden file inputs ── */}
       <input type="file" ref={productRef} className="hidden" accept="image/*"
         onChange={async (e) => {
           const f = e.target.files?.[0]; if (f) { await uploadProduct(f); setPlusOpen(false); }
@@ -321,15 +349,15 @@ export default function WelcomeDashboard() {
 
       {/* ─── CHAT AREA ─── */}
       <div className="flex-1 overflow-y-auto px-3 sm:px-6 py-6 space-y-5 sidebar-scroll"
-        style={{ paddingBottom: phase === "show-styles" ? "220px" : "88px" }}>
+        style={{ paddingBottom: phase === "show-styles" ? "260px" : "148px" }}>
 
-        {/* ─── Welcome screen — shown when no active chat ─── */}
         {phase === "idle" && (
           <div className="flex flex-col items-center justify-center h-full min-h-[60vh] text-center space-y-5 animate-fade-in">
-            <div className="h-14 w-14 rounded-2xl flex items-center justify-center text-2xl font-black" style={{ background: "rgba(137,233,0,0.12)", border: "1px solid rgba(137,233,0,0.2)", color: "#89E900" }}>
+            <div className="h-14 w-14 rounded-2xl flex items-center justify-center text-2xl font-black"
+              style={{ background: "rgba(137,233,0,0.12)", border: "1px solid rgba(137,233,0,0.2)", color: "#89E900" }}>
               B
             </div>
-            <div className="text-center space-y-2">
+            <div className="space-y-2">
               <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground leading-tight">
                 Hi {firstName},
               </h1>
@@ -337,26 +365,17 @@ export default function WelcomeDashboard() {
                 What do you want to create?
               </h2>
             </div>
-            {/* Suggested tools */}
             <div className="flex flex-wrap justify-center gap-2 max-w-sm">
-              {[
-                { icon: LayoutGrid, label: "Generate Catalog" },
-                { icon: Camera, label: "Product Photo" },
-                { icon: Clapperboard, label: "Cinematic Ad" },
-                { icon: Megaphone, label: "Ad Creative" },
-              ].map(({ icon: Icon, label }) => (
-                <button
-                  key={label}
-                  onClick={() => setInputPrompt(label)}
+              {TOOL_DEFS.map(({ icon: Icon, name, id }) => (
+                <button key={id} onClick={() => handleToolSelect(id)}
                   className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium border transition-all duration-150 hover:border-primary/30 hover:text-primary hover:bg-primary/5"
-                  style={{ background: "rgba(255,255,255,0.04)", borderColor: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.55)" }}
-                >
+                  style={{ background: "rgba(255,255,255,0.04)", borderColor: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.55)" }}>
                   <Icon className="h-3.5 w-3.5" />
-                  {label}
+                  {name}
                 </button>
               ))}
             </div>
-            {!canGenerate && (
+            {!hasEnoughCredits && (
               <div className="bg-destructive/10 border border-destructive/20 rounded-xl px-4 py-3 flex items-center gap-3">
                 <AlertTriangle className="h-4 w-4 text-destructive shrink-0" />
                 <span className="text-sm text-foreground">You've reached your generation limit.</span>
@@ -367,11 +386,9 @@ export default function WelcomeDashboard() {
           </div>
         )}
 
-        {/* ─── User message bubble (right) ─── */}
         {sentPrompt && (
           <div className="flex justify-end animate-fade-in">
             <div className="max-w-[75%] space-y-2">
-              {/* Images above message */}
               {(sentProductPreview || sentRefPreview) && (
                 <div className="flex justify-end gap-2">
                   {sentProductPreview && (
@@ -388,7 +405,6 @@ export default function WelcomeDashboard() {
                   )}
                 </div>
               )}
-              {/* Prompt bubble */}
               <div className="bg-primary/12 border border-primary/20 rounded-2xl rounded-tr-sm px-4 py-3">
                 <p className="text-sm text-foreground leading-relaxed">{sentPrompt}</p>
               </div>
@@ -396,7 +412,6 @@ export default function WelcomeDashboard() {
           </div>
         )}
 
-        {/* ─── AI Thinking / Generating bubble (left) ─── */}
         {(phase === "thinking" || phase === "generating" || phase === "show-styles" || phase === "results" || phase === "approved") && (
           <div className="flex justify-start animate-fade-in">
             <div className="max-w-[80%] space-y-1">
@@ -410,7 +425,6 @@ export default function WelcomeDashboard() {
                 {THINKING_STEPS.map((step, i) => {
                   const done = i < thinkingStep || thinkingDone;
                   const active = i === thinkingStep && !thinkingDone && (phase === "thinking" || phase === "generating");
-                  const upcoming = !done && !active;
                   return (
                     <div key={step} className={`flex items-center gap-2.5 transition-all duration-300 ${
                       done ? "text-primary" : active ? "text-foreground" : "text-muted-foreground/30"
@@ -433,7 +447,6 @@ export default function WelcomeDashboard() {
           </div>
         )}
 
-        {/* ─── Generated Images bubble (right) ─── */}
         {(phase === "results" || phase === "approved") && generatedImages.length > 0 && (
           <div className="flex justify-end animate-fade-in">
             <div className="max-w-[85%] space-y-3">
@@ -457,8 +470,6 @@ export default function WelcomeDashboard() {
               {!generatedImages[0]?.isReal && (
                 <p className="text-[10px] text-amber-400/70 text-right">Preview mode — add REPLICATE_API_TOKEN for real images</p>
               )}
-
-              {/* Approve / Regenerate */}
               {phase === "results" && (
                 <div className="flex gap-2 justify-end">
                   <button onClick={handleRegenerate}
@@ -471,7 +482,6 @@ export default function WelcomeDashboard() {
                   </button>
                 </div>
               )}
-
               {phase === "approved" && (
                 <div className="flex items-center gap-2 justify-end">
                   <div className="flex items-center gap-1.5 text-xs text-primary bg-primary/10 border border-primary/20 rounded-full px-3 py-1.5">
@@ -486,7 +496,6 @@ export default function WelcomeDashboard() {
           </div>
         )}
 
-        {/* ─── Platform Optimization (left bubble) ─── */}
         {showApprovedPlatform && phase === "approved" && (
           <div className="flex justify-start animate-fade-in">
             <div className="max-w-[90%] w-full space-y-1">
@@ -510,7 +519,7 @@ export default function WelcomeDashboard() {
         <div ref={chatEndRef} />
       </div>
 
-      {/* ─── STYLE CARDS strip — shown above prompt box during style selection ─── */}
+      {/* ─── STYLE CARDS ─── */}
       {phase === "show-styles" && (
         <div className="px-3 sm:px-6 pb-2 animate-fade-in">
           <div className="mb-2 flex items-center gap-2">
@@ -522,8 +531,7 @@ export default function WelcomeDashboard() {
               <button key={style.id} onClick={() => handleStyleSelect(style.id)}
                 className={`shrink-0 flex flex-col rounded-xl overflow-hidden border border-white/10 hover:border-primary/40 transition-all duration-200 ${
                   selectedStyle === style.id ? "border-primary/60 ring-1 ring-primary/30" : ""
-                }`}
-                style={{ width: 100 }}>
+                }`} style={{ width: 100 }}>
                 <div className="aspect-square w-full" style={{ background: style.gradient }} />
                 <div className="px-2 py-1.5 bg-white/4">
                   <p className="text-[10px] font-semibold text-foreground leading-snug truncate">{style.label}</p>
@@ -541,9 +549,86 @@ export default function WelcomeDashboard() {
         </div>
       )}
 
-      {/* ─── PROMPT BAR (fixed bottom) ─── */}
+      {/* ─── PROMPT BAR ─── */}
       <div className="shrink-0 px-3 sm:px-6 pb-4 pt-2 border-t border-white/8 bg-background/80 backdrop-blur-sm">
-        {/* Attached image previews above the bar */}
+
+        {/* ── Tool Selector Strip ── */}
+        <div className="mb-2">
+          <div className="flex items-center gap-1.5 overflow-x-auto sidebar-scroll pb-0.5">
+            {TOOL_DEFS.map((tool) => {
+              const Icon = tool.icon;
+              const isActive = selectedTool === tool.id;
+              const isLocked = tool.proOnly && !isPro;
+              return (
+                <div key={tool.id} className="relative shrink-0">
+                  <button
+                    onClick={() => handleToolSelect(tool.id)}
+                    onMouseEnter={() => tool.id === "cinematic" && setCinematicTooltip(true)}
+                    onMouseLeave={() => setCinematicTooltip(false)}
+                    className={`group flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-medium border transition-all duration-200 whitespace-nowrap ${
+                      isActive
+                        ? "border-primary/50 bg-primary/10 text-primary shadow-sm shadow-primary/10"
+                        : "border-white/8 bg-white/3 text-muted-foreground hover:border-white/16 hover:bg-white/6 hover:text-foreground"
+                    }`}
+                  >
+                    <Icon className={`h-3 w-3 shrink-0 transition-colors ${isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground"}`} />
+                    <span>{tool.name}</span>
+                    {isLocked && (
+                      <Lock className="h-2.5 w-2.5 text-amber-500/70 ml-0.5" />
+                    )}
+                    {isActive && !isLocked && (
+                      <div className="h-1 w-1 rounded-full bg-primary ml-0.5" />
+                    )}
+                  </button>
+
+                  {/* Cinematic Ads Tooltip */}
+                  {tool.id === "cinematic" && cinematicTooltip && tool.tooltip && (
+                    <div className="absolute bottom-full left-0 mb-2 z-50 animate-fade-in pointer-events-none">
+                      <div className="bg-popover border border-white/12 rounded-xl px-3 py-2.5 shadow-xl max-w-[220px]">
+                        <div className="flex items-start gap-2">
+                          <Info className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />
+                          <p className="text-[11px] text-foreground leading-relaxed">{tool.tooltip}</p>
+                        </div>
+                        {isLocked && (
+                          <div className="mt-1.5 pt-1.5 border-t border-white/8 flex items-center gap-1">
+                            <Lock className="h-2.5 w-2.5 text-amber-500" />
+                            <span className="text-[10px] text-amber-500">Pro plan required</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+
+            {/* Model Selector inline */}
+            <div className="h-4 w-px bg-white/10 mx-0.5 shrink-0" />
+            {(["flash", "pro"] as ModelId[]).map((m) => {
+              const isActive = selectedModel === m;
+              const isLocked = m === "pro" && !PLANS[user.plan].allowPro;
+              return (
+                <button key={m}
+                  onClick={() => {
+                    if (isLocked) { setShowUpgradeModal(true); return; }
+                    setSelectedModel(m);
+                  }}
+                  className={`shrink-0 flex items-center gap-1 px-2 py-1.5 rounded-lg text-[10px] font-semibold border transition-all duration-150 uppercase tracking-wide ${
+                    isActive
+                      ? "border-primary/40 bg-primary/8 text-primary"
+                      : "border-white/8 bg-white/3 text-muted-foreground/60 hover:border-white/14 hover:text-muted-foreground"
+                  } ${isLocked ? "opacity-50 cursor-not-allowed" : ""}`}
+                  title={isLocked ? "Upgrade to use Pro model" : `${m} model`}>
+                  <Zap className={`h-2.5 w-2.5 ${isActive ? "text-primary" : ""}`} />
+                  {m}
+                  {isLocked && <Lock className="h-2 w-2 text-amber-500/60" />}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Attached image previews */}
         {(productPreview || referencePreview) && (
           <div className="flex gap-2 mb-2">
             {productPreview && (
@@ -584,8 +669,7 @@ export default function WelcomeDashboard() {
                 <Plus className="h-4.5 w-4.5" />
               </button>
             </PopoverTrigger>
-            <PopoverContent align="start" side="top" className="w-64 p-1.5 rounded-xl bg-popover border border-white/10">
-              {/* Product image */}
+            <PopoverContent align="start" side="top" className="w-60 p-1.5 rounded-xl bg-popover border border-white/10">
               <div className="px-3 pt-2 pb-1">
                 <p className="text-[9px] text-muted-foreground/60 uppercase tracking-wider font-semibold">Images</p>
               </div>
@@ -605,21 +689,6 @@ export default function WelcomeDashboard() {
                   <p className="text-[10px] text-muted-foreground/60">Style reference or inspiration</p>
                 </div>
               </button>
-              <div className="h-px bg-white/8 my-1" />
-              {/* Tool selection */}
-              <div className="px-3 pt-1 pb-1">
-                <p className="text-[9px] text-muted-foreground/60 uppercase tracking-wider font-semibold">Mode</p>
-              </div>
-              {tools.map((tool) => (
-                <button key={tool.id} onClick={() => { setSelectedTool(tool.id); setPlusOpen(false); }}
-                  className={`w-full flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors ${
-                    selectedTool === tool.id ? "bg-primary/10 text-primary" : "text-foreground hover:bg-white/5"
-                  }`}>
-                  <tool.icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                  {tool.name}
-                  {selectedTool === tool.id && <Check className="h-3 w-3 ml-auto text-primary" />}
-                </button>
-              ))}
             </PopoverContent>
           </Popover>
 
@@ -633,6 +702,7 @@ export default function WelcomeDashboard() {
             </PopoverTrigger>
             <PopoverContent align="start" side="top" className="w-72 p-4 rounded-2xl bg-popover border border-white/10 space-y-4">
               <p className="text-xs font-semibold text-foreground uppercase tracking-wider">Generation Settings</p>
+
               {/* Aspect Ratio */}
               <div className="space-y-1.5">
                 <p className="text-xs text-muted-foreground">Aspect Ratio</p>
@@ -647,6 +717,7 @@ export default function WelcomeDashboard() {
                   ))}
                 </div>
               </div>
+
               {/* Outputs */}
               <div className="space-y-1.5">
                 <p className="text-xs text-muted-foreground">Number of Outputs</p>
@@ -661,27 +732,41 @@ export default function WelcomeDashboard() {
                   ))}
                 </div>
               </div>
+
               {/* Quality */}
               <div className="space-y-1.5">
                 <p className="text-xs text-muted-foreground">Image Quality</p>
                 <div className="grid grid-cols-2 gap-1.5">
-                  {QUALITIES.map(q => {
-                    const locked = q.pro && !isPro;
+                  {QUALITY_OPTIONS.map(q => {
+                    const locked = PLAN_ORDER[q.minPlan] > planLevel;
+                    const addonCost = QUALITY_ADDON_COSTS[q.id];
                     return (
                       <button key={q.id} disabled={locked}
                         onClick={() => !locked && setGenSettings(s => ({ ...s, quality: q.id }))}
                         className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs border transition-all duration-150 ${
-                          locked ? "bg-white/3 text-muted-foreground/30 border-white/5 cursor-not-allowed"
+                          locked
+                            ? "bg-white/3 text-muted-foreground/30 border-white/5 cursor-not-allowed"
                             : genSettings.quality === q.id
                               ? "bg-primary/10 text-primary border-primary/30"
                               : "bg-white/5 text-muted-foreground border-white/10 hover:bg-white/8"
                         }`}>
                         <span className="font-semibold">{q.label}</span>
-                        {locked ? <span className="flex items-center gap-0.5 text-[9px] text-amber-500/70"><Lock className="h-2.5 w-2.5" /> Pro</span>
-                          : <span className="text-[9px] opacity-50">Free</span>}
+                        {locked
+                          ? <span className="flex items-center gap-0.5 text-[9px] text-amber-500/70"><Lock className="h-2.5 w-2.5" /> {q.minPlan === "pro" ? "Pro" : "Starter"}</span>
+                          : addonCost > 0
+                            ? <span className="text-[9px] text-primary/70">+{addonCost} cr</span>
+                            : <span className="text-[9px] opacity-40">free</span>
+                        }
                       </button>
                     );
                   })}
+                </div>
+                {/* Live cost preview inside settings */}
+                <div className="mt-1 pt-2 border-t border-white/8 flex items-center justify-between">
+                  <span className="text-[10px] text-muted-foreground">Cost for this quality</span>
+                  <span className="text-[10px] font-semibold" style={{ color: "#89E900" }}>
+                    {calculateCreditCost(selectedTool, selectedModel as ModelId, genSettings.quality as QualityId)} credits
+                  </span>
                 </div>
               </div>
             </PopoverContent>
@@ -694,9 +779,9 @@ export default function WelcomeDashboard() {
             onChange={(e) => setInputPrompt(e.target.value)}
             onKeyDown={handleKeyDown}
             disabled={isGenerating}
-            placeholder="Describe your product or scene..."
+            placeholder={`${currentTool.name} — describe your product or scene...`}
             rows={1}
-            className="flex-1 bg-transparent resize-none text-sm sm:text-base text-foreground placeholder:text-muted-foreground/40 outline-none leading-relaxed max-h-32 overflow-y-auto scrollbar-none py-1 disabled:opacity-50"
+            className="flex-1 bg-transparent resize-none text-sm sm:text-base text-foreground placeholder:text-muted-foreground/35 outline-none leading-relaxed max-h-32 overflow-y-auto scrollbar-none py-1 disabled:opacity-50"
             onInput={(e) => {
               const el = e.currentTarget;
               el.style.height = "auto";
@@ -704,13 +789,36 @@ export default function WelcomeDashboard() {
             }}
           />
 
+          {/* Credit Pill */}
+          <div className={`shrink-0 flex items-center gap-1 px-2 py-1 rounded-full border text-[10px] font-semibold mb-0.5 transition-all duration-200 ${
+            hasEnoughCredits
+              ? "border-primary/25 bg-primary/8 text-primary"
+              : "border-destructive/30 bg-destructive/8 text-destructive"
+          }`}>
+            <Zap className="h-2.5 w-2.5" />
+            <span>{currentCreditCost}</span>
+          </div>
+
           {/* Send button */}
           <button onClick={handleSend}
-            disabled={!inputPrompt.trim() || !canGenerate || isGenerating}
+            disabled={!canSend}
             title="Send (Ctrl+Enter)"
             className="h-8 w-8 shrink-0 flex items-center justify-center rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-150 mb-0.5">
             <Send className="h-4 w-4" />
           </button>
+        </div>
+
+        {/* Credits remaining bar */}
+        <div className="flex items-center justify-between mt-1.5 px-1">
+          <span className="text-[10px] text-muted-foreground/40">
+            {currentTool.name}
+            {selectedTool === "cinematic" && !isPro && (
+              <span className="ml-1.5 text-amber-500/70">· Pro required</span>
+            )}
+          </span>
+          <span className="text-[10px] text-muted-foreground/40">
+            {user.creditsRemaining} credits remaining
+          </span>
         </div>
       </div>
     </div>

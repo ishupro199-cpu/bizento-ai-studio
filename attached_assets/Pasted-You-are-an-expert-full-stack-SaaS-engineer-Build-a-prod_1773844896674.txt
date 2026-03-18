@@ -1,0 +1,317 @@
+You are an expert full-stack SaaS engineer.
+
+Build a production-ready AI SaaS system called Bizento AI with:
+
+• Pricing plans
+• Credit system
+• Feature access control
+• Real-time usage tracking
+• Checkout system (Razorpay ready)
+
+Use:
+
+Frontend: React + Tailwind
+Backend: Node.js (Express)
+Database: PostgreSQL or Firebase
+
+---
+
+---
+
+1️⃣ PRICING PLANS SYSTEM
+
+Create 3 plans:
+
+---
+
+FREE PLAN
+
+• 15 credits per month
+• Catalog generation (limited)
+• Flash model only
+• Max quality: 1080p
+• No prompt library
+• Limited features
+
+---
+
+STARTER PLAN — ₹99/month
+
+• 100 credits per month
+• +20 bonus credits on purchase
+
+Access:
+
+• Catalog generation
+• Product Photography
+• Ad Creatives
+
+• Flash + Pro models
+• Max quality: 2K
+
+Features:
+
+• Basic Prompt Library
+• SEO title & description
+• Attributes generation
+• Full history access
+
+---
+
+PRO PLAN — ₹399 (3 months)
+
+• 450 credits total
+• +50 bonus credits
+
+Access:
+
+• All tools unlocked
+
+- Catalog
+- Photography
+- Ad Creatives
+- Cinematic Ads (CGI Ads)
+
+• Flash + Pro models
+• Max quality: 4K
+
+Features:
+
+• Full Prompt Library
+• Premium prompts
+• AI prompt suggestions
+• Advanced SEO listings
+• Platform-specific attributes
+• Priority processing
+• Full history
+• Best output quality
+
+---
+
+---
+
+2️⃣ FEATURE ACCESS CONTROL
+
+Implement role-based access:
+
+User.plan = free / starter / pro
+
+Restrict features:
+
+• Cinematic Ads → only Pro
+• 4K → only Pro
+• Prompt Library → Starter & Pro
+• Pro Model → Starter & Pro
+
+If restricted:
+
+Show:
+
+"Upgrade to unlock this feature"
+
+---
+
+---
+
+3️⃣ CREDIT SYSTEM (REAL-TIME)
+
+Store credits per user.
+
+---
+
+COST STRUCTURE:
+
+Catalog:
+Flash → 5 credits
+Pro → 10 credits
+
+Photography:
+Flash → 3 credits
+Pro → 5 credits
+
+Ad Creatives:
+Flash → 3 credits
+Pro → 5 credits
+
+Cinematic Ads (CGI):
+Flash → 30 credits
+Pro → 50 credits
+
+---
+
+QUALITY ADD-ON:
+
+2K → +4 credits
+4K → +8 credits
+
+---
+
+LOGIC:
+
+• Calculate cost before generation
+• Show cost in UI
+• Deduct credits in real-time
+• If failed → refund credits
+
+---
+
+---
+
+4️⃣ PROMPT BOX INTEGRATION
+
+Inside input:
+
+• show cost: "⚡ 12 credits"
+• update dynamically
+
+Disable generate button if:
+
+• not enough credits
+
+---
+
+---
+
+5️⃣ DATABASE STRUCTURE
+
+Users Table:
+
+id
+name
+email
+plan
+credits
+subscription_start
+subscription_end
+
+---
+
+Transactions Table:
+
+id
+user_id
+credits_used
+type (catalog / ad / etc)
+status
+
+---
+
+Payments Table:
+
+id
+user_id
+plan
+amount
+status
+payment_gateway (razorpay)
+
+---
+
+---
+
+6️⃣ CHECKOUT PAGE (IMPORTANT)
+
+Build a complete checkout page.
+
+---
+
+SHOW:
+
+• Selected plan
+• Price
+• Bonus credits
+• Total credits
+
+---
+
+ADD:
+
+• GST (18%) calculation
+• Final amount
+
+Example:
+
+Plan: Starter ₹99
+GST: ₹17.82
+Total: ₹116.82
+
+---
+
+UI:
+
+• clean card layout
+• order summary
+• CTA button: "Pay Now"
+
+---
+
+---
+
+7️⃣ RAZORPAY INTEGRATION READY
+
+Prepare backend endpoints:
+
+POST /create-order
+POST /verify-payment
+
+Frontend:
+
+• call create-order
+• open Razorpay checkout
+• verify payment
+
+After success:
+
+• update user plan
+• add credits
+• store payment
+
+---
+
+---
+
+8️⃣ REAL-TIME SYSTEM
+
+After purchase:
+
+• update UI instantly
+• refresh credits
+• unlock features
+
+---
+
+---
+
+9️⃣ UPGRADE FLOW
+
+If user clicks locked feature:
+
+Show modal:
+
+"Upgrade to Pro to unlock Cinematic Ads"
+
+CTA → Go to Pricing
+
+---
+
+---
+
+🔟 UX GOALS
+
+System must feel:
+
+• premium
+• transparent
+• real-time
+• production-ready
+
+---
+
+IMPORTANT
+
+• no fake data
+• real credit calculation
+• proper state sync
+• clean UI
+
+This must behave like a real SaaS product ready for launch.
