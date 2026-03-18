@@ -1,0 +1,326 @@
+Build a modern, ultra-premium SaaS web application called Pixalera** — an AI-powered ecommerce creative and catalog generation platform.**
+
+The product should feel like a combination of ChatGPT + Canva + Midjourney, specifically designed for ecommerce sellers.
+
+---
+
+## 🎨 THEME & DESIGN SYSTEM
+
+* Primary Theme Colors:
+
+  * Night: #222222
+  * Kiwi: #89E900
+
+* UI Style:
+
+  * Minimal, clean, modern
+  * Smooth animations and transitions
+  * Rounded corners (but not overly circular)
+  * Professional SaaS feel (inspired by ChatGPT, Notion, Canva)
+
+---
+
+## 🏠 WORKSPACE SYSTEM
+
+### Default Workspace:
+
+* Automatically create a personal workspace on first visit
+* Name format: “{username}'s workspace”
+* This workspace cannot be deleted
+
+### Pro Feature:
+
+* Users can create multiple workspaces (only for Pro users)
+* Each workspace acts as a separate environment (for brands/clients)
+
+---
+
+## 📚 INSPIRATION HUB (Prompt Library)
+
+Rename “Prompt Library” to **Inspiration Hub**
+
+Each item should include:
+
+* Preview image (very important)
+* Title
+* Short description
+* Category (Catalog, Ads, CGI, Fashion, etc.)
+
+Purpose:
+
+* Help users visually understand outputs
+* Reduce dependency on writing prompts
+
+---
+
+## 🧭 SIDEBAR NAVIGATION
+
+Include:
+
+* New Generate (icon: +)
+* Inspiration Hub
+* My Catalog
+* My Ads
+* Images
+* History
+* Settings
+
+### New Generate Behavior:
+
+* Clicking opens a new chat session
+* Each session is saved in history
+
+---
+
+## 💬 CHAT-BASED GENERATION INTERFACE (CORE FEATURE)
+
+Design the main interface like ChatGPT.
+
+---
+
+### 🧩 INPUT SECTION
+
+* Upload Product Image
+* Optional Prompt Input (not required)
+
+### ⚙️ SETTINGS POPUP (next to upload button)
+
+When clicked, open modal with:
+
+* Aspect Ratio (1:1, 4:5, 16:9, etc.)
+* Number of Outputs (min: 1, max: 3)
+* Image Quality:
+
+  * 720p (Free)
+  * 1K (Free)
+  * 2K (Pro)
+  * 4K (Pro)
+
+---
+
+## 🤖 AI THINKING EXPERIENCE
+
+After user submits input, show animated AI thinking flow:
+
+* “Analyzing your product...”
+* “Understanding product details...”
+* “Identifying category, colors, materials...”
+* “Matching high-performing ecommerce styles...”
+* “Creating high-quality scene...”
+* “Applying lighting and composition...”
+
+Include:
+
+* Typing animation
+* Slight delay for realism
+
+---
+
+## 🎯 SMART DESIGN SUGGESTION SYSTEM
+
+Before generating final images:
+
+* Show 5–7 small preview images (design styles)
+* Each preview should have labels like:
+
+  * “High Conversion Ad Style”
+  * “Amazon Best Seller Look”
+  * “Premium Brand Style”
+  * “Minimal Catalog”
+
+User can:
+
+* Select a style → AI follows it
+* Skip → AI automatically selects best style
+
+---
+
+## 🖼️ IMAGE GENERATION FLOW
+
+After selection:
+
+* Show “Rendering outputs...” animation
+* Display generation steps:
+
+  * Optimizing lighting
+  * Enhancing product clarity
+  * Applying composition
+
+Then generate images:
+
+* Based on selected number (1–3)
+* Different angles and compositions
+* According to selected tool (catalog/ad/etc.)
+
+---
+
+## ✅ APPROVAL SYSTEM
+
+After images are generated:
+
+* Show two options:
+
+  * Approve
+  * Regenerate
+
+---
+
+## 🛒 PLATFORM OPTIMIZATION SYSTEM
+
+After approval:
+
+### Platform Selection:
+
+* Free user: can select only 1 platform
+* Pro user: can select multiple
+
+Platforms:
+
+* Amazon
+* Flipkart
+* Meesho
+* Myntra
+* Others
+
+---
+
+### AI OUTPUT (FOR EACH PLATFORM)
+
+Generate:
+
+* SEO Optimized Title
+* Bullet Points (important)
+* Description
+* 5 Keywords
+* Product Attributes
+* Key Selling Points (USP)
+* Emotional Hook (conversion-focused)
+
+---
+
+## 📊 RESULT DISPLAY UI
+
+Structure:
+
+1. Top: Generated Images
+2. Below: Platform Tabs (horizontal)
+
+Example:
+Amazon | Flipkart | Meesho
+
+3. On selecting a platform:
+
+* Show platform-specific content:
+
+  * Title
+  * Bullet Points
+  * Description
+  * Keywords
+  * Attributes
+
+---
+
+## 📁 ASSET MANAGEMENT SYSTEM
+
+Automatically store generated assets into:
+
+* My Catalog
+* My Ads
+* Images
+
+Add smart tagging:
+
+* Product type
+* Style used
+* Platform
+
+---
+
+## 📜 CHAT HISTORY SYSTEM
+
+* Save every generation session
+* Show in sidebar
+* Allow:
+
+  * Delete
+  * Archive
+  * Rename chat
+
+---
+
+## ⚡ QUALITY CONTROL SYSTEM
+
+Before showing results:
+
+* Filter out low-quality outputs
+* Only display best images
+
+Goal:
+
+* Ensure consistently premium output
+
+---
+
+## 💰 PRICING LOGIC
+
+### Free Plan:
+
+* 1 workspace
+* Limited generations
+* 720p / 1K quality
+* 1 platform selection
+
+### Pro Plan:
+
+* Multiple workspaces
+* 2K / 4K quality
+* Multiple platforms
+* More outputs
+
+---
+
+## 🧠 AI BEHAVIOR (IMPORTANT)
+
+The AI should behave like:
+
+* A professional ecommerce designer
+* A conversion-focused marketer
+
+It should:
+
+* Automatically understand product type
+* Apply best-performing design styles
+* Optimize content for conversions
+
+Do NOT say:
+
+* “Fetching from internet”
+
+Instead:
+
+* “Optimized using high-performing ecommerce design patterns”
+
+---
+
+## 🎯 UX PRINCIPLES
+
+* Reduce user thinking as much as possible
+* Keep flow smooth and guided
+* Show intelligence through micro-interactions
+* Maintain premium feel at every step
+
+---
+
+## 🚀 FINAL GOAL
+
+Create a platform where:
+
+User uploads product →
+AI suggests best styles →
+Generates premium visuals →
+Creates platform-ready listings →
+Everything is ready to sell
+
+---
+
+This should feel like a complete ecommerce creative operating system, not just an image generator.
