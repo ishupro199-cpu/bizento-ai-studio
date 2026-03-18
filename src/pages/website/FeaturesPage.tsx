@@ -4,7 +4,7 @@ import {
   Zap, Shield, LayoutGrid, Clapperboard, Megaphone, Check,
   ChevronRight, Star,
 } from "lucide-react";
-import { PixaleraIcon } from "@/components/PixaleraIcon";
+import { WebsiteNav } from "@/components/website/WebsiteNav";
 
 const TOOLS = [
   {

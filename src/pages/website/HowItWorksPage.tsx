@@ -3,7 +3,7 @@ import {
   Sparkles, Upload, Wand2, Download, ChevronRight,
   Check, Play, ArrowRight, Star, Zap,
 } from "lucide-react";
-import { PixaleraIcon } from "@/components/PixaleraIcon";
+import { WebsiteNav } from "@/components/website/WebsiteNav";
 
 const STEPS = [
   {

@@ -4,7 +4,7 @@ import {
   MessageCircle, ArrowRight, ChevronRight, Star,
   LayoutGrid, Camera, Clapperboard, Megaphone, Zap,
 } from "lucide-react";
-import { PixaleraIcon } from "@/components/PixaleraIcon";
+import { WebsiteNav } from "@/components/website/WebsiteNav";
 
 const GUIDES = [
   {
