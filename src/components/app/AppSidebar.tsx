@@ -2,15 +2,14 @@ import { useState, useRef, useEffect } from "react";
 import {
   FolderOpen, Megaphone, Image,
   CreditCard, Lightbulb, ChevronRight, ChevronLeft, X,
-  Settings, Plus, Clock, MoreHorizontal, Pencil, Trash2, Archive,
-  Check,
+  Settings, Plus, MessageSquare, MoreHorizontal, Pencil, Trash2, Archive,
 } from "lucide-react";
-import { PixaLeraIcon } from "@/components/PixaLeraIcon";
+import { BizentoIcon } from "@/components/BizentoIcon";
 import { NavLink } from "@/components/NavLink";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Separator } from "@/components/ui/separator";
-import { useAppContext } from "@/contexts/AppContext";
 import { ProfileMenu } from "@/components/app/ProfileMenu";
+import { useChatContext, ChatSession } from "@/contexts/ChatContext";
 
 const navItems = [
   { title: "Inspiration Hub", url: "/app/inspiration", icon: Lightbulb },
@@ -26,44 +25,27 @@ interface AppSidebarProps {
   onMobileClose: () => void;
 }
 
-function useHistoryMeta() {
-  const storageKey = "pixalera_history_meta";
-  const [meta, setMeta] = useState<Record<string, { name?: string; archived?: boolean }>>(() => {
-    try { return JSON.parse(localStorage.getItem(storageKey) || "{}"); } catch { return {}; }
-  });
-  const save = (next: Record<string, { name?: string; archived?: boolean }>) => {
-    setMeta(next);
-    try { localStorage.setItem(storageKey, JSON.stringify(next)); } catch {}
-  };
-  const rename = (id: string, name: string) => save({ ...meta, [id]: { ...meta[id], name } });
-  const archive = (id: string) => save({ ...meta, [id]: { ...meta[id], archived: true } });
-  const unarchive = (id: string) => save({ ...meta, [id]: { ...meta[id], archived: false } });
-  return { meta, rename, archive, unarchive };
-}
-
-function HistoryItem({
-  gen,
-  metaName,
+function ChatItem({
+  session,
+  isActive,
   onRename,
   onArchive,
   onDelete,
+  onClick,
 }: {
-  gen: { id: string; prompt: string; date: Date; gradient: string; tool: string };
-  metaName?: string;
-  onRename: (id: string, name: string) => void;
+  session: ChatSession;
+  isActive: boolean;
+  onRename: (id: string, title: string) => void;
   onArchive: (id: string) => void;
   onDelete: (id: string) => void;
+  onClick: () => void;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [renaming, setRenaming] = useState(false);
-  const [nameInput, setNameInput] = useState(metaName || gen.prompt);
+  const [nameInput, setNameInput] = useState(session.title);
   const inputRef = useRef<HTMLInputElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
-
-  const displayName = metaName || gen.prompt;
-  const date = gen.date instanceof Date
-    ? gen.date.toLocaleDateString(undefined, { month: "short", day: "numeric" })
-    : "";
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   useEffect(() => {
     if (renaming && inputRef.current) inputRef.current.focus();
@@ -72,7 +54,10 @@ function HistoryItem({
   useEffect(() => {
     if (!menuOpen) return;
     const handler = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+        setConfirmDelete(false);
+      }
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
@@ -80,9 +65,11 @@ function HistoryItem({
 
   const commitRename = () => {
     const trimmed = nameInput.trim();
-    if (trimmed) onRename(gen.id, trimmed);
+    if (trimmed) onRename(session.id, trimmed);
     setRenaming(false);
   };
+
+  const date = new Date(session.created_at).toLocaleDateString(undefined, { month: "short", day: "numeric" });
 
   if (renaming) {
     return (
@@ -92,7 +79,10 @@ function HistoryItem({
           value={nameInput}
           onChange={e => setNameInput(e.target.value)}
           onBlur={commitRename}
-          onKeyDown={e => { if (e.key === "Enter") commitRename(); if (e.key === "Escape") setRenaming(false); }}
+          onKeyDown={e => {
+            if (e.key === "Enter") commitRename();
+            if (e.key === "Escape") setRenaming(false);
+          }}
           className="w-full bg-white/8 border border-primary/30 rounded-lg px-2.5 py-1.5 text-xs text-foreground outline-none"
         />
       </div>
@@ -100,40 +90,72 @@ function HistoryItem({
   }
 
   return (
-    <div className="group flex items-center gap-1.5 rounded-lg px-2 py-1.5 hover:bg-white/5 transition-colors cursor-pointer">
-      <div className="h-6 w-6 shrink-0 rounded-md" style={{ background: gen.gradient || "linear-gradient(135deg,#89E900 0%,#222 100%)" }} />
+    <div
+      onClick={onClick}
+      className={`group flex items-center gap-1.5 rounded-lg px-2 py-1.5 transition-colors cursor-pointer ${
+        isActive ? "bg-primary/10" : "hover:bg-white/5"
+      }`}
+    >
+      <MessageSquare
+        className="h-3.5 w-3.5 shrink-0"
+        style={{ color: isActive ? "#89E900" : "rgba(255,255,255,0.25)" }}
+      />
       <div className="flex-1 min-w-0">
-        <p className="text-xs text-[hsl(var(--sidebar-foreground))] truncate leading-snug">{displayName}</p>
+        <p className={`text-xs truncate leading-snug ${isActive ? "text-primary" : "text-[hsl(var(--sidebar-foreground))]"}`}>
+          {session.title}
+        </p>
         <p className="text-[10px] text-muted-foreground/50">{date}</p>
       </div>
+
       <div className="relative shrink-0" ref={menuRef}>
         <button
-          onClick={e => { e.stopPropagation(); setMenuOpen(v => !v); }}
+          onClick={e => { e.stopPropagation(); setMenuOpen(v => !v); setConfirmDelete(false); }}
           className="h-6 w-6 flex items-center justify-center rounded-md opacity-0 group-hover:opacity-100 hover:bg-white/10 transition-all text-muted-foreground hover:text-foreground"
         >
           <MoreHorizontal className="h-3.5 w-3.5" />
         </button>
-        {menuOpen && (
+
+        {menuOpen && !confirmDelete && (
           <div className="absolute right-0 top-7 z-50 w-36 bg-popover border border-white/10 rounded-xl shadow-xl py-1 animate-fade-in">
             <button
-              onClick={() => { setMenuOpen(false); setRenaming(true); setNameInput(displayName); }}
+              onClick={() => { setMenuOpen(false); setRenaming(true); setNameInput(session.title); }}
               className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-foreground hover:bg-white/5 transition-colors"
             >
               <Pencil className="h-3 w-3 text-muted-foreground" /> Rename
             </button>
             <button
-              onClick={() => { setMenuOpen(false); onArchive(gen.id); }}
+              onClick={() => { setMenuOpen(false); onArchive(session.id); }}
               className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-foreground hover:bg-white/5 transition-colors"
             >
               <Archive className="h-3 w-3 text-muted-foreground" /> Archive
             </button>
             <div className="h-px bg-white/8 my-0.5" />
             <button
-              onClick={() => { setMenuOpen(false); onDelete(gen.id); }}
+              onClick={() => setConfirmDelete(true)}
               className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-red-400 hover:bg-red-500/10 transition-colors"
             >
               <Trash2 className="h-3 w-3" /> Delete
             </button>
+          </div>
+        )}
+
+        {menuOpen && confirmDelete && (
+          <div className="absolute right-0 top-7 z-50 w-44 bg-popover border border-red-500/20 rounded-xl shadow-xl py-2 px-3 animate-fade-in">
+            <p className="text-[11px] text-white/70 mb-2 leading-snug">Delete this chat?</p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => { setMenuOpen(false); setConfirmDelete(false); onDelete(session.id); }}
+                className="flex-1 text-[11px] font-semibold py-1 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors"
+              >
+                Delete
+              </button>
+              <button
+                onClick={() => { setMenuOpen(false); setConfirmDelete(false); }}
+                className="flex-1 text-[11px] py-1 rounded-lg bg-white/5 text-white/50 hover:bg-white/10 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         )}
       </div>
@@ -154,16 +176,19 @@ function SidebarInner({
 }) {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, generations, deleteGeneration } = useAppContext();
-  const { meta, rename, archive } = useHistoryMeta();
+  const { sessions, activeSessionId, setActiveSessionId, renameSession, deleteSession, archiveSession, startNewChat } = useChatContext();
   const [logoHovered, setLogoHovered] = useState(false);
 
   const handleNavClick = () => { if (isMobile) onClose(); };
-  const handleNewGenerate = () => { navigate("/app"); if (isMobile) onClose(); };
+  const handleNewChat = () => {
+    startNewChat();
+    navigate("/app");
+    if (isMobile) onClose();
+  };
 
   const isCollapsed = isMobile ? false : collapsed;
 
-  const visibleGenerations = generations.filter(g => !meta[g.id]?.archived);
+  const visibleSessions = sessions.filter(s => !s.is_archived);
 
   return (
     <div
@@ -181,16 +206,16 @@ function SidebarInner({
             className="relative flex h-9 w-9 items-center justify-center rounded-lg hover:bg-white/5 transition-colors"
           >
             <div className={`transition-opacity duration-150 ${logoHovered ? "opacity-0" : "opacity-100"}`}>
-              <PixaLeraIcon size={28} />
+              <BizentoIcon size={28} />
             </div>
             <ChevronRight className={`h-4 w-4 text-muted-foreground absolute transition-opacity duration-150 ${logoHovered ? "opacity-100" : "opacity-0"}`} />
           </button>
         ) : (
           <>
             <div className="flex items-center gap-2.5">
-              <PixaLeraIcon size={28} className="shrink-0" />
+              <BizentoIcon size={28} className="shrink-0" />
               <span className="text-base font-black tracking-tight whitespace-nowrap" style={{ color: "#F0EBD8", letterSpacing: "-0.02em" }}>
-                Pixalera<span style={{ color: "#89E900" }}>.</span>
+                Bizento<span style={{ color: "#89E900" }}>.</span>
               </span>
             </div>
             <button
@@ -203,11 +228,11 @@ function SidebarInner({
         )}
       </div>
 
-      {/* New Generate button */}
+      {/* New Chat button */}
       <div className={`px-2 pb-2 ${isCollapsed ? "flex justify-center" : ""}`}>
         <button
-          onClick={handleNewGenerate}
-          title="New Generate"
+          onClick={handleNewChat}
+          title="New Chat"
           className={`flex items-center gap-2.5 rounded-xl transition-all duration-150 font-semibold text-sm ${
             isCollapsed
               ? "justify-center h-9 w-9 bg-primary/15 hover:bg-primary/25 text-primary"
@@ -215,7 +240,7 @@ function SidebarInner({
           }`}
         >
           <Plus className="h-4 w-4 shrink-0" />
-          {!isCollapsed && <span>New Generate</span>}
+          {!isCollapsed && <span>New Chat</span>}
         </button>
       </div>
 
@@ -251,35 +276,42 @@ function SidebarInner({
         {!isCollapsed && (
           <>
             <div className="pt-4 pb-1 flex items-center gap-2 px-1">
-              <Clock className="h-3.5 w-3.5 text-muted-foreground/60 shrink-0" />
-              <span className="text-[11px] font-semibold text-muted-foreground/60 uppercase tracking-wider flex-1">History</span>
+              <MessageSquare className="h-3.5 w-3.5 text-muted-foreground/60 shrink-0" />
+              <span className="text-[11px] font-semibold text-muted-foreground/60 uppercase tracking-wider flex-1">
+                History
+              </span>
             </div>
 
-            {visibleGenerations.length === 0 ? (
-              <p className="text-[11px] text-muted-foreground/40 px-3 py-2">No generations yet</p>
+            {visibleSessions.length === 0 ? (
+              <p className="text-[11px] text-muted-foreground/40 px-3 py-2">No chats yet</p>
             ) : (
-              visibleGenerations.slice(0, 20).map(gen => (
-                <HistoryItem
-                  key={gen.id}
-                  gen={gen as any}
-                  metaName={meta[gen.id]?.name}
-                  onRename={rename}
-                  onArchive={archive}
-                  onDelete={deleteGeneration}
+              visibleSessions.slice(0, 30).map(session => (
+                <ChatItem
+                  key={session.id}
+                  session={session}
+                  isActive={session.id === activeSessionId}
+                  onRename={renameSession}
+                  onArchive={archiveSession}
+                  onDelete={deleteSession}
+                  onClick={() => {
+                    setActiveSessionId(session.id);
+                    navigate("/app");
+                    if (isMobile) onClose();
+                  }}
                 />
               ))
             )}
           </>
         )}
 
-        {/* Collapsed: history icon placeholder */}
+        {/* Collapsed: history icon */}
         {isCollapsed && (
           <button
             onClick={onToggle}
             title="History (expand sidebar)"
             className="w-full flex items-center justify-center rounded-lg py-2 text-[hsl(var(--sidebar-foreground))] hover:bg-white/5 transition-colors"
           >
-            <Clock className="h-5 w-5 shrink-0" />
+            <MessageSquare className="h-5 w-5 shrink-0" />
           </button>
         )}
       </div>

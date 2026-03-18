@@ -4,7 +4,7 @@ import {
   Loader2, Eye, EyeOff, ArrowLeft, CheckCircle2, Star,
   Mail, Phone, MailCheck,
 } from "lucide-react";
-import { PixaLeraIcon } from "@/components/PixaLeraIcon";
+import { BizentoIcon } from "@/components/BizentoIcon";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { isTempEmail } from "@/lib/authErrors";
@@ -77,7 +77,7 @@ export default function SignupPage() {
       if (result.needsVerification) {
         setVerificationSent(true);
       } else {
-        toast.success("Account created! Welcome to PixaLera");
+        toast.success("Account created! Welcome to Bizento AI");
         navigate("/app");
       }
     } catch (err: any) {
@@ -127,7 +127,7 @@ export default function SignupPage() {
           </div>
           <div className="rounded-2xl p-5 border border-white/[0.07] text-left space-y-2.5" style={{ background: "rgba(255,255,255,0.03)" }}>
             <p className="text-[13px] text-white/55">
-              1. Open the email from <strong className="text-white/70">PixaLera</strong>
+              1. Open the email from <strong className="text-white/70">Bizento AI</strong>
             </p>
             <p className="text-[13px] text-white/55">
               2. Click <strong className="text-white/70">"Verify your email address"</strong>
@@ -188,9 +188,9 @@ export default function SignupPage() {
             {/* Logo + heading */}
             <div>
               <div className="flex items-center gap-2.5 mb-6">
-                <PixaLeraIcon size={32} />
+                <BizentoIcon size={32} />
                 <span className="text-[15px] font-bold text-white tracking-tight">
-                  Pixa<span className="text-[#89E900]">Lera</span>
+                  Bizento<span className="text-[#89E900]"> AI</span>
                 </span>
               </div>
               <h1 className="text-[2rem] font-bold text-white leading-tight">Create your account</h1>
@@ -427,7 +427,7 @@ export default function SignupPage() {
             style={{ background: "rgba(255,255,255,0.03)" }}
           >
             <p className="text-[13px] text-white/55 leading-relaxed italic">
-              "PixaLera saved me hours every week. The catalog shots look like they were done by a pro studio."
+              "Bizento AI saved me hours every week. The catalog shots look like they were done by a pro studio."
             </p>
             <div className="flex items-center gap-2.5 mt-4">
               <div className="h-7 w-7 rounded-full flex items-center justify-center text-[11px] font-bold text-black" style={{ background: "#89E900" }}>

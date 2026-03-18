@@ -1,7 +1,7 @@
-# PixaLera AI
+# Bizento AI
 
 ## Overview
-AI-powered product photography and creative automation platform. Users upload product photos and generate professional catalog images, cinematic ads, and social media creatives using AI.
+AI-powered product photography and creative automation platform (rebranded from PixaLera). Users upload product photos and generate professional catalog images, cinematic ads, and social media creatives using AI.
 
 ## Architecture
 - **Frontend**: React 18 + Vite + TypeScript

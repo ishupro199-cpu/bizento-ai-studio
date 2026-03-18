@@ -1,0 +1,202 @@
+You are an expert frontend engineer.
+
+Refactor the chat UI system of Bizento AI to implement a ChatGPT-style history system and dynamic welcome screen behavior.
+
+Use React + Tailwind CSS.
+
+---
+
+---
+
+1️⃣ REMOVE HISTORY PAGE
+
+• Completely remove the separate "History Page"
+• Do NOT use route-based history
+
+---
+
+---
+
+2️⃣ SIDEBAR HISTORY SYSTEM
+
+In sidebar:
+
+Create a section:
+
+"History"
+
+Below it:
+
+• dynamically list all user chats
+• latest chat at top
+• scrollable list
+
+---
+
+CHAT ITEM UI
+
+Each chat item should include:
+
+• chat title (auto-generated or renamed)
+• active state highlight
+• hover effect
+
+---
+
+RIGHT SIDE (IMPORTANT)
+
+Each chat item must have:
+
+"⋯" (3-dot menu)
+
+On click → open dropdown menu
+
+OPTIONS:
+
+• Rename
+• Delete
+• Archive
+
+---
+
+RENAME FLOW
+
+• click rename
+• convert title into input field
+• save on enter / blur
+
+---
+
+DELETE FLOW
+
+• confirmation modal
+• delete from database
+
+---
+
+ARCHIVE FLOW
+
+• move chat to archived state
+• hide from main list
+• (optional future: archive section)
+
+---
+
+---
+
+3️⃣ WELCOME SCREEN LOGIC (IMPORTANT)
+
+Implement conditional rendering:
+
+---
+
+CASE 1: NO MESSAGES (FIRST TIME)
+
+Show:
+
+• clean welcome screen
+• centered layout
+• heading:
+
+"Hi, what do you want to create?"
+
+• prompt input
+• suggested tools
+
+---
+
+CASE 2: AFTER FIRST MESSAGE
+
+Immediately hide welcome screen
+
+Show:
+
+• chat interface
+• messages
+• history active
+
+---
+
+IMPORTANT RULE
+
+Welcome screen must ONLY appear:
+
+• when chat is empty
+
+---
+
+---
+
+4️⃣ CHAT SYSTEM BEHAVIOR
+
+When user sends first message:
+
+• create new chat
+• add to sidebar history
+• auto-generate title (based on prompt)
+
+---
+
+---
+
+5️⃣ DATA STRUCTURE
+
+Each chat must store:
+
+• id
+• user_id
+• title
+• messages[]
+• created_at
+• updated_at
+• is_archived
+
+---
+
+---
+
+6️⃣ UX DETAILS
+
+• smooth transitions
+• sidebar hover effects
+• active chat highlight
+• clean minimal UI
+
+---
+
+---
+
+7️⃣ STATE MANAGEMENT
+
+Maintain:
+
+• current chat
+• chat list
+• archived chats
+
+Update UI in real-time.
+
+---
+
+---
+
+8️⃣ GOAL
+
+The system must feel like:
+
+• ChatGPT
+• Notion
+• modern AI SaaS
+
+---
+
+IMPORTANT
+
+• no clutter
+• fast interactions
+• clean UI
+• proper state sync
+
+---
+
+This must behave like a real production chat system.

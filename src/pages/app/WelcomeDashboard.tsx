@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { useAppContext } from "@/contexts/AppContext";
+import { useChatContext } from "@/contexts/ChatContext";
 import { Button } from "@/components/ui/button";
 import { useImageUpload } from "@/hooks/useImageUpload";
 import {
@@ -103,6 +104,7 @@ async function saveBlobToFirebase(blobUrl: string, userId: string, filename: str
 export default function WelcomeDashboard() {
   const { canGenerate, setShowUpgradeModal, user, selectedModel, addGeneration } = useAppContext();
   const { user: authUser } = useAuth();
+  const { createSession, startNewChat } = useChatContext();
   const location = useLocation();
 
   // input state
@@ -171,6 +173,12 @@ export default function WelcomeDashboard() {
     if (!inputPrompt.trim() || !canGenerate || isGenerating) return;
 
     const prompt = inputPrompt.trim();
+
+    // Create a new chat session in the sidebar when sending the first message
+    if (phase === "idle") {
+      createSession(prompt);
+    }
+
     setSentPrompt(prompt);
     setSentProductPreview(productPreview);
     setSentRefPreview(referencePreview);
@@ -291,6 +299,7 @@ export default function WelcomeDashboard() {
     setThinkingDone(false);
     clearProduct();
     setReferencePreview(null);
+    startNewChat();
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -314,16 +323,38 @@ export default function WelcomeDashboard() {
       <div className="flex-1 overflow-y-auto px-3 sm:px-6 py-6 space-y-5 sidebar-scroll"
         style={{ paddingBottom: phase === "show-styles" ? "220px" : "88px" }}>
 
-        {/* Empty state greeting */}
+        {/* ─── Welcome screen — shown when no active chat ─── */}
         {phase === "idle" && (
-          <div className="flex flex-col items-center justify-center h-full min-h-[60vh] text-center space-y-4 animate-fade-in">
-            <div className="text-center space-y-1">
+          <div className="flex flex-col items-center justify-center h-full min-h-[60vh] text-center space-y-5 animate-fade-in">
+            <div className="h-14 w-14 rounded-2xl flex items-center justify-center text-2xl font-black" style={{ background: "rgba(137,233,0,0.12)", border: "1px solid rgba(137,233,0,0.2)", color: "#89E900" }}>
+              B
+            </div>
+            <div className="text-center space-y-2">
               <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground leading-tight">
                 Hi {firstName},
               </h1>
-              <h2 className="text-xl sm:text-2xl font-medium tracking-tight text-muted-foreground">
-                What do you want to create today?
+              <h2 className="text-xl sm:text-2xl font-medium tracking-tight" style={{ color: "rgba(255,255,255,0.45)" }}>
+                What do you want to create?
               </h2>
+            </div>
+            {/* Suggested tools */}
+            <div className="flex flex-wrap justify-center gap-2 max-w-sm">
+              {[
+                { icon: LayoutGrid, label: "Generate Catalog" },
+                { icon: Camera, label: "Product Photo" },
+                { icon: Clapperboard, label: "Cinematic Ad" },
+                { icon: Megaphone, label: "Ad Creative" },
+              ].map(({ icon: Icon, label }) => (
+                <button
+                  key={label}
+                  onClick={() => setInputPrompt(label)}
+                  className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium border transition-all duration-150 hover:border-primary/30 hover:text-primary hover:bg-primary/5"
+                  style={{ background: "rgba(255,255,255,0.04)", borderColor: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.55)" }}
+                >
+                  <Icon className="h-3.5 w-3.5" />
+                  {label}
+                </button>
+              ))}
             </div>
             {!canGenerate && (
               <div className="bg-destructive/10 border border-destructive/20 rounded-xl px-4 py-3 flex items-center gap-3">
@@ -332,7 +363,7 @@ export default function WelcomeDashboard() {
                 <Button size="sm" className="text-xs h-7 rounded-lg ml-2" onClick={() => setShowUpgradeModal(true)}>Upgrade</Button>
               </div>
             )}
-            <p className="text-xs text-muted-foreground/50">Upload a product image and describe your vision, or just describe it</p>
+            <p className="text-xs" style={{ color: "rgba(255,255,255,0.25)" }}>Upload a product image and describe your vision, or just describe it</p>
           </div>
         )}
 
@@ -373,7 +404,7 @@ export default function WelcomeDashboard() {
                 <div className="h-6 w-6 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
                   <Sparkles className="h-3 w-3 text-primary" />
                 </div>
-                <span className="text-xs text-muted-foreground font-medium">Pixalera AI</span>
+                <span className="text-xs text-muted-foreground font-medium">Bizento AI</span>
               </div>
               <div className="bg-white/4 border border-white/10 rounded-2xl rounded-tl-sm px-4 py-3.5 space-y-2">
                 {THINKING_STEPS.map((step, i) => {
@@ -463,7 +494,7 @@ export default function WelcomeDashboard() {
                 <div className="h-6 w-6 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
                   <Sparkles className="h-3 w-3 text-primary" />
                 </div>
-                <span className="text-xs text-muted-foreground font-medium">Pixalera AI</span>
+                <span className="text-xs text-muted-foreground font-medium">Bizento AI</span>
               </div>
               <div className="bg-white/4 border border-white/10 rounded-2xl rounded-tl-sm px-4 py-4">
                 <PlatformOptimization

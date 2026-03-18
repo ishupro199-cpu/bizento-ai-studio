@@ -1,0 +1,334 @@
+You are an expert full-stack SaaS engineer.
+
+Build a production-ready frontend (React + Tailwind CSS) for an AI SaaS platform called Bizento AI.
+
+Focus on clean architecture, reusable components, and premium UI/UX similar to ChatGPT, Stripe, and Notion.
+
+---
+
+TECH STACK
+
+React (functional components)
+Tailwind CSS
+Component-based architecture
+State management using useState / useContext
+
+---
+
+GLOBAL DESIGN SYSTEM
+
+Theme:
+
+Background: #222222
+Accent: #89E900
+
+Style:
+
+• glassmorphism
+• rounded UI (rounded-2xl / rounded-full)
+• soft shadows
+• minimal layout
+• smooth transitions
+
+---
+
+---
+
+1️⃣ LANDING PAGE (HOMEPAGE)
+
+Create a modern SaaS landing page.
+
+---
+
+NAVBAR
+
+LEFT:
+Logo (Bizento AI)
+
+CENTER:
+Features
+How It Works
+Pricing
+Resources
+
+RIGHT (IMPORTANT):
+
+IF user NOT logged in:
+
+Login
+Get Started (primary CTA)
+
+IF user logged in:
+
+Hide Login + Get Started
+Show Profile Avatar (top-right)
+
+Click avatar → open profile dropdown menu.
+
+---
+
+HERO SECTION
+
+LEFT:
+
+• Headline
+• Subtext
+
+PROMPT BOX (IMPORTANT):
+
+Create ChatGPT-style input.
+
+Inside input:
+
+LEFT:
+
++ icon (for tools / upload)
+
+CENTER:
+text input
+
+RIGHT:
+send button (arrow icon)
+
+---
+
+IMAGE UPLOAD LOGIC
+
+• user can upload ONLY 1 image
+• once image is uploaded:
+
+→ disable + button
+→ show preview inside input
+
+• allow remove image option (small "x" button)
+
+---
+
+CREDIT DISPLAY (IMPORTANT)
+
+Inside prompt box (right side, just before send button):
+
+Show:
+
+"Cost: X credits"
+
+This must dynamically update based on:
+
+• selected tool
+• model (Flash / Pro)
+• quality (1K / 2K / 4K)
+
+---
+
+CTA BUTTONS (OUTSIDE INPUT)
+
+Right side of input:
+
+[ Get Started ]
+[ Demo ]
+
+---
+
+---
+
+2️⃣ PRICING PAGE
+
+Create a full pricing page.
+
+---
+
+PLANS
+
+Display 3 plans:
+
+FREE
+STARTER
+PRO
+
+Each card must include:
+
+• plan name
+• price
+• credits
+• bonus credits
+• features list
+• CTA button
+
+---
+
+PLAN DATA
+
+FREE:
+15 credits/month
+
+STARTER:
+₹49
+100 credits/month
++20 bonus credits
+
+PRO:
+₹399 (3 months)
+450 credits total
++50 bonus credits
+
+---
+
+HIGHLIGHT PRO PLAN
+
+Add "Most Popular" badge.
+
+---
+
+COMPARISON TABLE (IMPORTANT)
+
+Below pricing cards, create a full comparison table.
+
+Include:
+
+Credits
+Models access
+Tools access
+Max quality
+Prompt library
+SEO features
+Priority speed
+
+Use clean table UI.
+
+---
+
+---
+
+3️⃣ HOW IT WORKS PAGE
+
+Create a dedicated page.
+
+---
+
+STEPS
+
+1. Upload your product image
+2. Describe your idea
+3. AI generates visuals
+4. Download & use
+
+---
+
+Add:
+
+• icons
+• minimal explanation
+• visual flow
+
+---
+
+---
+
+4️⃣ RESOURCES SECTION
+
+Create a professional resources page.
+
+Include:
+
+Help Center
+Guides
+Blog (placeholder)
+
+Each as cards with:
+
+• title
+• description
+• arrow icon
+
+---
+
+---
+
+5️⃣ PROFILE DROPDOWN
+
+Click avatar → open popup.
+
+Include:
+
+Upgrade Plan
+Personalization
+Settings
+Help → (submenu)
+
+SUBMENU:
+
+Help Center
+Release Notes
+Terms & Policy
+Report a Bug
+Keyboard Shortcuts
+
+Bottom:
+
+Logout
+
+---
+
+---
+
+6️⃣ PROMPT BOX LOGIC (IMPORTANT)
+
+Implement state logic:
+
+• selected tool
+• selected model
+• selected quality
+• uploaded image
+
+---
+
+CREDIT CALCULATION
+
+Display dynamic cost:
+
+Catalog:
+Flash → 5 credits
+Pro → 10 credits
+
+Other tools:
+Flash → 3 credits
+Pro → 5 credits
+
+Quality add-on:
+2K → +2
+4K → +6
+
+---
+
+---
+
+7️⃣ INTERACTIONS
+
+• smooth hover animations
+• input focus glow
+• button scale on hover
+• dropdown transitions
+
+---
+
+---
+
+8️⃣ UX GOAL
+
+The product must feel:
+
+• premium
+• fast
+• intuitive
+• modern SaaS
+
+---
+
+IMPORTANT
+
+• keep UI clean
+• avoid clutter
+• ensure responsive layout
+• use reusable components
+
+This must look like a real production-ready SaaS product.

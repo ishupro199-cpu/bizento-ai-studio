@@ -9,8 +9,8 @@ import {
 import { useAppContext } from "@/contexts/AppContext";
 
 const models = [
-  { id: "flash" as const, name: "Pixa Flash", desc: "Fast generation (1 credit)", icon: Zap },
-  { id: "pro" as const, name: "Pixa Pro", desc: "Highest quality (2 credits)", icon: Sparkles },
+  { id: "flash" as const, name: "Nano Bana Flash", desc: "Fast generation (1 credit)", icon: Zap },
+  { id: "pro" as const, name: "Nano Bana Pro", desc: "Highest quality (2 credits)", icon: Sparkles },
 ];
 
 interface TopNavbarProps {
@@ -35,17 +35,15 @@ export function TopNavbar({ onMenuToggle }: TopNavbarProps) {
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button
-              className="flex items-center gap-2 h-9 px-3 rounded-lg hover:bg-white/5 transition-colors outline-none"
-            >
+            <button className="flex items-center gap-2 h-9 px-3 rounded-lg hover:bg-white/5 transition-colors outline-none">
               <currentModel.icon className="h-3.5 w-3.5 text-primary shrink-0" />
-              <span className="text-sm font-medium text-foreground truncate max-w-[110px] sm:max-w-none">
+              <span className="text-sm font-medium text-foreground truncate max-w-[130px] sm:max-w-none">
                 {currentModel.name}
               </span>
               <ChevronDown className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-56 bg-popover border-[hsl(var(--glass-border))]">
+          <DropdownMenuContent align="start" className="w-60 bg-popover border-[hsl(var(--glass-border))]">
             {models.map((model) => (
               <DropdownMenuItem
                 key={model.id}

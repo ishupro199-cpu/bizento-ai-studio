@@ -1,0 +1,173 @@
+You are an expert frontend engineer.
+
+Build a modern, clean, and professional Footer component for an AI SaaS platform called Bizento AI.
+
+Use:
+
+React (functional components)
+Tailwind CSS
+
+---
+
+DESIGN SYSTEM
+
+Background: #222222
+Text: light gray / white
+Accent: #89E900
+
+Style:
+
+• minimal
+• clean grid layout
+• rounded UI
+• soft spacing
+• subtle hover effects
+
+---
+
+LAYOUT STRUCTURE
+
+Create a multi-column footer with proper spacing.
+
+Use a responsive grid:
+
+Desktop: 5 columns
+Mobile: stacked layout
+
+---
+
+COLUMN 1 — BRAND
+
+Include:
+
+• Logo (Bizento AI)
+• Short description:
+
+"AI-powered product photography and catalog generation for ecommerce sellers."
+
+• Social icons:
+
+Instagram
+Twitter (X)
+LinkedIn
+
+Icons should:
+
+• be circular
+• have hover glow
+• subtle scale effect
+
+---
+
+COLUMN 2 — PRODUCT
+
+Include links:
+
+Features
+Pricing
+Demo
+How It Works
+
+---
+
+COLUMN 3 — TOOLS
+
+Include:
+
+Catalog Generator
+Product Photography
+Cinematic Ads
+Ad Creatives
+
+---
+
+COLUMN 4 — RESOURCES
+
+Include:
+
+Help Center
+Guides
+Blog (placeholder)
+
+---
+
+COLUMN 5 — LEGAL
+
+Include:
+
+Privacy Policy
+Terms & Conditions
+Refund Policy
+Cookies Policy
+
+---
+
+BOTTOM SECTION
+
+Add a horizontal divider.
+
+Below it include:
+
+LEFT:
+© 2026 Bizento AI. All rights reserved.
+
+RIGHT:
+"Built for ecommerce sellers 🚀"
+
+---
+
+OPTIONAL — NEWSLETTER (recommended)
+
+Above bottom section, add:
+
+Title:
+"Stay updated with AI ecommerce tips"
+
+Input field:
+
+[ Enter your email ]   [ Subscribe ]
+
+Design:
+
+• rounded input
+• subtle border
+• button with accent color
+
+---
+
+INTERACTIONS
+
+• links change color on hover (#89E900)
+• icons scale slightly on hover
+• smooth transitions
+• no heavy animations
+
+---
+
+RESPONSIVENESS
+
+• stack columns vertically on mobile
+• center align content
+• maintain spacing
+
+---
+
+UX GOAL
+
+The footer should feel:
+
+• trustworthy
+• clean
+• professional
+• lightweight
+
+---
+
+IMPORTANT
+
+• avoid clutter
+• do not add unnecessary links
+• maintain consistent spacing
+• keep typography readable
+
+This footer must match a premium SaaS product.

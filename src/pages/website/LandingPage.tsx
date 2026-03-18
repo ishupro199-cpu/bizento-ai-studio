@@ -1,22 +1,26 @@
-import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Sparkles, ArrowRight, Check, Star, X, CheckCircle2, XCircle,
   Camera, Layers, Users, Palette, Zap, Shield, ShoppingBag,
   Droplets, Monitor, Sofa, Package, UtensilsCrossed, Menu,
   ChevronRight, Mail, Twitter, Instagram, Linkedin, Github,
+  Plus, Send, LayoutGrid, Clapperboard, Megaphone, Image as ImageIcon,
+  Settings, LogOut, Crown, ChevronDown,
 } from "lucide-react";
-import { PixaLeraIcon } from "@/components/PixaLeraIcon";
+import { BizentoIcon } from "@/components/BizentoIcon";
 import {
   Accordion, AccordionContent, AccordionItem, AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { useAuth } from "@/contexts/AuthContext";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const TYPING_PROMPTS = [
   "sneaker on white marble surface, editorial lighting",
-  "dress on AI fashion model, downtown NYC background",
   "luxury watch on beach at golden sunset",
   "skincare products flat-lay, minimalist aesthetic",
+  "dress on AI fashion model, downtown NYC background",
 ];
 
 function useTypingAnimation(prompts: string[]) {
@@ -33,29 +37,41 @@ function useTypingAnimation(prompts: string[]) {
       return () => clearTimeout(t);
     }
     if (deleting) {
-      if (charIdx === 0) {
-        setDeleting(false);
-        setPromptIdx((i) => (i + 1) % prompts.length);
-        return;
-      }
-      const t = setTimeout(() => {
-        setText(current.slice(0, charIdx - 1));
-        setCharIdx((c) => c - 1);
-      }, 22);
+      if (charIdx === 0) { setDeleting(false); setPromptIdx((i) => (i + 1) % prompts.length); return; }
+      const t = setTimeout(() => { setText(current.slice(0, charIdx - 1)); setCharIdx((c) => c - 1); }, 22);
       return () => clearTimeout(t);
     }
     if (charIdx < current.length) {
-      const t = setTimeout(() => {
-        setText(current.slice(0, charIdx + 1));
-        setCharIdx((c) => c + 1);
-      }, 38);
+      const t = setTimeout(() => { setText(current.slice(0, charIdx + 1)); setCharIdx((c) => c + 1); }, 38);
       return () => clearTimeout(t);
-    } else {
-      setPaused(true);
-    }
+    } else { setPaused(true); }
   }, [charIdx, deleting, paused, promptIdx, prompts]);
 
   return text;
+}
+
+const TOOLS = [
+  { id: "catalog", name: "Generate Catalog", icon: LayoutGrid },
+  { id: "photo", name: "Product Photography", icon: Camera },
+  { id: "cinematic", name: "Cinematic Ads", icon: Clapperboard },
+  { id: "creative", name: "Ad Creatives", icon: Megaphone },
+];
+const MODELS = [
+  { id: "flash", name: "Flash" },
+  { id: "pro", name: "Pro" },
+];
+const QUALITIES = [
+  { id: "1K", label: "1K", bonus: 0 },
+  { id: "2K", label: "2K", bonus: 2 },
+  { id: "4K", label: "4K", bonus: 6 },
+];
+
+function calcCredits(tool: string, model: string, quality: string): number {
+  const base = model === "flash"
+    ? (tool === "catalog" ? 5 : 3)
+    : (tool === "catalog" ? 10 : 5);
+  const bonus = quality === "2K" ? 2 : quality === "4K" ? 6 : 0;
+  return base + bonus;
 }
 
 const BEFORE_AFTER = [
@@ -63,20 +79,6 @@ const BEFORE_AFTER = [
   { category: "Beauty", before: "Cluttered desk, uneven shadows, no styling", after: "Minimalist flat-lay, marble surface, studio lighting", image: "/gen-beauty-product.png" },
   { category: "Electronics", before: "Box on table, warehouse background", after: "Floating on gradient, neon reflections, cinematic depth", image: "/gen-tech-product.png" },
   { category: "Fragrance", before: "Blurry close-up, no staging, casual shot", after: "Marble platform, dramatic studio lighting, luxury aesthetic", image: "/hero-product.png" },
-];
-
-const PROBLEMS = [
-  { title: "Expensive photoshoots", desc: "$500–$2,000 per session. Studio, equipment, crew, model fees — all adding up." },
-  { title: "Slow turnaround", desc: "1–2 weeks from shoot to edited, delivery-ready images. Kills your launch velocity." },
-  { title: "Inconsistent quality", desc: "Every photographer has a different style. Maintaining brand consistency is a constant battle." },
-  { title: "Limited scalability", desc: "100 SKUs? 10,000 SKUs? Traditional photography can't scale with your catalog." },
-];
-
-const SOLUTIONS = [
-  { title: "AI-generated from $0.50/image", desc: "Studio-quality results at a fraction of the cost. No crew, no bookings, no overhead." },
-  { title: "Results in seconds", desc: "Upload a photo, get professional outputs in under a minute. Ship faster than ever." },
-  { title: "Consistent brand aesthetics", desc: "Every image follows your brand style. One style applied uniformly across your entire catalog." },
-  { title: "Unlimited at any scale", desc: "Process 1 or 100,000 images. PixaLera scales infinitely with your growth." },
 ];
 
 const FEATURES = [
@@ -103,61 +105,26 @@ const HOW_IT_WORKS = [
   { num: "03", title: "Generate & Download", desc: "AI generates studio-quality images in seconds. Download, export, and publish instantly.", color: "#8B5CF6" },
 ];
 
-const COMPARISON = [
-  { label: "Cost per image", traditional: "$15–$40", pixalera: "From $0.50" },
-  { label: "Turnaround time", traditional: "1–2 weeks", pixalera: "Under 60 seconds" },
-  { label: "Scalability", traditional: "Limited by budget", pixalera: "Unlimited" },
-  { label: "Consistency", traditional: "Varies by shoot", pixalera: "100% consistent" },
-  { label: "Effort required", traditional: "Full production crew", pixalera: "Just upload & click" },
-];
-
 const TESTIMONIALS = [
-  {
-    name: "Rahul Mehta", role: "Founder, StyleKart", avatar: "R",
-    quote: "PixaLera cut our photoshoot budget by 80%. We went from waiting 2 weeks for images to publishing same-day. The quality is genuinely indistinguishable from studio shots.",
-  },
-  {
-    name: "Priya Sharma", role: "Head of Marketing, GlowBeauty", avatar: "P",
-    quote: "Our CTR doubled after switching to PixaLera-generated images. The AI understands our brand aesthetic perfectly. I use it daily — couldn't run campaigns without it.",
-  },
-  {
-    name: "James O'Brien", role: "E-commerce Director, TechMart UK", avatar: "J",
-    quote: "We have 8,000+ SKUs. Traditional photography was impossible to scale. PixaLera processed our entire catalog in a weekend. It's simply unmatched for e-commerce at scale.",
-  },
-];
-
-const PRICING = [
-  {
-    name: "Basic", price: "29", desc: "Perfect for solo sellers and small stores.",
-    features: ["100 images/month", "5 style presets", "Standard AI model", "720p exports", "Email support"],
-    popular: false, cta: "Start Free Trial",
-  },
-  {
-    name: "Pro", price: "79", desc: "Built for growing brands with volume needs.",
-    features: ["500 images/month", "Unlimited presets", "Pro AI model", "4K exports", "Batch processing", "Priority support"],
-    popular: true, cta: "Start Free Trial",
-  },
-  {
-    name: "Scale", price: "199", desc: "Enterprise-grade for large catalogs.",
-    features: ["2000 images/month", "API access", "Custom AI fine-tuning", "4K exports", "Dedicated account manager", "SLA guarantee"],
-    popular: false, cta: "Contact Sales",
-  },
+  { name: "Rahul Mehta", role: "Founder, StyleKart", avatar: "R", quote: "Bizento AI cut our photoshoot budget by 80%. We went from waiting 2 weeks for images to publishing same-day. The quality is genuinely indistinguishable from studio shots." },
+  { name: "Priya Sharma", role: "Head of Marketing, GlowBeauty", avatar: "P", quote: "Our CTR doubled after switching to Bizento AI-generated images. The AI understands our brand aesthetic perfectly. I use it daily — couldn't run campaigns without it." },
+  { name: "James O'Brien", role: "E-commerce Director, TechMart UK", avatar: "J", quote: "We have 8,000+ SKUs. Bizento AI processed our entire catalog in a weekend. The results are stunning and consistent." },
 ];
 
 const FAQ = [
-  { q: "How good is the image quality?", a: "PixaLera generates images at professional studio quality — indistinguishable from traditional photoshoots. We use state-of-the-art diffusion models fine-tuned specifically for product photography." },
+  { q: "How good is the image quality?", a: "Bizento AI generates images at professional studio quality — indistinguishable from traditional photoshoots. We use state-of-the-art diffusion models fine-tuned specifically for product photography." },
   { q: "Can I process images in bulk?", a: "Yes. Our batch processing feature lets you upload and process hundreds of images at once, applying consistent style settings across your entire catalog." },
   { q: "What file formats are supported?", a: "We support JPEG, PNG, WebP for input. Outputs are available in JPEG, PNG, and WebP at up to 4K resolution depending on your plan." },
-  { q: "Is there an API?", a: "Yes — our Scale plan includes full API access, letting you integrate PixaLera directly into your inventory management, CMS, or custom workflows." },
-  { q: "Do you offer a satisfaction guarantee?", a: "Absolutely. All plans include a 14-day free trial and if you're not satisfied within 30 days of your first paid billing, we'll refund you in full." },
-  { q: "How do I get started?", a: "Sign up, upload one product photo, and you'll have studio-quality results in under a minute — no credit card required for the trial." },
+  { q: "Is there an API?", a: "Yes — our Pro plan includes API access, letting you integrate Bizento AI directly into your inventory management, CMS, or custom workflows." },
+  { q: "Do you offer a satisfaction guarantee?", a: "Absolutely. All paid plans include a 14-day satisfaction guarantee. If you're not happy, we'll refund you in full." },
+  { q: "How do I get started?", a: "Sign up free — 15 credits on us, no credit card required. Upload a product photo and you'll have studio-quality results in under a minute." },
 ];
 
 const NAV_LINKS = [
   { label: "Features", href: "#features" },
   { label: "Resources", href: "#resources" },
   { label: "How It Works", href: "#how-it-works" },
-  { label: "Pricing", href: "#pricing" },
+  { label: "Pricing", href: "/pricing" },
 ];
 
 const FOOTER_LINKS = {
@@ -167,10 +134,70 @@ const FOOTER_LINKS = {
   Legal: ["Privacy Policy", "Terms of Service", "Cookie Policy", "GDPR"],
 };
 
+function ProfileDropdown({ user, onClose }: { user: any; onClose: () => void }) {
+  const { signOut } = useAuth();
+  const navigate = useNavigate();
+  const initials = (user.displayName || user.email || "U").split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2);
+
+  const handleLogout = async () => {
+    onClose();
+    await signOut();
+    navigate("/");
+  };
+
+  return (
+    <div
+      className="absolute right-0 top-10 w-56 rounded-2xl border border-white/10 shadow-2xl py-2 z-50"
+      style={{ background: "rgba(20,22,28,0.97)", backdropFilter: "blur(28px)" }}
+    >
+      <div className="px-4 py-3 border-b border-white/8 mb-1">
+        <p className="text-[13px] font-semibold text-white truncate">{user.displayName || "User"}</p>
+        {user.email && <p className="text-[11px] text-white/35 truncate mt-0.5">{user.email}</p>}
+      </div>
+      <button
+        onClick={() => { onClose(); navigate("/app"); }}
+        className="w-full flex items-center gap-2.5 px-4 py-2 text-[13px] text-white/65 hover:bg-white/5 hover:text-white transition-colors"
+      >
+        <LayoutGrid className="h-4 w-4 shrink-0" /> Go to Dashboard
+      </button>
+      <button
+        onClick={() => { onClose(); navigate("/app/settings"); }}
+        className="w-full flex items-center gap-2.5 px-4 py-2 text-[13px] text-white/65 hover:bg-white/5 hover:text-white transition-colors"
+      >
+        <Settings className="h-4 w-4 shrink-0" /> Settings
+      </button>
+      <div className="h-px bg-white/8 my-1 mx-3" />
+      <button
+        onClick={handleLogout}
+        className="w-full flex items-center gap-2.5 px-4 py-2 text-[13px] text-white/45 hover:bg-red-500/10 hover:text-red-400 transition-colors"
+      >
+        <LogOut className="h-4 w-4 shrink-0" /> Log out
+      </button>
+    </div>
+  );
+}
+
 export default function LandingPage() {
   const typedText = useTypingAnimation(TYPING_PROMPTS);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const profileRef = useRef<HTMLDivElement>(null);
+
+  const { user, signOut, loading } = useAuth();
+  const navigate = useNavigate();
+
+  // Prompt box state
+  const [promptText, setPromptText] = useState("");
+  const [selectedTool, setSelectedTool] = useState("catalog");
+  const [selectedModel, setSelectedModel] = useState("flash");
+  const [selectedQuality, setSelectedQuality] = useState("1K");
+  const [toolsOpen, setToolsOpen] = useState(false);
+  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const toolsRef = useRef<HTMLDivElement>(null);
+
+  const creditCost = calcCredits(selectedTool, selectedModel, selectedQuality);
 
   useEffect(() => {
     const handler = () => setScrolled(window.scrollY > 20);
@@ -178,13 +205,44 @@ export default function LandingPage() {
     return () => window.removeEventListener("scroll", handler);
   }, []);
 
-  const scrollTo = (id: string) => {
-    document.querySelector(id)?.scrollIntoView({ behavior: "smooth" });
+  // Close dropdowns on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (profileRef.current && !profileRef.current.contains(e.target as Node)) setProfileOpen(false);
+      if (toolsRef.current && !toolsRef.current.contains(e.target as Node)) setToolsOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const scrollTo = (href: string) => {
+    if (href.startsWith("#")) {
+      document.querySelector(href)?.scrollIntoView({ behavior: "smooth" });
+    } else {
+      navigate(href);
+    }
     setMobileOpen(false);
   };
 
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) setUploadedImage(URL.createObjectURL(file));
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const handleSend = () => {
+    if (!user) { navigate("/signup"); return; }
+    navigate("/app");
+  };
+
+  const initials = user
+    ? (user.displayName || user.email || "U").split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)
+    : "";
+
   return (
     <div className="min-h-screen font-bricolage" style={{ background: "#0D0F14", color: "#E8EAF0" }}>
+
+      <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
 
       {/* Global grid pattern */}
       <div className="fixed inset-0 pointer-events-none opacity-[0.025]"
@@ -205,18 +263,16 @@ export default function LandingPage() {
       >
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2.5">
-            <PixaLeraIcon size={32} />
-            <span
-              className="text-[17px] font-black tracking-tight"
-              style={{ color: "#F0EBD8", letterSpacing: "-0.02em" }}
-            >
-              Pixalera<span style={{ color: "#89E900" }}>.</span>
+            <BizentoIcon size={32} />
+            <span className="text-[17px] font-black tracking-tight" style={{ color: "#F0EBD8", letterSpacing: "-0.02em" }}>
+              Bizento<span style={{ color: "#89E900" }}>.</span>
             </span>
           </Link>
 
           <div className="hidden md:flex items-center gap-7">
             {NAV_LINKS.map((l) => (
-              <button key={l.label} onClick={() => scrollTo(l.href)}
+              <button key={l.label}
+                onClick={() => scrollTo(l.href)}
                 className="text-[14px] font-medium transition-colors duration-150"
                 style={{ color: "#8A8F9E" }}
                 onMouseEnter={e => (e.currentTarget.style.color = "#E8EAF0")}
@@ -226,17 +282,36 @@ export default function LandingPage() {
           </div>
 
           <div className="hidden md:flex items-center gap-3">
-            <Link to="/login" className="text-[14px] font-medium px-4 py-2 rounded-xl transition-colors"
-              style={{ color: "#8A8F9E" }}
-              onMouseEnter={e => (e.currentTarget.style.color = "#E8EAF0")}
-              onMouseLeave={e => (e.currentTarget.style.color = "#8A8F9E")}
-            >Log in</Link>
-            <Link to="/signup"
-              className="text-[14px] font-semibold px-5 py-2.5 rounded-xl transition-all duration-150 flex items-center gap-1.5"
-              style={{ background: "#89E900", color: "#0D0F14", boxShadow: "0 0 24px rgba(137,233,0,0.2)" }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = "0 0 40px rgba(137,233,0,0.4)"; (e.currentTarget as HTMLElement).style.background = "#9FFF00"; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = "0 0 24px rgba(137,233,0,0.2)"; (e.currentTarget as HTMLElement).style.background = "#89E900"; }}
-            >Get Started <ArrowRight className="h-3.5 w-3.5" /></Link>
+            {!loading && user ? (
+              <div className="relative" ref={profileRef}>
+                <button
+                  onClick={() => setProfileOpen(v => !v)}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-xl transition-all hover:bg-white/5"
+                >
+                  <Avatar className="h-8 w-8 ring-2 ring-[#89E900]/30">
+                    {user.photoURL && <AvatarImage src={user.photoURL} referrerPolicy="no-referrer" />}
+                    <AvatarFallback className="bg-[#89E900]/15 text-[#89E900] text-xs font-bold">{initials}</AvatarFallback>
+                  </Avatar>
+                  <ChevronDown className={`h-3.5 w-3.5 text-white/30 transition-transform ${profileOpen ? "rotate-180" : ""}`} />
+                </button>
+                {profileOpen && <ProfileDropdown user={user} onClose={() => setProfileOpen(false)} />}
+              </div>
+            ) : (
+              <>
+                <Link to="/login"
+                  className="text-[14px] font-medium px-4 py-2 rounded-xl transition-colors"
+                  style={{ color: "#8A8F9E" }}
+                  onMouseEnter={e => (e.currentTarget.style.color = "#E8EAF0")}
+                  onMouseLeave={e => (e.currentTarget.style.color = "#8A8F9E")}
+                >Log in</Link>
+                <Link to="/signup"
+                  className="text-[14px] font-semibold px-5 py-2.5 rounded-xl transition-all duration-150 flex items-center gap-1.5"
+                  style={{ background: "#89E900", color: "#0D0F14", boxShadow: "0 0 24px rgba(137,233,0,0.2)" }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = "0 0 40px rgba(137,233,0,0.4)"; (e.currentTarget as HTMLElement).style.background = "#9FFF00"; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = "0 0 24px rgba(137,233,0,0.2)"; (e.currentTarget as HTMLElement).style.background = "#89E900"; }}
+                >Get Started <ArrowRight className="h-3.5 w-3.5" /></Link>
+              </>
+            )}
           </div>
 
           <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
@@ -248,9 +323,9 @@ export default function LandingPage() {
             <SheetContent side="right" className="border-0 p-0 w-72" style={{ background: "#12141A" }}>
               <div className="p-6 space-y-6">
                 <Link to="/" className="flex items-center gap-2.5" onClick={() => setMobileOpen(false)}>
-                  <PixaLeraIcon size={28} />
+                  <BizentoIcon size={28} />
                   <span className="font-black text-[16px]" style={{ color: "#F0EBD8" }}>
-                    Pixalera<span style={{ color: "#89E900" }}>.</span>
+                    Bizento<span style={{ color: "#89E900" }}>.</span>
                   </span>
                 </Link>
                 <div className="space-y-1">
@@ -262,14 +337,23 @@ export default function LandingPage() {
                   ))}
                 </div>
                 <div className="space-y-3 pt-4 border-t" style={{ borderColor: "#1E2028" }}>
-                  <Link to="/login" onClick={() => setMobileOpen(false)}
-                    className="block w-full text-center py-3 rounded-xl text-[14px] font-medium border"
-                    style={{ color: "#8A8F9E", borderColor: "#1E2028" }}
-                  >Log in</Link>
-                  <Link to="/signup" onClick={() => setMobileOpen(false)}
-                    className="block w-full text-center py-3 rounded-xl text-[14px] font-semibold"
-                    style={{ background: "#89E900", color: "#0D0F14" }}
-                  >Get Started</Link>
+                  {user ? (
+                    <Link to="/app" onClick={() => setMobileOpen(false)}
+                      className="block w-full text-center py-3 rounded-xl text-[14px] font-semibold"
+                      style={{ background: "#89E900", color: "#0D0F14" }}
+                    >Go to Dashboard</Link>
+                  ) : (
+                    <>
+                      <Link to="/login" onClick={() => setMobileOpen(false)}
+                        className="block w-full text-center py-3 rounded-xl text-[14px] font-medium border"
+                        style={{ color: "#8A8F9E", borderColor: "#1E2028" }}
+                      >Log in</Link>
+                      <Link to="/signup" onClick={() => setMobileOpen(false)}
+                        className="block w-full text-center py-3 rounded-xl text-[14px] font-semibold"
+                        style={{ background: "#89E900", color: "#0D0F14" }}
+                      >Get Started</Link>
+                    </>
+                  )}
                 </div>
               </div>
             </SheetContent>
@@ -280,103 +364,185 @@ export default function LandingPage() {
       {/* ── HERO SECTION ── */}
       <section className="relative min-h-screen flex flex-col justify-center overflow-hidden">
 
-        {/* Full-cover dark studio background */}
-        <img
-          src="/hero-studio-bg.png"
-          alt=""
-          aria-hidden="true"
+        <img src="/hero-studio-bg.png" alt="" aria-hidden="true"
           className="absolute inset-0 w-full h-full object-cover object-center pointer-events-none"
           style={{ opacity: 0.85 }}
         />
-
-        {/* Darkening overlays for text readability */}
         <div className="absolute inset-0 pointer-events-none"
           style={{ background: "linear-gradient(to bottom, rgba(10,11,15,0.55) 0%, rgba(10,11,15,0.25) 50%, rgba(10,11,15,0.72) 100%)" }} />
         <div className="absolute inset-0 pointer-events-none"
           style={{ background: "linear-gradient(to right, rgba(10,11,15,0.4) 0%, transparent 60%, rgba(10,11,15,0.2) 100%)" }} />
-
-        {/* Subtle green glow in center */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none"
           style={{ width: 700, height: 700, background: "radial-gradient(circle, rgba(137,233,0,0.07) 0%, transparent 70%)" }} />
 
-        {/* Perfume bottle — bottom-right, partially off-screen */}
-        <img
-          src="/hero-perfume-bottle.png"
-          alt="AI product photography"
+        <img src="/hero-perfume-bottle.png" alt="AI product photography"
           className="absolute pointer-events-none hidden md:block"
-          style={{
-            bottom: "-2%",
-            right: "-2%",
-            width: "38%",
-            maxWidth: 480,
-            objectFit: "contain",
-            objectPosition: "bottom right",
-            zIndex: 5,
-            filter: "drop-shadow(0 30px 60px rgba(0,0,0,0.7))",
-          }}
+          style={{ bottom: "-2%", right: "-2%", width: "38%", maxWidth: 480, objectFit: "contain", objectPosition: "bottom right", zIndex: 5, filter: "drop-shadow(0 30px 60px rgba(0,0,0,0.7))" }}
         />
 
-        {/* Main content — centered */}
-        <div className="relative z-10 w-full max-w-5xl mx-auto px-6 pt-28 pb-24 text-center">
+        <div className="relative z-10 w-full max-w-5xl mx-auto px-6 pt-28 pb-24 text-left">
 
-          {/* Badge */}
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-8 border text-[13px] font-medium"
             style={{ background: "rgba(137,233,0,0.07)", borderColor: "rgba(137,233,0,0.25)", color: "#89E900", backdropFilter: "blur(8px)" }}>
             <Sparkles className="h-3.5 w-3.5" />
-            AI-Powered Product Photography
+            AI-Powered Creative Platform
           </div>
 
-          {/* Headline */}
           <h1 className="text-5xl sm:text-6xl md:text-[72px] font-extrabold leading-[1.0] tracking-tight mb-6 text-white">
             Your product.{" "}
-            <span style={{ color: "#89E900", textShadow: "0 0 80px rgba(137,233,0,0.5)" }}>
-              Any scene.
-            </span>
+            <span style={{ color: "#89E900", textShadow: "0 0 80px rgba(137,233,0,0.5)" }}>Any scene.</span>
             <br />Instant reality.
           </h1>
 
-          {/* Description */}
-          <p className="text-[17px] md:text-[18px] leading-relaxed mb-10 max-w-2xl mx-auto" style={{ color: "rgba(200,205,215,0.85)" }}>
+          <p className="text-[17px] md:text-[18px] leading-relaxed mb-10 max-w-2xl" style={{ color: "rgba(200,205,215,0.85)" }}>
             Transform simple product photos into stunning, studio-quality images
             <br className="hidden sm:block" /> and marketing creatives — powered by AI, in seconds.
           </p>
 
-          {/* Input row — card + generate button side by side */}
-          <div className="flex flex-col sm:flex-row items-stretch gap-3 max-w-xl mx-auto md:mx-0 md:ml-0 md:max-w-[560px]">
-            {/* Input card */}
+          {/* ── ChatGPT-style Prompt Box ── */}
+          <div className="max-w-[580px]">
+            {/* Image preview (when uploaded) */}
+            {uploadedImage && (
+              <div className="flex items-center gap-2 mb-2">
+                <div className="relative">
+                  <img src={uploadedImage} alt="Upload" className="h-12 w-12 rounded-xl object-cover border border-white/20" />
+                  <button
+                    onClick={() => setUploadedImage(null)}
+                    className="absolute -top-1 -right-1 h-4 w-4 bg-black/80 border border-white/20 rounded-full flex items-center justify-center text-white/70 text-[10px] hover:text-white"
+                  >×</button>
+                </div>
+                <span className="text-[11px] text-white/40">Product image attached</span>
+              </div>
+            )}
+
+            {/* Input box */}
             <div
-              className="flex-1 rounded-2xl text-left flex flex-col justify-between"
+              className="rounded-2xl flex items-center gap-2 transition-all duration-150"
               style={{
-                background: "rgba(16,18,24,0.82)",
-                border: "1px solid rgba(255,255,255,0.1)",
-                backdropFilter: "blur(14px)",
-                padding: "14px 18px 12px",
-                minHeight: 78,
+                background: "rgba(16,18,24,0.88)",
+                border: "1px solid rgba(255,255,255,0.12)",
+                backdropFilter: "blur(16px)",
+                padding: "10px 12px",
+                boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
               }}
             >
-              <div className="flex items-center min-h-[28px]">
-                <span className="text-[14px] font-mono leading-snug" style={{ color: "#C8CDD7" }}>{typedText}</span>
-                <span className="ml-0.5 inline-block w-0.5 h-4 rounded-sm animate-pulse shrink-0" style={{ background: "#89E900" }} />
+              {/* + button */}
+              <div className="relative shrink-0" ref={toolsRef}>
+                <button
+                  onClick={() => setToolsOpen(v => !v)}
+                  disabled={!!uploadedImage}
+                  title="Tools / Upload"
+                  className="h-9 w-9 flex items-center justify-center rounded-xl transition-all hover:bg-white/8 disabled:opacity-40"
+                  style={{ border: "1px solid rgba(255,255,255,0.10)", color: "#8A8F9E" }}
+                >
+                  <Plus className="h-4 w-4" />
+                </button>
+                {toolsOpen && (
+                  <div
+                    className="absolute left-0 bottom-11 w-56 rounded-2xl border border-white/10 py-2 shadow-2xl z-50"
+                    style={{ background: "rgba(18,20,26,0.98)", backdropFilter: "blur(24px)" }}
+                  >
+                    <p className="text-[9px] font-bold uppercase tracking-widest text-white/30 px-4 pt-1 pb-1.5">Upload</p>
+                    <button
+                      onClick={() => { fileInputRef.current?.click(); setToolsOpen(false); }}
+                      className="w-full flex items-center gap-2.5 px-4 py-2 text-[13px] text-white/65 hover:bg-white/5 hover:text-white transition-colors"
+                    >
+                      <ImageIcon className="h-4 w-4 shrink-0" /> Upload Image
+                    </button>
+                    <div className="h-px bg-white/8 my-1 mx-3" />
+                    <p className="text-[9px] font-bold uppercase tracking-widest text-white/30 px-4 pt-1 pb-1.5">Tools</p>
+                    {TOOLS.map(t => (
+                      <button key={t.id}
+                        onClick={() => { setSelectedTool(t.id); setToolsOpen(false); }}
+                        className={`w-full flex items-center gap-2.5 px-4 py-2 text-[13px] transition-colors ${selectedTool === t.id ? "text-primary bg-primary/8" : "text-white/65 hover:bg-white/5 hover:text-white"}`}
+                      >
+                        <t.icon className="h-4 w-4 shrink-0" />
+                        {t.name}
+                        {selectedTool === t.id && <Check className="h-3.5 w-3.5 ml-auto text-primary" />}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
-              <div className="flex items-center justify-between mt-2 pt-2" style={{ borderTop: "1px solid rgba(255,255,255,0.07)" }}>
-                <p className="text-[11px] leading-tight" style={{ color: "rgba(138,143,158,0.7)" }}>
-                  No credit card required · 10 free generations · Cancel anytime
-                </p>
-                <ArrowRight className="h-3.5 w-3.5 shrink-0 ml-2" style={{ color: "rgba(138,143,158,0.5)" }} />
+
+              {/* Text input */}
+              <input
+                value={promptText}
+                onChange={e => setPromptText(e.target.value)}
+                onKeyDown={e => { if (e.key === "Enter") handleSend(); }}
+                placeholder={`Describe your ${TOOLS.find(t => t.id === selectedTool)?.name.toLowerCase() || "creation"}...`}
+                className="flex-1 bg-transparent text-[14px] text-white placeholder-white/30 outline-none"
+              />
+
+              {/* Credit display */}
+              <div
+                className="shrink-0 flex items-center gap-1 px-2.5 py-1 rounded-lg text-[12px] font-semibold"
+                style={{ background: "rgba(137,233,0,0.08)", color: "#89E900", border: "1px solid rgba(137,233,0,0.15)" }}
+              >
+                <Zap className="h-3 w-3" />
+                {creditCost} cr
+              </div>
+
+              {/* Send button */}
+              <button
+                onClick={handleSend}
+                className="h-9 w-9 shrink-0 flex items-center justify-center rounded-xl transition-all duration-150 hover:scale-105"
+                style={{ background: "#89E900", color: "#0D0F14", boxShadow: "0 0 16px rgba(137,233,0,0.3)" }}
+              >
+                <ArrowRight className="h-4 w-4" />
+              </button>
+            </div>
+
+            {/* Controls row */}
+            <div className="flex flex-wrap items-center gap-2 mt-2.5">
+              {/* Model selector */}
+              <div className="flex items-center gap-1 rounded-lg p-0.5" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                {MODELS.map(m => (
+                  <button key={m.id}
+                    onClick={() => setSelectedModel(m.id)}
+                    className="px-2.5 py-1 rounded-md text-[11px] font-medium transition-all"
+                    style={selectedModel === m.id
+                      ? { background: "#89E900", color: "#0D0F14" }
+                      : { color: "#8A8F9E" }
+                    }
+                  >{m.name}</button>
+                ))}
+              </div>
+
+              {/* Quality selector */}
+              <div className="flex items-center gap-1 rounded-lg p-0.5" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                {QUALITIES.map(q => (
+                  <button key={q.id}
+                    onClick={() => setSelectedQuality(q.id)}
+                    className="px-2.5 py-1 rounded-md text-[11px] font-medium transition-all"
+                    style={selectedQuality === q.id
+                      ? { background: "#89E900", color: "#0D0F14" }
+                      : { color: "#8A8F9E" }
+                    }
+                  >{q.label}</button>
+                ))}
+              </div>
+
+              {/* CTA buttons */}
+              <div className="flex items-center gap-2 ml-auto">
+                <Link to="/signup"
+                  className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-[12px] font-semibold transition-all"
+                  style={{ background: "#89E900", color: "#0D0F14", boxShadow: "0 0 16px rgba(137,233,0,0.2)" }}
+                >
+                  Get Started
+                </Link>
+                <Link to="/features"
+                  className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-[12px] font-medium border transition-all"
+                  style={{ color: "#8A8F9E", borderColor: "rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.04)" }}
+                >
+                  Demo
+                </Link>
               </div>
             </div>
 
-            {/* Generate button */}
-            <Link
-              to="/signup"
-              className="flex items-center justify-center gap-2 px-7 py-4 rounded-2xl text-[15px] font-bold whitespace-nowrap transition-all duration-150 shrink-0"
-              style={{ background: "#89E900", color: "#0D0F14", boxShadow: "0 4px 30px rgba(137,233,0,0.3)" }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "#9FFF00"; (e.currentTarget as HTMLElement).style.boxShadow = "0 4px 50px rgba(137,233,0,0.55)"; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "#89E900"; (e.currentTarget as HTMLElement).style.boxShadow = "0 4px 30px rgba(137,233,0,0.3)"; }}
-            >
-              <Sparkles className="h-4 w-4" />
-              Generate
-            </Link>
+            <p className="text-[11px] mt-2.5" style={{ color: "rgba(138,143,158,0.5)" }}>
+              No credit card required · 15 free credits · Cancel anytime
+            </p>
           </div>
         </div>
       </section>
@@ -398,19 +564,18 @@ export default function LandingPage() {
                 className="rounded-2xl border overflow-hidden transition-all duration-300 group hover:border-[#89E900]/25"
                 style={{ background: "#12141A", borderColor: "#1E2028" }}>
                 <div className="aspect-video relative overflow-hidden">
-                  <img
-                    src={item.image}
-                    alt={item.category}
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                  />
+                  <img src={item.image} alt={item.category}
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
                   <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(18,20,26,0.85) 0%, transparent 50%)" }} />
                   <div className="absolute top-3 left-3">
-                    <span className="text-[11px] font-bold tracking-widest uppercase px-2.5 py-1 rounded-full" style={{ color: "#89E900", background: "rgba(137,233,0,0.1)", border: "1px solid rgba(137,233,0,0.2)" }}>
+                    <span className="text-[11px] font-bold tracking-widest uppercase px-2.5 py-1 rounded-full"
+                      style={{ color: "#89E900", background: "rgba(137,233,0,0.1)", border: "1px solid rgba(137,233,0,0.2)" }}>
                       {item.category}
                     </span>
                   </div>
                   <div className="absolute bottom-3 right-3">
-                    <span className="text-[10px] font-bold px-2 py-1 rounded-lg" style={{ background: "rgba(137,233,0,0.15)", color: "#89E900", border: "1px solid rgba(137,233,0,0.25)" }}>
+                    <span className="text-[10px] font-bold px-2 py-1 rounded-lg"
+                      style={{ background: "rgba(137,233,0,0.15)", color: "#89E900", border: "1px solid rgba(137,233,0,0.25)" }}>
                       AI Generated
                     </span>
                   </div>
@@ -421,7 +586,7 @@ export default function LandingPage() {
                     <p className="text-[12px] leading-relaxed" style={{ color: "#8A8F9E" }}>{item.before}</p>
                   </div>
                   <div className="p-4" style={{ borderColor: "#1E2028" }}>
-                    <p className="text-[10px] font-bold tracking-widest uppercase mb-1.5" style={{ color: "#89E900" }}>Pixalera AI</p>
+                    <p className="text-[10px] font-bold tracking-widest uppercase mb-1.5" style={{ color: "#89E900" }}>Bizento AI</p>
                     <p className="text-[12px] leading-relaxed" style={{ color: "rgba(137,233,0,0.75)" }}>{item.after}</p>
                   </div>
                 </div>
@@ -431,47 +596,22 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── PROBLEM → SOLUTION ── */}
-      <section className="py-24 px-6" style={{ background: "#0A0C11" }}>
+      {/* ── HOW IT WORKS ── */}
+      <section id="how-it-works" className="py-24 px-6" style={{ background: "#0A0C11" }}>
         <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-14">
-            <h2 className="text-4xl md:text-5xl font-extrabold leading-tight">Why <span style={{ color: "#89E900" }}>PixaLera</span> exists</h2>
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-extrabold">How it works</h2>
+            <p className="mt-4 text-[16px]" style={{ color: "#8A8F9E" }}>Three steps to studio-quality product visuals.</p>
           </div>
-          <div className="grid lg:grid-cols-2 gap-6">
-            <div className="rounded-2xl border overflow-hidden" style={{ background: "#12141A", borderColor: "#1E2028" }}>
-              <div className="flex items-center gap-3 px-6 py-4 border-b" style={{ background: "rgba(239,68,68,0.06)", borderColor: "#1E2028" }}>
-                <X className="h-5 w-5 text-red-400" />
-                <h3 className="font-bold text-red-400">The Problem</h3>
+          <div className="grid md:grid-cols-3 gap-6">
+            {HOW_IT_WORKS.map((step) => (
+              <div key={step.num} className="rounded-2xl border p-6 transition-all duration-300 hover:border-[rgba(137,233,0,0.2)]"
+                style={{ background: "#12141A", borderColor: "#1E2028" }}>
+                <div className="text-[40px] font-extrabold mb-4 leading-none" style={{ color: step.color, opacity: 0.6 }}>{step.num}</div>
+                <h3 className="text-[18px] font-bold mb-2">{step.title}</h3>
+                <p className="text-[14px] leading-relaxed" style={{ color: "#8A8F9E" }}>{step.desc}</p>
               </div>
-              <div className="p-6 space-y-5">
-                {PROBLEMS.map((p, i) => (
-                  <div key={i} className="flex gap-3.5">
-                    <XCircle className="h-5 w-5 text-red-500/70 shrink-0 mt-0.5" />
-                    <div>
-                      <p className="text-[14px] font-semibold text-white/85">{p.title}</p>
-                      <p className="text-[13px] mt-0.5 leading-relaxed" style={{ color: "#8A8F9E" }}>{p.desc}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="rounded-2xl border overflow-hidden" style={{ background: "#12141A", borderColor: "rgba(137,233,0,0.15)" }}>
-              <div className="flex items-center gap-3 px-6 py-4 border-b" style={{ background: "rgba(137,233,0,0.06)", borderColor: "rgba(137,233,0,0.12)" }}>
-                <CheckCircle2 className="h-5 w-5" style={{ color: "#89E900" }} />
-                <h3 className="font-bold" style={{ color: "#89E900" }}>The PixaLera Solution</h3>
-              </div>
-              <div className="p-6 space-y-5">
-                {SOLUTIONS.map((s, i) => (
-                  <div key={i} className="flex gap-3.5">
-                    <CheckCircle2 className="h-5 w-5 shrink-0 mt-0.5" style={{ color: "#89E900" }} />
-                    <div>
-                      <p className="text-[14px] font-semibold text-white/85">{s.title}</p>
-                      <p className="text-[13px] mt-0.5 leading-relaxed" style={{ color: "#8A8F9E" }}>{s.desc}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       </section>
@@ -479,30 +619,33 @@ export default function LandingPage() {
       {/* ── FEATURES ── */}
       <section id="features" className="py-24 px-6">
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-14">
-            <h2 className="text-4xl md:text-5xl font-extrabold leading-tight">
-              Everything you need to <span style={{ color: "#89E900" }}>scale visuals</span>
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-extrabold">
+              Everything you need to <span style={{ color: "#89E900" }}>create at scale</span>
             </h2>
+            <p className="mt-4 text-[16px] max-w-xl mx-auto" style={{ color: "#8A8F9E" }}>
+              A full creative suite powered by the most advanced AI models.
+            </p>
           </div>
-          <div className="space-y-5">
-            {FEATURES.map((f, i) => (
-              <div key={f.title}
-                className="rounded-2xl border overflow-hidden flex flex-col md:flex-row transition-all duration-300 group hover:border-[#89E900]/20"
-                style={{ background: "#12141A", borderColor: "#1E2028", flexDirection: i % 2 === 0 ? "row" : "row-reverse" as any }}>
-                <div className="flex-1 md:max-w-[42%] aspect-[4/3] relative overflow-hidden">
-                  <img
-                    src={f.image}
-                    alt={f.title}
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                  />
-                  <div className="absolute inset-0" style={{ background: "rgba(13,15,20,0.25)" }} />
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {FEATURES.map((feat) => (
+              <div key={feat.title}
+                className="rounded-2xl border overflow-hidden group transition-all duration-300 hover:border-[#89E900]/20"
+                style={{ background: "#12141A", borderColor: "#1E2028" }}>
+                <div className="aspect-[4/3] overflow-hidden relative">
+                  <img src={feat.image} alt={feat.title}
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                  <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(18,20,26,0.8) 0%, transparent 60%)" }} />
                 </div>
-                <div className="flex-1 p-8 flex flex-col justify-center">
-                  <div className="h-10 w-10 rounded-xl flex items-center justify-center mb-4" style={{ background: "rgba(137,233,0,0.08)", border: "1px solid rgba(137,233,0,0.15)" }}>
-                    <f.icon className="h-5 w-5" style={{ color: "#89E900" }} />
+                <div className="p-5">
+                  <div className="flex items-center gap-2.5 mb-2">
+                    <div className="h-8 w-8 rounded-lg flex items-center justify-center shrink-0"
+                      style={{ background: "rgba(137,233,0,0.1)", border: "1px solid rgba(137,233,0,0.2)" }}>
+                      <feat.icon className="h-4 w-4" style={{ color: "#89E900" }} />
+                    </div>
+                    <h3 className="text-[15px] font-bold">{feat.title}</h3>
                   </div>
-                  <h3 className="text-xl font-bold text-white mb-3">{f.title}</h3>
-                  <p className="text-[14px] leading-relaxed" style={{ color: "#8A8F9E" }}>{f.desc}</p>
+                  <p className="text-[13px] leading-relaxed" style={{ color: "#8A8F9E" }}>{feat.desc}</p>
                 </div>
               </div>
             ))}
@@ -510,98 +653,26 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── USE CASES / RESOURCES ── */}
+      {/* ── USE CASES ── */}
       <section id="resources" className="py-24 px-6" style={{ background: "#0A0C11" }}>
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-14">
-            <h2 className="text-4xl md:text-5xl font-extrabold leading-tight">
-              Built for <span style={{ color: "#89E900" }}>every industry</span>
-            </h2>
-            <p className="mt-4 text-[16px] max-w-xl mx-auto" style={{ color: "#8A8F9E" }}>
-              From fashion to food, PixaLera delivers studio-quality product photography for any category.
-            </p>
+            <h2 className="text-4xl md:text-5xl font-extrabold">Built for every category</h2>
+            <p className="mt-4 text-[16px]" style={{ color: "#8A8F9E" }}>Whatever you sell, Bizento AI creates the visuals.</p>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {USE_CASES.map((u) => (
-              <div key={u.title}
-                className="rounded-2xl border overflow-hidden group cursor-pointer transition-all duration-300 hover:border-[#89E900]/30 hover:-translate-y-1"
+            {USE_CASES.map((uc) => (
+              <div key={uc.title}
+                className="rounded-2xl border p-5 flex gap-4 group transition-all duration-300 hover:border-[#89E900]/20"
                 style={{ background: "#12141A", borderColor: "#1E2028" }}>
-                <div className="aspect-[4/3] relative overflow-hidden">
-                  <img
-                    src={u.image}
-                    alt={u.title}
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-108"
-                  />
-                  <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(18,20,26,0.9) 0%, rgba(18,20,26,0.2) 60%, transparent 100%)" }} />
+                <div className="h-10 w-10 shrink-0 rounded-xl flex items-center justify-center"
+                  style={{ background: "rgba(137,233,0,0.08)", border: "1px solid rgba(137,233,0,0.15)" }}>
+                  <uc.icon className="h-5 w-5" style={{ color: "#89E900" }} />
                 </div>
-                <div className="p-5">
-                  <div className="h-9 w-9 rounded-lg flex items-center justify-center mb-3" style={{ background: "rgba(137,233,0,0.08)", border: "1px solid rgba(137,233,0,0.12)" }}>
-                    <u.icon className="h-4 w-4" style={{ color: "#89E900" }} />
-                  </div>
-                  <h3 className="text-[15px] font-bold text-white mb-1.5">{u.title}</h3>
-                  <p className="text-[13px] leading-relaxed" style={{ color: "#8A8F9E" }}>{u.desc}</p>
+                <div>
+                  <h3 className="font-bold text-[15px] mb-1">{uc.title}</h3>
+                  <p className="text-[13px] leading-relaxed" style={{ color: "#8A8F9E" }}>{uc.desc}</p>
                 </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── HOW IT WORKS ── */}
-      <section id="how-it-works" className="py-24 px-6">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-14">
-            <h2 className="text-4xl md:text-5xl font-extrabold leading-tight">
-              How it <span style={{ color: "#89E900" }}>works</span>
-            </h2>
-            <p className="mt-4 text-[16px] max-w-xl mx-auto" style={{ color: "#8A8F9E" }}>
-              From upload to professional image in three simple steps.
-            </p>
-          </div>
-          <div className="grid md:grid-cols-3 gap-6">
-            {HOW_IT_WORKS.map((step, i) => (
-              <div key={step.num} className="relative">
-                {i < HOW_IT_WORKS.length - 1 && (
-                  <div className="hidden md:block absolute top-10 left-[calc(100%+12px)] w-[calc(100%-24px)] h-px" style={{ background: "linear-gradient(to right, rgba(137,233,0,0.3), transparent)", zIndex: 1 }} />
-                )}
-                <div className="rounded-2xl border overflow-hidden h-full transition-all duration-300 hover:border-[#89E900]/20" style={{ background: "#12141A", borderColor: "#1E2028" }}>
-                  <div className="p-7">
-                    <div className="h-14 w-14 rounded-2xl flex items-center justify-center mb-5" style={{ background: `${step.color}15`, border: `1px solid ${step.color}30` }}>
-                      <span className="text-2xl font-black" style={{ color: step.color }}>{step.num}</span>
-                    </div>
-                    <h3 className="text-[17px] font-bold text-white mb-2">{step.title}</h3>
-                    <p className="text-[13px] leading-relaxed" style={{ color: "#8A8F9E" }}>{step.desc}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── COMPARISON TABLE ── */}
-      <section className="py-24 px-6" style={{ background: "#0A0C11" }}>
-        <div className="max-w-3xl mx-auto">
-          <div className="text-center mb-14">
-            <h2 className="text-4xl md:text-5xl font-extrabold leading-tight">
-              Why choose <span style={{ color: "#89E900" }}>PixaLera</span>?
-            </h2>
-          </div>
-          <div className="rounded-2xl border overflow-hidden" style={{ borderColor: "#1E2028" }}>
-            <div className="grid grid-cols-3">
-              <div className="p-4 border-b border-r" style={{ borderColor: "#1E2028", background: "#0D0F14" }} />
-              <div className="p-4 border-b border-r text-center" style={{ borderColor: "#1E2028", background: "rgba(255,255,255,0.02)" }}>
-                <p className="text-[13px] font-bold" style={{ color: "#8A8F9E" }}>Traditional Studio</p>
-              </div>
-              <div className="p-4 border-b text-center" style={{ borderColor: "#1E2028", background: "rgba(137,233,0,0.05)" }}>
-                <p className="text-[13px] font-bold" style={{ color: "#89E900" }}>PixaLera AI</p>
-              </div>
-            </div>
-            {COMPARISON.map((row, i) => (
-              <div key={row.label} className="grid grid-cols-3" style={{ background: i % 2 === 0 ? "#12141A" : "#0F1117" }}>
-                <div className="p-4 border-r text-[13px] font-medium text-white/70" style={{ borderColor: "#1E2028" }}>{row.label}</div>
-                <div className="p-4 border-r text-center text-[13px]" style={{ borderColor: "#1E2028", color: "#8A8F9E" }}>{row.traditional}</div>
-                <div className="p-4 text-center text-[13px] font-bold" style={{ color: "#89E900" }}>{row.pixalera}</div>
               </div>
             ))}
           </div>
@@ -610,27 +681,30 @@ export default function LandingPage() {
 
       {/* ── TESTIMONIALS ── */}
       <section className="py-24 px-6">
-        <div className="max-w-5xl mx-auto">
+        <div className="max-w-6xl mx-auto">
           <div className="text-center mb-14">
-            <h2 className="text-4xl md:text-5xl font-extrabold leading-tight">
-              Loved by <span style={{ color: "#89E900" }}>sellers worldwide</span>
-            </h2>
+            <h2 className="text-4xl md:text-5xl font-extrabold">Loved by creators worldwide</h2>
           </div>
           <div className="grid md:grid-cols-3 gap-5">
             {TESTIMONIALS.map((t) => (
               <div key={t.name}
-                className="rounded-2xl border p-6 flex flex-col gap-4 transition-all duration-300 hover:border-[#89E900]/20"
-                style={{ background: "rgba(18,20,26,0.6)", borderColor: "#1E2028", backdropFilter: "blur(8px)" }}>
-                <div className="flex gap-0.5">
-                  {[...Array(5)].map((_, i) => <Star key={i} className="h-4 w-4 fill-[#89E900] text-[#89E900]" />)}
+                className="rounded-2xl border p-6 space-y-4 transition-all duration-300 hover:border-[#89E900]/20"
+                style={{ background: "#12141A", borderColor: "#1E2028" }}>
+                <div className="flex gap-1">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className="h-4 w-4 fill-[#89E900] text-[#89E900]" />
+                  ))}
                 </div>
-                <p className="text-[13px] leading-relaxed flex-1" style={{ color: "#8A8F9E" }}>"{t.quote}"</p>
-                <div className="flex items-center gap-3 pt-3 border-t" style={{ borderColor: "#1E2028" }}>
-                  <div className="h-9 w-9 rounded-full flex items-center justify-center text-[13px] font-bold shrink-0" style={{ background: "#89E900", color: "#0D0F14" }}>
+                <p className="text-[14px] leading-relaxed italic" style={{ color: "rgba(200,205,215,0.75)" }}>
+                  "{t.quote}"
+                </p>
+                <div className="flex items-center gap-3">
+                  <div className="h-9 w-9 rounded-full flex items-center justify-center text-sm font-bold text-black shrink-0"
+                    style={{ background: "#89E900" }}>
                     {t.avatar}
                   </div>
                   <div>
-                    <p className="text-[13px] font-bold text-white/85">{t.name}</p>
+                    <p className="text-[13px] font-semibold">{t.name}</p>
                     <p className="text-[11px]" style={{ color: "#8A8F9E" }}>{t.role}</p>
                   </div>
                 </div>
@@ -640,79 +714,24 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── PRICING ── */}
-      <section id="pricing" className="py-24 px-6" style={{ background: "#0A0C11" }}>
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-4">
-            <h2 className="text-4xl md:text-5xl font-extrabold leading-tight">
-              Simple, transparent <span style={{ color: "#89E900" }}>pricing</span>
-            </h2>
-          </div>
-          <p className="text-center text-[15px] mb-14" style={{ color: "#8A8F9E" }}>
-            All plans include a 14-day free trial. No credit card required.
-          </p>
-          <div className="grid md:grid-cols-3 gap-5 items-start">
-            {PRICING.map((plan) => (
-              <div key={plan.name}
-                className={`rounded-2xl border p-7 flex flex-col transition-all duration-300 ${plan.popular ? "md:scale-105" : ""}`}
-                style={{
-                  background: plan.popular ? "rgba(18,22,10,0.8)" : "#12141A",
-                  borderColor: plan.popular ? "rgba(137,233,0,0.35)" : "#1E2028",
-                  boxShadow: plan.popular ? "0 0 60px rgba(137,233,0,0.08)" : "none",
-                }}>
-                {plan.popular && (
-                  <div className="mb-4">
-                    <span className="text-[11px] font-bold tracking-widest uppercase px-3 py-1 rounded-full" style={{ background: "rgba(137,233,0,0.12)", color: "#89E900" }}>
-                      Most Popular
-                    </span>
-                  </div>
-                )}
-                <h3 className="text-[18px] font-bold text-white">{plan.name}</h3>
-                <div className="mt-3 mb-2 flex items-end gap-1">
-                  <span className="text-4xl font-extrabold text-white tabular-nums">${plan.price}</span>
-                  <span className="text-[14px] mb-1" style={{ color: "#8A8F9E" }}>/month</span>
-                </div>
-                <p className="text-[13px] mb-6" style={{ color: "#8A8F9E" }}>{plan.desc}</p>
-                <ul className="space-y-3 mb-8 flex-1">
-                  {plan.features.map((f) => (
-                    <li key={f} className="flex items-center gap-2.5 text-[13px]" style={{ color: "#8A8F9E" }}>
-                      <Check className="h-4 w-4 shrink-0" style={{ color: plan.popular ? "#89E900" : "#8A8F9E" }} />
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-                <Link to="/signup"
-                  className="block text-center py-3.5 rounded-xl text-[14px] font-semibold transition-all duration-150"
-                  style={plan.popular
-                    ? { background: "#89E900", color: "#0D0F14", boxShadow: "0 0 24px rgba(137,233,0,0.2)" }
-                    : { background: "transparent", color: "#E8EAF0", border: "1px solid #1E2028" }
-                  }
-                  onMouseEnter={e => plan.popular && ((e.currentTarget as HTMLElement).style.boxShadow = "0 0 40px rgba(137,233,0,0.4)")}
-                  onMouseLeave={e => plan.popular && ((e.currentTarget as HTMLElement).style.boxShadow = "0 0 24px rgba(137,233,0,0.2)")}
-                >
-                  {plan.cta}
-                </Link>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* ── FAQ ── */}
-      <section className="py-24 px-6">
+      <section className="py-24 px-6" style={{ background: "#0A0C11" }}>
         <div className="max-w-3xl mx-auto">
           <div className="text-center mb-14">
-            <h2 className="text-4xl md:text-5xl font-extrabold leading-tight">
-              Frequently asked <span style={{ color: "#89E900" }}>questions</span>
-            </h2>
+            <h2 className="text-4xl md:text-5xl font-extrabold">Frequently asked questions</h2>
           </div>
-          <Accordion type="single" collapsible className="space-y-0">
+          <Accordion type="single" collapsible className="space-y-3">
             {FAQ.map((item, i) => (
-              <AccordionItem key={i} value={`faq-${i}`} className="border-0 border-b" style={{ borderColor: "#1E2028" }}>
-                <AccordionTrigger className="py-5 text-[15px] font-semibold text-left text-white/85 hover:text-white hover:no-underline">
+              <AccordionItem
+                key={i}
+                value={`faq-${i}`}
+                className="rounded-2xl border px-5 overflow-hidden"
+                style={{ background: "#12141A", borderColor: "#1E2028" }}
+              >
+                <AccordionTrigger className="text-[15px] font-semibold py-4 hover:no-underline text-left">
                   {item.q}
                 </AccordionTrigger>
-                <AccordionContent className="pb-5 text-[14px] leading-relaxed" style={{ color: "#8A8F9E" }}>
+                <AccordionContent className="text-[14px] leading-relaxed pb-4" style={{ color: "#8A8F9E" }}>
                   {item.a}
                 </AccordionContent>
               </AccordionItem>
@@ -722,134 +741,86 @@ export default function LandingPage() {
       </section>
 
       {/* ── FINAL CTA ── */}
-      <section className="py-28 px-6 text-center relative overflow-hidden" style={{ background: "#0A0C11" }}>
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[600px] w-[600px] rounded-full blur-[160px] pointer-events-none" style={{ background: "rgba(137,233,0,0.06)" }} />
-        <div className="relative z-10 max-w-2xl mx-auto">
-          <h2 className="text-4xl md:text-5xl font-extrabold leading-tight mb-5">
-            Ready to transform your <span style={{ color: "#89E900" }}>product visuals</span>?
+      <section className="py-24 px-6">
+        <div className="max-w-4xl mx-auto text-center rounded-2xl border py-16 px-8"
+          style={{ background: "linear-gradient(135deg, rgba(137,233,0,0.05) 0%, rgba(137,233,0,0.02) 100%)", borderColor: "rgba(137,233,0,0.15)" }}>
+          <h2 className="text-4xl md:text-5xl font-extrabold mb-4">
+            Start creating <span style={{ color: "#89E900" }}>today</span>
           </h2>
-          <p className="text-[17px] mb-10" style={{ color: "#8A8F9E" }}>
-            Join 10,000+ sellers generating studio-quality product images with AI. Start free — no credit card needed.
+          <p className="text-[17px] mb-10 max-w-xl mx-auto" style={{ color: "#8A8F9E" }}>
+            Join thousands of brands who've made the switch to AI product photography. 15 free credits. No card required.
           </p>
-          <Link to="/signup"
-            className="inline-flex items-center gap-2.5 px-8 py-4 rounded-xl text-[16px] font-bold transition-all duration-150"
-            style={{ background: "#89E900", color: "#0D0F14", boxShadow: "0 0 40px rgba(137,233,0,0.25)" }}
-            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "#9FFF00"; (e.currentTarget as HTMLElement).style.boxShadow = "0 0 60px rgba(137,233,0,0.45)"; }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "#89E900"; (e.currentTarget as HTMLElement).style.boxShadow = "0 0 40px rgba(137,233,0,0.25)"; }}
-          >
-            Start Free Trial <ArrowRight className="h-5 w-5" />
-          </Link>
-          <p className="mt-4 text-[12px]" style={{ color: "#8A8F9E" }}>No credit card required · 10 free generations</p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Link to="/signup"
+              className="flex items-center gap-2 px-8 py-4 rounded-2xl text-[15px] font-bold transition-all duration-150"
+              style={{ background: "#89E900", color: "#0D0F14", boxShadow: "0 4px 30px rgba(137,233,0,0.3)" }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "#9FFF00"; (e.currentTarget as HTMLElement).style.boxShadow = "0 4px 50px rgba(137,233,0,0.55)"; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "#89E900"; (e.currentTarget as HTMLElement).style.boxShadow = "0 4px 30px rgba(137,233,0,0.3)"; }}
+            >
+              <Sparkles className="h-4 w-4" />
+              Get Started Free
+            </Link>
+            <Link to="/pricing"
+              className="flex items-center gap-2 px-8 py-4 rounded-2xl text-[15px] font-medium border transition-all duration-150"
+              style={{ color: "#8A8F9E", borderColor: "#1E2028" }}
+            >
+              View Pricing <ChevronRight className="h-4 w-4" />
+            </Link>
+          </div>
         </div>
       </section>
 
-      {/* ── PROFESSIONAL FOOTER ── */}
-      <footer style={{ background: "#09090D", borderTop: "1px solid #1A1D26" }}>
-        {/* Top footer */}
-        <div className="max-w-7xl mx-auto px-6 py-16">
-          <div className="grid grid-cols-2 md:grid-cols-6 gap-10">
-            {/* Brand col */}
-            <div className="col-span-2">
-              <Link to="/" className="flex items-center gap-2.5 mb-5">
-                <PixaLeraIcon size={30} />
+      {/* ── FOOTER ── */}
+      <footer className="border-t py-16 px-6" style={{ borderColor: "#1E2028", background: "#0A0C11" }}>
+        <div className="max-w-6xl mx-auto">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-10 mb-12">
+            <div className="col-span-2 md:col-span-1">
+              <div className="flex items-center gap-2.5 mb-4">
+                <BizentoIcon size={28} />
                 <span className="font-black text-[16px]" style={{ color: "#F0EBD8" }}>
-                  Pixalera<span style={{ color: "#89E900" }}>.</span>
+                  Bizento<span style={{ color: "#89E900" }}>.</span>
                 </span>
-              </Link>
-              <p className="text-[13px] leading-relaxed mb-6" style={{ color: "#666C7E" }}>
-                AI-powered product photography for e-commerce sellers worldwide. Studio quality, in seconds.
+              </div>
+              <p className="text-[13px] leading-relaxed" style={{ color: "#8A8F9E" }}>
+                AI-powered product photography and creative automation for modern brands.
               </p>
-              <div className="flex items-center gap-3">
-                {[
-                  { Icon: Twitter, label: "Twitter" },
-                  { Icon: Instagram, label: "Instagram" },
-                  { Icon: Linkedin, label: "LinkedIn" },
-                  { Icon: Github, label: "GitHub" },
-                ].map(({ Icon, label }) => (
-                  <a key={label} href="#" aria-label={label}
-                    className="h-9 w-9 rounded-xl flex items-center justify-center transition-all duration-150"
-                    style={{ background: "#1A1D26", color: "#666C7E" }}
-                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "rgba(137,233,0,0.1)"; (e.currentTarget as HTMLElement).style.color = "#89E900"; }}
-                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "#1A1D26"; (e.currentTarget as HTMLElement).style.color = "#666C7E"; }}
-                  >
-                    <Icon className="h-4 w-4" />
-                  </a>
+              <div className="flex gap-3 mt-5">
+                {[Twitter, Instagram, Linkedin, Github].map((Icon, i) => (
+                  <button key={i} className="h-8 w-8 rounded-lg flex items-center justify-center transition-colors hover:bg-white/8"
+                    style={{ background: "rgba(255,255,255,0.05)", color: "#8A8F9E" }}>
+                    <Icon className="h-3.5 w-3.5" />
+                  </button>
                 ))}
               </div>
             </div>
-
-            {/* Link cols */}
-            {Object.entries(FOOTER_LINKS).map(([heading, links]) => (
-              <div key={heading}>
-                <p className="text-[12px] font-bold text-white/50 mb-4 uppercase tracking-widest">{heading}</p>
-                <ul className="space-y-3">
+            {Object.entries(FOOTER_LINKS).map(([category, links]) => (
+              <div key={category}>
+                <p className="text-[12px] font-bold uppercase tracking-wider mb-4" style={{ color: "#8A8F9E" }}>{category}</p>
+                <ul className="space-y-2.5">
                   {links.map((link) => (
                     <li key={link}>
-                      <a href="#"
-                        className="text-[13px] transition-colors duration-150 flex items-center gap-1 group"
-                        style={{ color: "#666C7E" }}
+                      <button className="text-[13px] transition-colors" style={{ color: "rgba(138,143,158,0.6)" }}
                         onMouseEnter={e => (e.currentTarget.style.color = "#E8EAF0")}
-                        onMouseLeave={e => (e.currentTarget.style.color = "#666C7E")}
-                      >
-                        {link}
-                      </a>
+                        onMouseLeave={e => (e.currentTarget.style.color = "rgba(138,143,158,0.6)")}
+                      >{link}</button>
                     </li>
                   ))}
                 </ul>
               </div>
             ))}
           </div>
-        </div>
-
-        {/* Newsletter bar */}
-        <div className="border-t border-b" style={{ borderColor: "#1A1D26" }}>
-          <div className="max-w-7xl mx-auto px-6 py-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="h-8 w-8 rounded-lg flex items-center justify-center" style={{ background: "rgba(137,233,0,0.08)", border: "1px solid rgba(137,233,0,0.15)" }}>
-                <Mail className="h-4 w-4" style={{ color: "#89E900" }} />
-              </div>
-              <div>
-                <p className="text-[13px] font-semibold text-white">Stay updated</p>
-                <p className="text-[12px]" style={{ color: "#666C7E" }}>Get the latest AI photography tips and product updates.</p>
-              </div>
+          <div className="flex flex-col sm:flex-row items-center justify-between pt-8 border-t gap-4" style={{ borderColor: "#1E2028" }}>
+            <p className="text-[13px]" style={{ color: "rgba(138,143,158,0.45)" }}>
+              © {new Date().getFullYear()} Bizento AI. All rights reserved.
+            </p>
+            <div className="flex items-center gap-2">
+              <div className="h-1.5 w-1.5 rounded-full animate-pulse" style={{ background: "#89E900" }} />
+              <span className="text-[12px]" style={{ color: "rgba(137,233,0,0.6)" }}>All systems operational</span>
             </div>
-            <div className="flex items-center gap-2 w-full sm:w-auto">
-              <input
-                type="email"
-                placeholder="Enter your email"
-                className="flex-1 sm:w-64 px-4 py-2.5 rounded-xl text-[13px] outline-none border transition-all"
-                style={{ background: "#1A1D26", borderColor: "#2A2D38", color: "#E8EAF0" }}
-                onFocus={e => (e.currentTarget.style.borderColor = "rgba(137,233,0,0.4)")}
-                onBlur={e => (e.currentTarget.style.borderColor = "#2A2D38")}
-              />
-              <button
-                className="px-4 py-2.5 rounded-xl text-[13px] font-semibold whitespace-nowrap transition-all"
-                style={{ background: "#89E900", color: "#0D0F14" }}
-                onMouseEnter={e => (e.currentTarget.style.background = "#9FFF00")}
-                onMouseLeave={e => (e.currentTarget.style.background = "#89E900")}
-              >
-                Subscribe
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Bottom bar */}
-        <div className="max-w-7xl mx-auto px-6 py-5 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p className="text-[12px]" style={{ color: "#3D4150" }}>
-            © {new Date().getFullYear()} Pixalera, Inc. All rights reserved.
-          </p>
-          <div className="flex items-center gap-5">
-            {["Privacy Policy", "Terms of Service", "Cookies"].map((item) => (
-              <a key={item} href="#" className="text-[12px] transition-colors"
-                style={{ color: "#3D4150" }}
-                onMouseEnter={e => (e.currentTarget.style.color = "#8A8F9E")}
-                onMouseLeave={e => (e.currentTarget.style.color = "#3D4150")}
-              >{item}</a>
-            ))}
           </div>
         </div>
       </footer>
+
     </div>
   );
 }
