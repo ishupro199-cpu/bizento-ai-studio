@@ -83,8 +83,8 @@ function SidebarInner({
             <>
               <div className="flex items-center gap-2.5">
                 <PixaLeraIcon size={28} className="shrink-0" />
-                <span className="text-base font-bold tracking-tight text-foreground whitespace-nowrap">
-                  Pixa<span className="text-primary">Lera</span>
+                <span className="text-base font-black tracking-tight whitespace-nowrap" style={{ color: "#F0EBD8", letterSpacing: "-0.02em" }}>
+                  Pixalera<span style={{ color: "#89E900" }}>.</span>
                 </span>
               </div>
               <button
