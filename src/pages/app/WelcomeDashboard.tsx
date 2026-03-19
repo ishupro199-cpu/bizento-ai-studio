@@ -426,34 +426,244 @@ export default function WelcomeDashboard() {
       <input type="file" ref={referenceRef} className="hidden" accept="image/*" onChange={handleReferenceSelect} />
 
       {/* ─── CHAT AREA ─── */}
-      <div className="flex-1 overflow-y-auto px-3 sm:px-6 py-6 space-y-5 sidebar-scroll"
-        style={{ paddingBottom: phase === "show-styles" ? "220px" : "100px" }}>
+      <div className={`flex-1 overflow-y-auto sidebar-scroll ${phase === "idle" ? "" : "px-3 sm:px-6 py-6 space-y-5"}`}
+        style={{ paddingBottom: phase === "idle" ? 0 : phase === "show-styles" ? "220px" : "100px" }}>
 
-        {/* IDLE STATE */}
+        {/* IDLE STATE — fully inline, no sticky bar */}
         {phase === "idle" && (
-          <div className="flex flex-col h-full min-h-[50vh] animate-fade-in">
-            {/* Top - Workspace name + greeting */}
-            <div className="flex flex-col items-center justify-center flex-1 text-center space-y-2">
-              {/* Workspace chip */}
-              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full border"
-                style={{ background: "rgba(137,233,0,0.06)", borderColor: "rgba(137,233,0,0.18)", color: "rgba(137,233,0,0.8)" }}>
-                <Building className="h-3 w-3" />
-                <span className="text-[11px] font-medium">{workspaceName}</span>
+          <div className="flex flex-col items-center justify-center min-h-full py-8 px-4 sm:px-6 animate-fade-in">
+            <div className="w-full max-w-xl space-y-4">
+
+              {/* Workspace chip + greeting */}
+              <div className="text-center space-y-2 mb-5">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full"
+                  style={{ background: "rgba(137,233,0,0.07)", border: "1px solid rgba(137,233,0,0.18)", color: "rgba(137,233,0,0.8)" }}>
+                  <Building className="h-3 w-3" />
+                  <span className="text-[11px] font-medium">{workspaceName}</span>
+                </div>
+                <p className="text-sm font-medium whitespace-nowrap overflow-hidden text-ellipsis"
+                  style={{ color: "rgba(255,255,255,0.5)", letterSpacing: "-0.01em" }}>
+                  Hi {firstName}, what do you want to create?
+                </p>
+                {!hasEnoughCredits && (
+                  <div className="bg-destructive/10 border border-destructive/20 rounded-xl px-4 py-2.5 flex items-center gap-3">
+                    <AlertTriangle className="h-4 w-4 text-destructive shrink-0" />
+                    <span className="text-sm text-foreground">You've reached your generation limit.</span>
+                    <Button size="sm" className="text-xs h-7 rounded-lg ml-2" onClick={() => setShowUpgradeModal(true)}>Upgrade</Button>
+                  </div>
+                )}
               </div>
 
-              {/* Single-line compact greeting */}
-              <p className="text-sm font-medium whitespace-nowrap overflow-hidden text-ellipsis max-w-full px-4"
-                style={{ color: "rgba(255,255,255,0.5)", letterSpacing: "-0.01em" }}>
-                Hi {firstName}, what do you want to create?
-              </p>
-
-              {!hasEnoughCredits && (
-                <div className="bg-destructive/10 border border-destructive/20 rounded-xl px-4 py-2.5 flex items-center gap-3">
-                  <AlertTriangle className="h-4 w-4 text-destructive shrink-0" />
-                  <span className="text-sm text-foreground">You've reached your generation limit.</span>
-                  <Button size="sm" className="text-xs h-7 rounded-lg ml-2" onClick={() => setShowUpgradeModal(true)}>Upgrade</Button>
+              {/* Attached image previews */}
+              {(productPreview || referencePreview) && (
+                <div className="flex gap-2 mb-1">
+                  {productPreview && (
+                    <div className="relative">
+                      <img src={productPreview} alt="Product" className="h-14 w-14 rounded-xl object-cover border border-white/15" />
+                      <div className="absolute -top-1.5 left-0 right-0 flex justify-center">
+                        <span className="text-[8px] bg-white/15 rounded-full px-1.5 py-0.5 text-white/70 backdrop-blur-sm">Product</span>
+                      </div>
+                      <button onClick={clearProduct}
+                        className="absolute -top-1.5 -right-1.5 h-4 w-4 bg-background border border-white/20 rounded-full flex items-center justify-center text-muted-foreground text-[10px] leading-none hover:text-foreground">
+                        ×
+                      </button>
+                    </div>
+                  )}
+                  {referencePreview && (
+                    <div className="relative">
+                      <img src={referencePreview} alt="Reference" className="h-14 w-14 rounded-xl object-cover border border-primary/30" />
+                      <div className="absolute -top-1.5 left-0 right-0 flex justify-center">
+                        <span className="text-[8px] bg-primary/40 rounded-full px-1.5 py-0.5 text-white backdrop-blur-sm">Ref</span>
+                      </div>
+                      <button onClick={() => setReferencePreview(null)}
+                        className="absolute -top-1.5 -right-1.5 h-4 w-4 bg-background border border-white/20 rounded-full flex items-center justify-center text-muted-foreground text-[10px] leading-none hover:text-foreground">
+                        ×
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
+
+              {/* Inline Prompt Box */}
+              <div className="flex items-end gap-2 rounded-2xl px-3 py-2.5 focus-within:border-white/22 transition-[border-color] duration-150"
+                style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)" }}>
+
+                {/* + button */}
+                <Popover open={plusOpen} onOpenChange={setPlusOpen}>
+                  <PopoverTrigger asChild>
+                    <button disabled={uploadingProduct} title="Add / Select Tool"
+                      className="h-7 w-7 shrink-0 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors text-muted-foreground hover:text-foreground mb-0.5 disabled:opacity-40">
+                      <Plus className="h-3.5 w-3.5" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent align="start" side="top" className="w-64 p-1.5 rounded-xl bg-popover border border-white/10">
+                    <div className="px-3 pt-2 pb-1">
+                      <p className="text-[9px] text-muted-foreground/60 uppercase tracking-wider font-semibold">AI Tool</p>
+                    </div>
+                    {TOOL_DEFS.map((tool) => {
+                      const Icon = tool.icon;
+                      const isActive = selectedTool === tool.id;
+                      const isLocked = tool.proOnly && !isPro;
+                      return (
+                        <button key={tool.id} onClick={() => handleToolSelect(tool.id)}
+                          className={`w-full flex items-center gap-3 rounded-lg px-3 py-2 transition-colors ${isActive ? "bg-primary/10" : "hover:bg-white/5"}`}>
+                          <Icon className={`h-4 w-4 shrink-0 ${isActive ? "text-primary" : "text-muted-foreground"}`} />
+                          <div className="flex-1 text-left">
+                            <p className={`text-sm font-medium ${isActive ? "text-primary" : "text-foreground"}`}>{tool.name}</p>
+                          </div>
+                          {isLocked && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "rgba(245,158,11,0.15)", color: "rgba(245,158,11,0.9)" }}>PRO</span>}
+                          {isActive && !isLocked && <div className="h-1.5 w-1.5 rounded-full bg-primary" />}
+                        </button>
+                      );
+                    })}
+                    <div className="h-px bg-white/8 my-1.5 mx-2" />
+                    <div className="px-3 pb-1">
+                      <p className="text-[9px] text-muted-foreground/60 uppercase tracking-wider font-semibold">Attach Image</p>
+                    </div>
+                    <button onClick={() => productRef.current?.click()}
+                      className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-foreground hover:bg-white/5 transition-colors">
+                      <Upload className="h-4 w-4 text-muted-foreground shrink-0" />
+                      <div className="text-left">
+                        <p className="text-sm">Product Image</p>
+                        <p className="text-[10px] text-muted-foreground/60">Main product to transform</p>
+                      </div>
+                    </button>
+                    <button onClick={() => referenceRef.current?.click()}
+                      className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-foreground hover:bg-white/5 transition-colors">
+                      <Link2 className="h-4 w-4 text-muted-foreground shrink-0" />
+                      <div className="text-left">
+                        <p className="text-sm">Reference Image</p>
+                        <p className="text-[10px] text-muted-foreground/60">Style or inspiration</p>
+                      </div>
+                    </button>
+                  </PopoverContent>
+                </Popover>
+
+                {/* Settings button */}
+                <Popover open={settingsOpen} onOpenChange={setSettingsOpen}>
+                  <PopoverTrigger asChild>
+                    <button title="Generation Settings"
+                      className="h-7 w-7 shrink-0 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors text-muted-foreground hover:text-foreground mb-0.5">
+                      <Settings2 className="h-3.5 w-3.5" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent align="start" side="top" className="w-72 p-4 rounded-2xl bg-popover border border-white/10 space-y-4">
+                    <p className="text-xs font-semibold text-foreground uppercase tracking-wider">Generation Settings</p>
+                    <div className="space-y-1.5">
+                      <p className="text-xs text-muted-foreground">Aspect Ratio</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {ASPECT_RATIOS.map(ar => (
+                          <button key={ar} onClick={() => setGenSettings(s => ({ ...s, aspectRatio: ar }))}
+                            className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-all duration-150 ${genSettings.aspectRatio === ar ? "bg-primary/10 text-primary border-primary/30" : "bg-white/5 text-muted-foreground border-white/10 hover:bg-white/8"}`}>{ar}</button>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="space-y-1.5">
+                      <p className="text-xs text-muted-foreground">Number of Outputs</p>
+                      <div className="flex gap-1.5">
+                        {[1, 2, 3].map(n => (
+                          <button key={n} onClick={() => setGenSettings(s => ({ ...s, numOutputs: n }))}
+                            className={`flex-1 py-1.5 rounded-lg text-sm font-semibold border transition-all duration-150 ${genSettings.numOutputs === n ? "bg-primary/10 text-primary border-primary/30" : "bg-white/5 text-muted-foreground border-white/10 hover:bg-white/8"}`}>{n}</button>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="space-y-1.5">
+                      <p className="text-xs text-muted-foreground">Image Quality</p>
+                      <div className="grid grid-cols-2 gap-1.5">
+                        {QUALITY_OPTIONS.map(q => {
+                          const locked = PLAN_ORDER[q.minPlan] > planLevel;
+                          const addonCost = QUALITY_ADDON_COSTS[q.id];
+                          return (
+                            <button key={q.id} disabled={locked} onClick={() => !locked && setGenSettings(s => ({ ...s, quality: q.id }))}
+                              className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs border transition-all duration-150 ${locked ? "bg-white/3 text-muted-foreground/30 border-white/5 cursor-not-allowed" : genSettings.quality === q.id ? "bg-primary/10 text-primary border-primary/30" : "bg-white/5 text-muted-foreground border-white/10 hover:bg-white/8"}`}>
+                              <span className="font-semibold">{q.label}</span>
+                              {locked ? <span className="flex items-center gap-0.5 text-[9px] text-amber-500/70"><Lock className="h-2.5 w-2.5" /> {q.minPlan === "pro" ? "Pro" : "Starter"}</span>
+                                : addonCost > 0 ? <span className="text-[9px] text-primary/70">+{addonCost} cr</span>
+                                : <span className="text-[9px] opacity-40">free</span>}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <div className="mt-1 pt-2 border-t border-white/8 flex items-center justify-between">
+                        <span className="text-[10px] text-muted-foreground">Cost for this quality</span>
+                        <span className="text-[10px] font-semibold" style={{ color: "#89E900" }}>
+                          {calculateCreditCost(selectedTool, selectedModel as ModelId, genSettings.quality as QualityId)} credits
+                        </span>
+                      </div>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+
+                {/* Textarea */}
+                <textarea ref={textareaRef} value={inputPrompt} onChange={(e) => setInputPrompt(e.target.value)}
+                  onKeyDown={handleKeyDown} placeholder={`${currentTool.name} — describe your product...`} rows={1}
+                  className="flex-1 bg-transparent resize-none text-sm text-foreground placeholder:text-muted-foreground/35 outline-none leading-relaxed max-h-32 overflow-y-auto scrollbar-none py-1"
+                  onInput={(e) => { const el = e.currentTarget; el.style.height = "auto"; el.style.height = `${el.scrollHeight}px`; }} />
+
+                {/* Credit Pill */}
+                <div className={`shrink-0 flex items-center gap-1 px-2 py-1 rounded-full border text-[10px] font-semibold mb-0.5 transition-all duration-200 ${hasEnoughCredits ? "border-primary/25 bg-primary/8 text-primary" : "border-destructive/30 bg-destructive/8 text-destructive"}`}>
+                  <BoltIcon className="h-2.5 w-2.5" />
+                  <span>{currentCreditCost}</span>
+                </div>
+
+                {/* Send button */}
+                <button onClick={handleSend} disabled={!canSend} title="Send (Ctrl+Enter)"
+                  className="h-8 w-8 shrink-0 flex items-center justify-center rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-150 mb-0.5">
+                  <Send className="h-4 w-4" />
+                </button>
+              </div>
+
+              {/* Active tool indicator */}
+              <div className="flex items-center gap-2 px-1">
+                {(() => { const Icon = currentTool.icon; return <Icon className="h-3 w-3 text-muted-foreground/40" />; })()}
+                <span className="text-[10px] text-muted-foreground/40">{currentTool.name}</span>
+                <span className="text-[10px] text-muted-foreground/25">·</span>
+                <span className="text-[10px] text-muted-foreground/40 capitalize">{selectedModel} model</span>
+              </div>
+
+              {/* Tool selector chips */}
+              <div className="flex items-center gap-2 flex-wrap">
+                {TOOL_DEFS.map((tool) => {
+                  const Icon = tool.icon;
+                  const isActive = selectedTool === tool.id;
+                  const isLocked = tool.proOnly && !isPro;
+                  return (
+                    <button key={tool.id} onClick={() => handleToolSelect(tool.id)}
+                      className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-medium transition-all duration-150 ${
+                        isActive ? "bg-primary/10 text-primary" : "bg-white/4 text-muted-foreground hover:bg-white/7 hover:text-foreground"
+                      }`}>
+                      <Icon className={`h-4 w-4 shrink-0 ${isActive ? "text-primary" : ""}`} />
+                      <span>{tool.name}</span>
+                      {isLocked && (
+                        <span className="text-[8px] font-bold px-1 py-0.5 rounded-full"
+                          style={{ background: "rgba(245,158,11,0.15)", color: "rgba(245,158,11,0.85)" }}>PRO</span>
+                      )}
+                      {isActive && !isLocked && <div className="h-1.5 w-1.5 rounded-full bg-primary shrink-0" />}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Try this prompt */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[10px] font-semibold text-muted-foreground/55 uppercase tracking-wider">Try this prompt</span>
+                  <button onClick={() => setPromptSeed(s => (s + 3) % ALL_INSPIRATION_PROMPTS.length)}
+                    className="flex items-center gap-1 text-[10px] text-muted-foreground/45 hover:text-muted-foreground transition-colors">
+                    <RotateCcw className="h-3 w-3" />
+                    Refresh
+                  </button>
+                </div>
+                <div className="space-y-1.5">
+                  {suggestedPrompts.map((prompt, i) => (
+                    <button key={i} onClick={() => setInputPrompt(prompt)}
+                      className="w-full text-left px-3 py-2 rounded-xl bg-white/3 hover:bg-white/5 transition-all duration-150">
+                      <p className="text-[11px] text-foreground/65 leading-relaxed">{prompt}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
             </div>
           </div>
         )}
@@ -625,8 +835,8 @@ export default function WelcomeDashboard() {
         </div>
       )}
 
-      {/* ─── PROMPT BAR ─── */}
-      <div className="shrink-0 px-3 sm:px-6 pb-4 pt-2 border-t border-white/8 bg-background/80 backdrop-blur-sm">
+      {/* ─── PROMPT BAR (non-idle only) ─── */}
+      {phase !== "idle" && <div className="shrink-0 px-3 sm:px-6 pb-4 pt-2 border-t border-white/8 bg-background/80 backdrop-blur-sm">
 
         {/* Attached image previews */}
         {(productPreview || referencePreview) && (
@@ -846,67 +1056,7 @@ export default function WelcomeDashboard() {
           <span className="text-[10px] text-muted-foreground/40 capitalize">{selectedModel} model</span>
         </div>
 
-        {/* ── Tool selector chips (idle only) ── */}
-        {phase === "idle" && (
-          <div className="mt-3 flex items-center gap-1.5 flex-wrap">
-            {TOOL_DEFS.map((tool) => {
-              const Icon = tool.icon;
-              const isActive = selectedTool === tool.id;
-              const isLocked = tool.proOnly && !isPro;
-              return (
-                <button
-                  key={tool.id}
-                  onClick={() => handleToolSelect(tool.id)}
-                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-xs font-medium transition-all duration-150 ${
-                    isActive
-                      ? "border-primary/40 bg-primary/10 text-primary"
-                      : "border-white/10 bg-white/4 text-muted-foreground hover:bg-white/7 hover:border-white/18 hover:text-foreground"
-                  }`}
-                >
-                  <Icon className={`h-3 w-3 shrink-0 ${isActive ? "text-primary" : ""}`} />
-                  <span>{tool.name}</span>
-                  {isLocked && (
-                    <span className="text-[8px] font-bold px-1 py-0.5 rounded-full ml-0.5"
-                      style={{ background: "rgba(245,158,11,0.15)", color: "rgba(245,158,11,0.85)" }}>
-                      PRO
-                    </span>
-                  )}
-                  {isActive && !isLocked && (
-                    <div className="h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        )}
-
-        {/* ── Try this prompt (idle only) ── */}
-        {phase === "idle" && (
-          <div className="mt-3 pt-3 border-t border-white/6">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[10px] font-semibold text-muted-foreground/55 uppercase tracking-wider">Try this prompt</span>
-              <button
-                onClick={() => setPromptSeed(s => (s + 3) % ALL_INSPIRATION_PROMPTS.length)}
-                className="flex items-center gap-1 text-[10px] text-muted-foreground/45 hover:text-muted-foreground transition-colors"
-              >
-                <RotateCcw className="h-3 w-3" />
-                Refresh
-              </button>
-            </div>
-            <div className="space-y-1.5">
-              {suggestedPrompts.map((prompt, i) => (
-                <button
-                  key={i}
-                  onClick={() => setInputPrompt(prompt)}
-                  className="w-full text-left px-3 py-2 rounded-xl border border-white/8 bg-white/3 hover:bg-white/5 hover:border-white/14 transition-all duration-150"
-                >
-                  <p className="text-[11px] text-foreground/65 leading-relaxed">{prompt}</p>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
+      </div>}
     </div>
   );
 }

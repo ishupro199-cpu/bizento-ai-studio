@@ -198,8 +198,9 @@ function SidebarInner({
 
   const handleNavClick = () => { if (isMobile) onClose(); };
   const handleNewChat = () => {
-    if (!sessionHasMessages) return;
-    startNewChat();
+    if (sessionHasMessages) {
+      startNewChat();
+    }
     navigate("/app");
     if (isMobile) onClose();
   };

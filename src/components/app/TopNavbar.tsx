@@ -10,8 +10,8 @@ import { ConfigProvider, Dropdown, Badge, theme } from "antd";
 import { useAppContext } from "@/contexts/AppContext";
 
 const models = [
-  { id: "flash" as const, name: "Flash", desc: "Fast generation · 1 credit", icon: BoltIcon },
-  { id: "pro" as const, name: "Pro", desc: "Highest quality · 2 credits", icon: SparklesIcon },
+  { id: "flash" as const, name: "Pixa Flash", desc: "Fast generation · 1 credit", icon: BoltIcon },
+  { id: "pro" as const, name: "Pixa Pro", desc: "Highest quality · 2 credits", icon: SparklesIcon },
 ];
 
 interface TopNavbarProps {
@@ -46,7 +46,7 @@ export function TopNavbar({ onMenuToggle }: TopNavbarProps) {
         className="h-14 flex items-center justify-between px-3 sm:px-4 sticky top-0 z-20"
         style={{
           background: "transparent",
-          borderBottom: "1px solid rgba(255,255,255,0.05)",
+          border: "none",
         }}
       >
         <div className="flex items-center gap-2 sm:gap-3">
