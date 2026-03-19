@@ -1,21 +1,32 @@
 import { useState, useRef, useEffect } from "react";
 import {
-  FolderOpen, Megaphone, Image,
-  CreditCard, Lightbulb, ChevronRight, ChevronLeft, X,
-  Settings, Plus, MessageSquare, MoreHorizontal, Pencil, Trash2, Archive,
-} from "lucide-react";
+  FolderOpenIcon,
+  MegaphoneIcon,
+  PhotoIcon,
+  CreditCardIcon,
+  LightBulbIcon,
+  ChevronRightIcon,
+  ChevronLeftIcon,
+  XMarkIcon,
+  Cog6ToothIcon,
+  PlusIcon,
+  ChatBubbleLeftRightIcon,
+  EllipsisHorizontalIcon,
+  PencilIcon,
+  TrashIcon,
+  ArchiveBoxIcon,
+} from "@heroicons/react/24/outline";
 import { BizentoIcon } from "@/components/BizentoIcon";
 import { NavLink } from "@/components/NavLink";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Separator } from "@/components/ui/separator";
 import { ProfileMenu } from "@/components/app/ProfileMenu";
 import { useChatContext, ChatSession } from "@/contexts/ChatContext";
 
 const navItems = [
-  { title: "Inspiration Hub", url: "/app/inspiration", icon: Lightbulb },
-  { title: "My Catalogs", url: "/app/catalogs", icon: FolderOpen },
-  { title: "My Ads", url: "/app/ads", icon: Megaphone },
-  { title: "Images", url: "/app/images", icon: Image },
+  { title: "Inspiration Hub", url: "/app/inspiration", icon: LightBulbIcon },
+  { title: "My Catalogs", url: "/app/catalogs", icon: FolderOpenIcon },
+  { title: "My Ads", url: "/app/ads", icon: MegaphoneIcon },
+  { title: "Images", url: "/app/images", icon: PhotoIcon },
 ];
 
 interface AppSidebarProps {
@@ -83,7 +94,8 @@ function ChatItem({
             if (e.key === "Enter") commitRename();
             if (e.key === "Escape") setRenaming(false);
           }}
-          className="w-full bg-white/8 border border-primary/30 rounded-lg px-2.5 py-1.5 text-xs text-foreground outline-none"
+          className="w-full rounded-lg px-2.5 py-1.5 text-xs text-white outline-none"
+          style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(137,233,0,0.3)" }}
         />
       </div>
     );
@@ -92,67 +104,72 @@ function ChatItem({
   return (
     <div
       onClick={onClick}
-      className={`group flex items-center gap-1.5 rounded-lg px-2 py-1.5 transition-colors cursor-pointer ${
-        isActive ? "bg-primary/10" : "hover:bg-white/5"
-      }`}
+      className="group flex items-center gap-1.5 rounded-lg px-2 py-1.5 transition-colors cursor-pointer"
+      style={{ background: isActive ? "rgba(137,233,0,0.08)" : "transparent" }}
+      onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.04)"; }}
+      onMouseLeave={e => { if (!isActive) (e.currentTarget as HTMLElement).style.background = "transparent"; }}
     >
-      <MessageSquare
+      <ChatBubbleLeftRightIcon
         className="h-3.5 w-3.5 shrink-0"
-        style={{ color: isActive ? "#89E900" : "rgba(255,255,255,0.25)" }}
+        style={{ color: isActive ? "#89E900" : "rgba(255,255,255,0.22)" }}
       />
       <div className="flex-1 min-w-0">
-        <p className={`text-xs truncate leading-snug ${isActive ? "text-primary" : "text-[hsl(var(--sidebar-foreground))]"}`}>
+        <p className="text-xs truncate leading-snug" style={{ color: isActive ? "#89E900" : "rgba(255,255,255,0.7)" }}>
           {session.title}
         </p>
-        <p className="text-[10px] text-muted-foreground/50">{date}</p>
+        <p className="text-[10px]" style={{ color: "rgba(255,255,255,0.28)" }}>{date}</p>
       </div>
 
       <div className="relative shrink-0" ref={menuRef}>
         <button
           onClick={e => { e.stopPropagation(); setMenuOpen(v => !v); setConfirmDelete(false); }}
-          className="h-6 w-6 flex items-center justify-center rounded-md opacity-0 group-hover:opacity-100 hover:bg-white/10 transition-all text-muted-foreground hover:text-foreground"
+          className="h-6 w-6 flex items-center justify-center rounded-md opacity-0 group-hover:opacity-100 transition-all"
+          style={{ color: "rgba(255,255,255,0.45)" }}
+          onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.08)"}
+          onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "transparent"}
         >
-          <MoreHorizontal className="h-3.5 w-3.5" />
+          <EllipsisHorizontalIcon className="h-3.5 w-3.5" />
         </button>
 
         {menuOpen && !confirmDelete && (
-          <div className="absolute right-0 top-7 z-50 w-36 bg-popover border border-white/10 rounded-xl shadow-xl py-1 animate-fade-in">
+          <div className="absolute right-0 top-7 z-50 w-36 rounded-xl shadow-xl py-1 animate-fade-in liquid-glass-strong">
             <button
               onClick={() => { setMenuOpen(false); setRenaming(true); setNameInput(session.title); }}
-              className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-foreground hover:bg-white/5 transition-colors"
-            >
-              <Pencil className="h-3 w-3 text-muted-foreground" /> Rename
+              className="w-full flex items-center gap-2.5 px-3 py-2 text-xs hover:bg-white/5 transition-colors"
+              style={{ color: "rgba(255,255,255,0.7)" }}>
+              <PencilIcon className="h-3 w-3 opacity-60" /> Rename
             </button>
             <button
               onClick={() => { setMenuOpen(false); onArchive(session.id); }}
-              className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-foreground hover:bg-white/5 transition-colors"
-            >
-              <Archive className="h-3 w-3 text-muted-foreground" /> Archive
+              className="w-full flex items-center gap-2.5 px-3 py-2 text-xs hover:bg-white/5 transition-colors"
+              style={{ color: "rgba(255,255,255,0.7)" }}>
+              <ArchiveBoxIcon className="h-3 w-3 opacity-60" /> Archive
             </button>
             <div className="h-px bg-white/8 my-0.5" />
             <button
               onClick={() => setConfirmDelete(true)}
-              className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-red-400 hover:bg-red-500/10 transition-colors"
-            >
-              <Trash2 className="h-3 w-3" /> Delete
+              className="w-full flex items-center gap-2.5 px-3 py-2 text-xs hover:bg-red-500/10 transition-colors"
+              style={{ color: "rgba(248,113,113,0.8)" }}>
+              <TrashIcon className="h-3 w-3" /> Delete
             </button>
           </div>
         )}
 
         {menuOpen && confirmDelete && (
-          <div className="absolute right-0 top-7 z-50 w-44 bg-popover border border-red-500/20 rounded-xl shadow-xl py-2 px-3 animate-fade-in">
-            <p className="text-[11px] text-white/70 mb-2 leading-snug">Delete this chat?</p>
+          <div className="absolute right-0 top-7 z-50 w-44 rounded-xl shadow-xl py-2 px-3 animate-fade-in liquid-glass-strong"
+            style={{ borderColor: "rgba(239,68,68,0.2)", borderWidth: 1 }}>
+            <p className="text-[11px] mb-2 leading-snug" style={{ color: "rgba(255,255,255,0.65)" }}>Delete this chat?</p>
             <div className="flex gap-2">
               <button
                 onClick={() => { setMenuOpen(false); setConfirmDelete(false); onDelete(session.id); }}
-                className="flex-1 text-[11px] font-semibold py-1 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors"
-              >
+                className="flex-1 text-[11px] font-semibold py-1 rounded-lg transition-colors"
+                style={{ background: "rgba(239,68,68,0.2)", color: "rgba(248,113,113,0.9)" }}>
                 Delete
               </button>
               <button
                 onClick={() => { setMenuOpen(false); setConfirmDelete(false); }}
-                className="flex-1 text-[11px] py-1 rounded-lg bg-white/5 text-white/50 hover:bg-white/10 transition-colors"
-              >
+                className="flex-1 text-[11px] py-1 rounded-lg transition-colors"
+                style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.45)" }}>
                 Cancel
               </button>
             </div>
@@ -187,13 +204,18 @@ function SidebarInner({
   };
 
   const isCollapsed = isMobile ? false : collapsed;
-
   const visibleSessions = sessions.filter(s => !s.is_archived);
 
   return (
     <div
-      style={{ width: isMobile ? 280 : isCollapsed ? 72 : 240 }}
-      className="flex flex-col h-full bg-[hsl(var(--sidebar-background))] border-r border-[hsl(var(--sidebar-border))] overflow-hidden transition-[width] duration-200 ease-in-out"
+      style={{
+        width: isMobile ? 280 : isCollapsed ? 68 : 240,
+        background: "rgba(12,13,18,0.85)",
+        backdropFilter: "blur(40px) saturate(180%)",
+        WebkitBackdropFilter: "blur(40px) saturate(180%)",
+        borderRight: "1px solid rgba(255,255,255,0.07)",
+      }}
+      className="flex flex-col h-full overflow-hidden transition-[width] duration-200 ease-in-out"
     >
       {/* Logo row */}
       <div className={`flex items-center h-14 px-3 shrink-0 ${isCollapsed ? "justify-center" : "justify-between"}`}>
@@ -203,26 +225,27 @@ function SidebarInner({
             title="Expand sidebar"
             onMouseEnter={() => setLogoHovered(true)}
             onMouseLeave={() => setLogoHovered(false)}
-            className="relative flex h-9 w-9 items-center justify-center rounded-lg hover:bg-white/5 transition-colors"
+            className="relative flex h-9 w-9 items-center justify-center rounded-lg transition-colors hover:bg-white/5"
           >
             <div className={`transition-opacity duration-150 ${logoHovered ? "opacity-0" : "opacity-100"}`}>
-              <BizentoIcon size={28} />
+              <BizentoIcon size={26} />
             </div>
-            <ChevronRight className={`h-4 w-4 text-muted-foreground absolute transition-opacity duration-150 ${logoHovered ? "opacity-100" : "opacity-0"}`} />
+            <ChevronRightIcon className={`h-4 w-4 absolute transition-opacity duration-150 ${logoHovered ? "opacity-100" : "opacity-0"}`} style={{ color: "rgba(255,255,255,0.5)" }} />
           </button>
         ) : (
           <>
             <div className="flex items-center gap-2.5">
-              <BizentoIcon size={28} className="shrink-0" />
-              <span className="text-base font-black tracking-tight whitespace-nowrap" style={{ color: "#F0EBD8", letterSpacing: "-0.02em" }}>
+              <BizentoIcon size={26} className="shrink-0" />
+              <span className="text-[15px] font-black tracking-tight whitespace-nowrap" style={{ color: "#F0EBD8", letterSpacing: "-0.02em" }}>
                 Pixalera<span style={{ color: "#89E900" }}>.</span>
               </span>
             </div>
             <button
               onClick={isMobile ? onClose : onToggle}
-              className="h-7 w-7 flex items-center justify-center rounded-lg hover:bg-white/5 transition-colors text-muted-foreground hover:text-foreground"
+              className="h-7 w-7 flex items-center justify-center rounded-lg hover:bg-white/5 transition-colors"
+              style={{ color: "rgba(255,255,255,0.35)" }}
             >
-              {isMobile ? <X className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+              {isMobile ? <XMarkIcon className="h-4 w-4" /> : <ChevronLeftIcon className="h-4 w-4" />}
             </button>
           </>
         )}
@@ -235,20 +258,26 @@ function SidebarInner({
           title="New Chat"
           className={`flex items-center gap-2.5 rounded-xl transition-all duration-150 font-semibold text-sm ${
             isCollapsed
-              ? "justify-center h-9 w-9 bg-primary/15 hover:bg-primary/25 text-primary"
-              : "w-full px-3 py-2.5 bg-primary/10 hover:bg-primary/18 text-primary border border-primary/20 hover:border-primary/35"
+              ? "justify-center h-9 w-9"
+              : "w-full px-3 py-2.5"
           }`}
+          style={{
+            background: isCollapsed ? "rgba(137,233,0,0.12)" : "rgba(137,233,0,0.08)",
+            border: isCollapsed ? "none" : "1px solid rgba(137,233,0,0.18)",
+            color: "#89E900",
+          }}
+          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "rgba(137,233,0,0.16)"; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = isCollapsed ? "rgba(137,233,0,0.12)" : "rgba(137,233,0,0.08)"; }}
         >
-          <Plus className="h-4 w-4 shrink-0" />
+          <PlusIcon className="h-4 w-4 shrink-0" />
           {!isCollapsed && <span>New Chat</span>}
         </button>
       </div>
 
-      <Separator className="mx-3 w-auto bg-[hsl(var(--sidebar-border))] mb-2" />
+      <div className="mx-3 h-px mb-2" style={{ background: "rgba(255,255,255,0.06)" }} />
 
       {/* Scrollable nav + history area */}
       <div className="flex-1 overflow-y-auto overflow-x-hidden py-1 px-2 space-y-0.5 sidebar-scroll">
-        {/* Nav items */}
         {navItems.map((item) => {
           const isActive = location.pathname.startsWith(item.url);
           return (
@@ -260,30 +289,30 @@ function SidebarInner({
               title={isCollapsed ? item.title : undefined}
               className={`flex items-center gap-3 rounded-lg py-2 text-sm font-medium transition-colors duration-150 ${
                 isCollapsed ? "justify-center w-full px-0" : "px-3"
-              } ${
-                isActive
-                  ? "bg-primary/10 text-primary"
-                  : "text-[hsl(var(--sidebar-foreground))] hover:bg-white/5"
               }`}
+              style={{
+                color: isActive ? "#89E900" : "rgba(255,255,255,0.6)",
+                background: isActive ? "rgba(137,233,0,0.08)" : "transparent",
+              }}
+              onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.04)"; }}
+              onMouseLeave={e => { if (!isActive) (e.currentTarget as HTMLElement).style.background = "transparent"; }}
             >
-              <item.icon className="h-5 w-5 shrink-0" />
+              <item.icon className="h-[18px] w-[18px] shrink-0" />
               {!isCollapsed && <span className="whitespace-nowrap">{item.title}</span>}
             </NavLink>
           );
         })}
 
-        {/* History section — only when expanded */}
         {!isCollapsed && (
           <>
             <div className="pt-4 pb-1 flex items-center gap-2 px-1">
-              <MessageSquare className="h-3.5 w-3.5 text-muted-foreground/60 shrink-0" />
-              <span className="text-[11px] font-semibold text-muted-foreground/60 uppercase tracking-wider flex-1">
+              <ChatBubbleLeftRightIcon className="h-3.5 w-3.5 shrink-0" style={{ color: "rgba(255,255,255,0.25)" }} />
+              <span className="text-[11px] font-semibold uppercase tracking-wider flex-1" style={{ color: "rgba(255,255,255,0.25)" }}>
                 History
               </span>
             </div>
-
             {visibleSessions.length === 0 ? (
-              <p className="text-[11px] text-muted-foreground/40 px-3 py-2">No chats yet</p>
+              <p className="text-[11px] px-3 py-2" style={{ color: "rgba(255,255,255,0.25)" }}>No chats yet</p>
             ) : (
               visibleSessions.slice(0, 30).map(session => (
                 <ChatItem
@@ -304,58 +333,48 @@ function SidebarInner({
           </>
         )}
 
-        {/* Collapsed: history icon */}
         {isCollapsed && (
           <button
             onClick={onToggle}
-            title="History (expand sidebar)"
-            className="w-full flex items-center justify-center rounded-lg py-2 text-[hsl(var(--sidebar-foreground))] hover:bg-white/5 transition-colors"
+            title="History"
+            className="w-full flex items-center justify-center rounded-lg py-2 transition-colors hover:bg-white/5"
+            style={{ color: "rgba(255,255,255,0.45)" }}
           >
-            <MessageSquare className="h-5 w-5 shrink-0" />
+            <ChatBubbleLeftRightIcon className="h-5 w-5 shrink-0" />
           </button>
         )}
       </div>
 
-      <Separator className="mx-3 w-auto bg-[hsl(var(--sidebar-border))]" />
+      <div className="mx-3 h-px" style={{ background: "rgba(255,255,255,0.06)" }} />
 
-      {/* Account / Plan / Settings */}
+      {/* Account links */}
       <div className="px-2 py-2 space-y-0.5">
         {!isCollapsed && (
-          <p className="px-3 py-1 text-[10px] text-muted-foreground/70 uppercase tracking-wider">Account</p>
+          <p className="px-3 py-1 text-[10px] uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.28)" }}>Account</p>
         )}
         <NavLink
           to="/app/plan"
           onClick={handleNavClick}
           title={isCollapsed ? "Plan" : undefined}
-          className={`flex items-center gap-3 rounded-lg py-2 text-sm font-medium transition-colors duration-150 ${
-            isCollapsed ? "justify-center px-0 w-full" : "px-3"
-          } ${
-            location.pathname.startsWith("/app/plan")
-              ? "bg-primary/10 text-primary"
-              : "text-[hsl(var(--sidebar-foreground))] hover:bg-white/5"
-          }`}
+          className={`flex items-center gap-3 rounded-lg py-2 text-sm font-medium transition-colors duration-150 ${isCollapsed ? "justify-center px-0 w-full" : "px-3"}`}
+          style={{ color: location.pathname.startsWith("/app/plan") ? "#89E900" : "rgba(255,255,255,0.6)", background: location.pathname.startsWith("/app/plan") ? "rgba(137,233,0,0.08)" : "transparent" }}
         >
-          <CreditCard className="h-5 w-5 shrink-0" />
+          <CreditCardIcon className="h-[18px] w-[18px] shrink-0" />
           {!isCollapsed && <span className="whitespace-nowrap">Plan</span>}
         </NavLink>
         <NavLink
           to="/app/settings"
           onClick={handleNavClick}
           title={isCollapsed ? "Settings" : undefined}
-          className={`flex items-center gap-3 rounded-lg py-2 text-sm font-medium transition-colors duration-150 ${
-            isCollapsed ? "justify-center px-0 w-full" : "px-3"
-          } ${
-            location.pathname.startsWith("/app/settings")
-              ? "bg-primary/10 text-primary"
-              : "text-[hsl(var(--sidebar-foreground))] hover:bg-white/5"
-          }`}
+          className={`flex items-center gap-3 rounded-lg py-2 text-sm font-medium transition-colors duration-150 ${isCollapsed ? "justify-center px-0 w-full" : "px-3"}`}
+          style={{ color: location.pathname.startsWith("/app/settings") ? "#89E900" : "rgba(255,255,255,0.6)", background: location.pathname.startsWith("/app/settings") ? "rgba(137,233,0,0.08)" : "transparent" }}
         >
-          <Settings className="h-5 w-5 shrink-0" />
+          <Cog6ToothIcon className="h-[18px] w-[18px] shrink-0" />
           {!isCollapsed && <span className="whitespace-nowrap">Settings</span>}
         </NavLink>
       </div>
 
-      <Separator className="mx-3 w-auto bg-[hsl(var(--sidebar-border))]" />
+      <div className="mx-3 h-px" style={{ background: "rgba(255,255,255,0.06)" }} />
 
       {/* Profile footer */}
       <div className="px-2 py-3 shrink-0">
@@ -368,35 +387,17 @@ function SidebarInner({
 export function AppSidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: AppSidebarProps) {
   return (
     <>
-      {/* Desktop sidebar */}
       <div className="hidden sm:flex shrink-0 h-screen sticky top-0">
-        <SidebarInner
-          collapsed={collapsed}
-          onToggle={onToggle}
-          onClose={onToggle}
-          isMobile={false}
-        />
+        <SidebarInner collapsed={collapsed} onToggle={onToggle} onClose={onToggle} isMobile={false} />
       </div>
-
-      {/* Mobile drawer overlay */}
       <div className="sm:hidden">
         <div
-          className={`fixed inset-0 bg-black/60 z-40 transition-opacity duration-300 ${
-            mobileOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
-          }`}
+          className={`fixed inset-0 z-40 transition-opacity duration-300 ${mobileOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}
+          style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)" }}
           onClick={onMobileClose}
         />
-        <div
-          className={`fixed inset-y-0 left-0 z-50 flex h-full transition-transform duration-300 ease-in-out ${
-            mobileOpen ? "translate-x-0" : "-translate-x-full"
-          }`}
-        >
-          <SidebarInner
-            collapsed={false}
-            onToggle={onMobileClose}
-            onClose={onMobileClose}
-            isMobile={true}
-          />
+        <div className={`fixed inset-y-0 left-0 z-50 flex h-full transition-transform duration-300 ease-in-out ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`}>
+          <SidebarInner collapsed={false} onToggle={onMobileClose} onClose={onMobileClose} isMobile={true} />
         </div>
       </div>
     </>

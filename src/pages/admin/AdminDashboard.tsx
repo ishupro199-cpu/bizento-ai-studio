@@ -18,8 +18,8 @@ import { collection, query, orderBy, limit, onSnapshot, Timestamp } from "fireba
 import { db } from "@/lib/firebase";
 
 const ACCENT = "#89E900";
-const CARD_BG = "#242424";
-const BORDER = "#2e2e2e";
+const CARD_BG = "rgba(255,255,255,0.04)";
+const BORDER = "rgba(255,255,255,0.08)";
 
 const { Title, Text } = Typography;
 

@@ -1,10 +1,25 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import {
-  Send, LayoutGrid, Camera, Clapperboard, Megaphone,
-  AlertTriangle, Check, Plus, Upload, Image as ImageIcon,
-  RotateCcw, Sparkles, ThumbsUp, Zap,
-  X, Link2, Settings2, Lock, Info,
-} from "lucide-react";
+  PaperAirplaneIcon as Send,
+  Squares2X2Icon as LayoutGrid,
+  CameraIcon as Camera,
+  FilmIcon as Clapperboard,
+  MegaphoneIcon as Megaphone,
+  ExclamationTriangleIcon as AlertTriangle,
+  CheckIcon as Check,
+  PlusIcon as Plus,
+  ArrowUpTrayIcon as Upload,
+  PhotoIcon as ImageIcon,
+  ArrowPathIcon as RotateCcw,
+  SparklesIcon as Sparkles,
+  HandThumbUpIcon as ThumbsUp,
+  BoltIcon as Zap,
+  XMarkIcon as X,
+  LinkIcon as Link2,
+  AdjustmentsHorizontalIcon as Settings2,
+  LockClosedIcon as Lock,
+  InformationCircleIcon as Info,
+} from "@heroicons/react/24/outline";
 import { useLocation } from "react-router-dom";
 import { useAppContext } from "@/contexts/AppContext";
 import type { ToolId, QualityId, ModelId } from "@/contexts/AppContext";

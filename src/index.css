@@ -6,22 +6,22 @@
 
 @layer base {
   :root {
-    --background: 0 0% 13.3%;
+    --background: 0 0% 7%;
     --foreground: 0 0% 95%;
 
-    --card: 0 0% 17.6%;
+    --card: 0 0% 10%;
     --card-foreground: 0 0% 95%;
 
-    --popover: 0 0% 15%;
+    --popover: 0 0% 9%;
     --popover-foreground: 0 0% 95%;
 
     --primary: 85 100% 45%;
     --primary-foreground: 0 0% 5%;
 
-    --secondary: 0 0% 20%;
+    --secondary: 0 0% 15%;
     --secondary-foreground: 0 0% 90%;
 
-    --muted: 0 0% 20%;
+    --muted: 0 0% 15%;
     --muted-foreground: 0 0% 55%;
 
     --accent: 85 100% 45%;
@@ -34,28 +34,41 @@
     --input: 0 0% 100% / 0.1;
     --ring: 85 100% 45%;
 
-    /* Component-based radius — NOT global 9999px */
     --radius: 0.75rem;
 
-    --sidebar-background: 0 0% 11%;
+    --sidebar-background: 0 0% 8%;
     --sidebar-foreground: 0 0% 85%;
     --sidebar-primary: 85 100% 45%;
     --sidebar-primary-foreground: 0 0% 5%;
     --sidebar-accent: 0 0% 100% / 0.05;
     --sidebar-accent-foreground: 0 0% 95%;
-    --sidebar-border: 0 0% 100% / 0.08;
+    --sidebar-border: 0 0% 100% / 0.07;
     --sidebar-ring: 85 100% 45%;
 
-    --glass: 0 0% 100% / 0.04;
-    --glass-border: 0 0% 100% / 0.08;
-    --glass-hover: 0 0% 100% / 0.05;
+    --glass: 0 0% 100% / 0.05;
+    --glass-border: 0 0% 100% / 0.1;
+    --glass-hover: 0 0% 100% / 0.08;
     --glow: 85 100% 45% / 0.15;
+
+    /* iOS Liquid Glass */
+    --lg-bg: rgba(255, 255, 255, 0.06);
+    --lg-bg-hover: rgba(255, 255, 255, 0.10);
+    --lg-border: rgba(255, 255, 255, 0.12);
+    --lg-border-strong: rgba(255, 255, 255, 0.20);
+    --lg-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.3);
+    --lg-shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.5), 0 8px 24px rgba(0, 0, 0, 0.4);
+    --lg-blur: blur(40px) saturate(180%);
+    --lg-blur-strong: blur(60px) saturate(200%);
   }
 }
 
 @layer base {
   * {
     @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
   }
 
   body {
@@ -65,6 +78,7 @@
     -webkit-tap-highlight-color: transparent;
     -webkit-font-smoothing: antialiased;
     overscroll-behavior: none;
+    background: #111113;
   }
 
   @media (max-width: 768px) {
@@ -79,9 +93,118 @@
   }
 }
 
+/* ── iOS Liquid Glass System ── */
 @layer utilities {
+  .liquid-glass {
+    background: var(--lg-bg);
+    backdrop-filter: var(--lg-blur);
+    -webkit-backdrop-filter: var(--lg-blur);
+    border: 1px solid var(--lg-border);
+    box-shadow: var(--lg-shadow);
+  }
+
+  .liquid-glass-hover {
+    background: var(--lg-bg);
+    backdrop-filter: var(--lg-blur);
+    -webkit-backdrop-filter: var(--lg-blur);
+    border: 1px solid var(--lg-border);
+    box-shadow: var(--lg-shadow);
+    transition: all 0.25s ease;
+  }
+  .liquid-glass-hover:hover {
+    background: var(--lg-bg-hover);
+    border-color: var(--lg-border-strong);
+    box-shadow: var(--lg-shadow-lg);
+    transform: translateY(-1px);
+  }
+
+  .liquid-glass-strong {
+    background: rgba(255, 255, 255, 0.09);
+    backdrop-filter: var(--lg-blur-strong);
+    -webkit-backdrop-filter: var(--lg-blur-strong);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    box-shadow: var(--lg-shadow-lg);
+  }
+
+  .liquid-glass-card {
+    background: rgba(255, 255, 255, 0.04);
+    backdrop-filter: blur(24px) saturate(160%);
+    -webkit-backdrop-filter: blur(24px) saturate(160%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+  }
+
+  .liquid-glass-nav {
+    background: rgba(15, 15, 18, 0.75);
+    backdrop-filter: blur(50px) saturate(200%);
+    -webkit-backdrop-filter: blur(50px) saturate(200%);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  }
+
+  /* ── 3D Scroll Animations ── */
+  .scroll-reveal {
+    opacity: 0;
+    transform: perspective(1000px) rotateX(12deg) translateY(40px);
+    transition: opacity 0.75s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                transform 0.75s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+
+  .scroll-reveal.revealed {
+    opacity: 1;
+    transform: perspective(1000px) rotateX(0deg) translateY(0px);
+  }
+
+  .scroll-reveal-left {
+    opacity: 0;
+    transform: perspective(1000px) rotateY(15deg) translateX(-50px);
+    transition: opacity 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                transform 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+
+  .scroll-reveal-left.revealed {
+    opacity: 1;
+    transform: perspective(1000px) rotateY(0deg) translateX(0px);
+  }
+
+  .scroll-reveal-right {
+    opacity: 0;
+    transform: perspective(1000px) rotateY(-15deg) translateX(50px);
+    transition: opacity 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                transform 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+
+  .scroll-reveal-right.revealed {
+    opacity: 1;
+    transform: perspective(1000px) rotateY(0deg) translateX(0px);
+  }
+
+  .scroll-reveal-scale {
+    opacity: 0;
+    transform: perspective(1000px) scale(0.88) translateY(30px);
+    transition: opacity 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+
+  .scroll-reveal-scale.revealed {
+    opacity: 1;
+    transform: perspective(1000px) scale(1) translateY(0px);
+  }
+
+  /* Delay utilities */
+  .reveal-delay-100 { transition-delay: 100ms; }
+  .reveal-delay-150 { transition-delay: 150ms; }
+  .reveal-delay-200 { transition-delay: 200ms; }
+  .reveal-delay-250 { transition-delay: 250ms; }
+  .reveal-delay-300 { transition-delay: 300ms; }
+  .reveal-delay-400 { transition-delay: 400ms; }
+  .reveal-delay-500 { transition-delay: 500ms; }
+
+  /* ── Legacy glass ── */
   .glass {
-    @apply bg-[hsl(var(--glass))] backdrop-blur-xl border border-[hsl(var(--glass-border))];
+    background: rgba(255, 255, 255, 0.04);
+    backdrop-filter: blur(20px) saturate(160%);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
   }
 
   .glass-hover {
@@ -96,6 +219,7 @@
     @apply bg-clip-text text-transparent bg-gradient-to-r from-[hsl(85,100%,45%)] to-[hsl(85,100%,65%)];
   }
 
+  /* ── Scrollbars ── */
   .scrollbar-none {
     -ms-overflow-style: none;
     scrollbar-width: none;
@@ -104,26 +228,25 @@
     display: none;
   }
 
-  /* Sidebar thin scrollbar */
   .sidebar-scroll {
     scrollbar-width: thin;
-    scrollbar-color: rgba(255,255,255,0.08) transparent;
+    scrollbar-color: rgba(255,255,255,0.07) transparent;
   }
   .sidebar-scroll::-webkit-scrollbar {
-    width: 4px;
+    width: 3px;
   }
   .sidebar-scroll::-webkit-scrollbar-track {
     background: transparent;
   }
   .sidebar-scroll::-webkit-scrollbar-thumb {
-    background: rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.07);
     border-radius: 4px;
   }
   .sidebar-scroll::-webkit-scrollbar-thumb:hover {
-    background: rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.14);
   }
 
-  /* Chat fade-in animation */
+  /* ── Animations ── */
   @keyframes fade-in {
     from { opacity: 0; transform: translateY(8px); }
     to   { opacity: 1; transform: translateY(0); }
@@ -131,4 +254,51 @@
   .animate-fade-in {
     animation: fade-in 0.28s ease-out both;
   }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    33%       { transform: translateY(-12px) rotate(1deg); }
+    66%       { transform: translateY(-6px) rotate(-0.5deg); }
+  }
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  @keyframes shimmer {
+    0%   { background-position: -200% center; }
+    100% { background-position: 200% center; }
+  }
+  .animate-shimmer {
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+    background-size: 200% 100%;
+    animation: shimmer 2s infinite;
+  }
+
+  @keyframes glow-pulse {
+    0%, 100% { opacity: 0.3; }
+    50%       { opacity: 0.7; }
+  }
+  .animate-glow-pulse {
+    animation: glow-pulse 3s ease-in-out infinite;
+  }
+
+  @keyframes spin-slow {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+  }
+  .animate-spin-slow {
+    animation: spin-slow 12s linear infinite;
+  }
+}
+
+/* ── Ant Design dark overrides ── */
+.ant-btn-primary {
+  background: #89E900 !important;
+  color: #000 !important;
+  border-color: #89E900 !important;
+  font-weight: 600 !important;
+}
+.ant-btn-primary:hover {
+  background: #9FFF00 !important;
+  border-color: #9FFF00 !important;
 }

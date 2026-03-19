@@ -1,14 +1,30 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
-  Loader2, Eye, EyeOff, ArrowLeft, Zap, ImageIcon, Layers,
-  Mail, Phone, RefreshCw,
-} from "lucide-react";
+  EyeIcon, EyeSlashIcon, ArrowLeftIcon, BoltIcon, PhotoIcon,
+  RectangleStackIcon, EnvelopeIcon, PhoneIcon, ArrowPathIcon,
+} from "@heroicons/react/24/outline";
 import { PixaleraIcon } from "@/components/PixaleraIcon";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { isTempEmail } from "@/lib/authErrors";
 import { PhoneAuthPanel } from "@/components/app/PhoneAuthPanel";
+
+const Loader2 = ({ className }: { className?: string }) => (
+  <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+  </svg>
+);
+const Eye = EyeIcon;
+const EyeOff = EyeSlashIcon;
+const ArrowLeft = ArrowLeftIcon;
+const Zap = BoltIcon;
+const ImageIcon = PhotoIcon;
+const Layers = RectangleStackIcon;
+const Mail = EnvelopeIcon;
+const Phone = PhoneIcon;
+const RefreshCw = ArrowPathIcon;
 
 type AuthTab = "email" | "phone";
 

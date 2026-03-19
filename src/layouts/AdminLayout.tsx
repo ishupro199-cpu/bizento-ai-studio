@@ -32,11 +32,11 @@ import { useAuth } from "@/contexts/AuthContext";
 const { Sider, Content, Header } = Layout;
 
 const ACCENT = "#89E900";
-const SIDEBAR_BG = "#181818";
-const HEADER_BG = "#1e1e1e";
-const CONTENT_BG = "#1a1a1a";
-const CARD_BG = "#242424";
-const BORDER = "#2e2e2e";
+const SIDEBAR_BG = "rgba(14,14,14,0.92)";
+const HEADER_BG = "rgba(20,20,20,0.75)";
+const CONTENT_BG = "#111113";
+const CARD_BG = "rgba(30,30,30,0.8)";
+const BORDER = "rgba(255,255,255,0.08)";
 
 const adminTheme = {
   algorithm: theme.darkAlgorithm,
@@ -199,6 +199,8 @@ export function AdminLayout() {
           collapsedWidth={64}
           style={{
             background: SIDEBAR_BG,
+            backdropFilter: "blur(40px) saturate(160%)",
+            WebkitBackdropFilter: "blur(40px) saturate(160%)",
             borderRight: `1px solid ${BORDER}`,
             position: "fixed",
             left: 0,
@@ -350,7 +352,9 @@ export function AdminLayout() {
         <Layout style={{ marginLeft: collapsed ? 64 : 224, transition: "margin-left 0.2s", background: CONTENT_BG }}>
           <Header
             style={{
-              background: HEADER_BG,
+              background: "rgba(20,20,20,0.75)",
+              backdropFilter: "blur(40px) saturate(180%)",
+              WebkitBackdropFilter: "blur(40px) saturate(180%)",
               borderBottom: `1px solid ${BORDER}`,
               padding: "0 20px",
               display: "flex",
