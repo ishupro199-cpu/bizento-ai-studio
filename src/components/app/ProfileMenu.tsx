@@ -3,7 +3,7 @@ import {
   ChevronDown, ChevronRight, Zap, Palette, Settings,
   HelpCircle, LogOut, BookOpen, FileText, Shield,
   Bug, Keyboard, Crown, Plus, Check, Link, Copy,
-  FolderOpen, Lock, X
+  FolderOpen, X
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAppContext, PLANS } from "@/contexts/AppContext";
@@ -68,13 +68,26 @@ export function ProfileMenu({ collapsed }: { collapsed: boolean }) {
   const recomputePos = useCallback(() => {
     if (!triggerRef.current) return;
     const r = triggerRef.current.getBoundingClientRect();
-    const popW = 260;
-    const popH = isPro ? 480 : 420;
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const isMobile = vw < 640;
+    const popW = isMobile ? Math.min(vw - 16, 300) : 260;
+    const popH = isPro ? 480 : 440;
     const gap = 8;
-    let x = r.left;
-    let y = r.top - popH - gap;
-    if (y < 8) y = r.bottom + gap;
-    if (x + popW > window.innerWidth - 8) x = window.innerWidth - popW - 8;
+    let x: number;
+    let y: number;
+    if (isMobile) {
+      x = Math.max(8, (vw - popW) / 2);
+      y = Math.max(8, r.top - popH - gap);
+      if (y < 8) y = Math.min(r.bottom + gap, vh - popH - 8);
+      if (y + popH > vh - 8) y = Math.max(8, vh - popH - 8);
+    } else {
+      x = r.left;
+      y = r.top - popH - gap;
+      if (y < 8) y = r.bottom + gap;
+      if (x + popW > vw - 8) x = vw - popW - 8;
+      if (x < 8) x = 8;
+    }
     setPopupPos({ x, y, w: popW });
   }, [isPro]);
 
@@ -105,13 +118,16 @@ export function ProfileMenu({ collapsed }: { collapsed: boolean }) {
       }
     };
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") closeMenu(); };
+    const onResize = () => recomputePos();
     document.addEventListener("mousedown", onMouseDown);
     document.addEventListener("keydown", onKey);
+    window.addEventListener("resize", onResize);
     return () => {
       document.removeEventListener("mousedown", onMouseDown);
       document.removeEventListener("keydown", onKey);
+      window.removeEventListener("resize", onResize);
     };
-  }, [open, closeMenu]);
+  }, [open, closeMenu, recomputePos]);
 
   const startHelpOpen = () => {
     if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
@@ -223,19 +239,10 @@ export function ProfileMenu({ collapsed }: { collapsed: boolean }) {
 
           {/* ── Workspace Section ── */}
           <div className="px-3 pt-3 pb-2">
-            <div className="flex items-center justify-between mb-2">
+            <div className="mb-2">
               <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.28)" }}>
                 Workspaces
               </span>
-              {isPro && !showCreateWs && (
-                <button
-                  onClick={() => setShowCreateWs(true)}
-                  className="flex items-center gap-1 text-[10px] font-medium transition-colors"
-                  style={{ color: "#89E900" }}
-                >
-                  <Plus className="h-3 w-3" /> New
-                </button>
-              )}
             </div>
 
             {/* Workspace list */}
@@ -265,9 +272,11 @@ export function ProfileMenu({ collapsed }: { collapsed: boolean }) {
                       style={{ color: ws.id === activeWsId ? "#89E900" : "rgba(255,255,255,0.75)" }}>
                       {ws.name}
                     </p>
-                    <p className="text-[10px] mt-0.5" style={{ color: "rgba(255,255,255,0.28)" }}>
-                      {ws.isPersonal ? "Personal" : `${ws.memberCount || 1} member${(ws.memberCount || 1) > 1 ? "s" : ""}`}
-                    </p>
+                    {!ws.isPersonal && (
+                      <p className="text-[10px] mt-0.5" style={{ color: "rgba(255,255,255,0.28)" }}>
+                        {ws.memberCount || 1} member{(ws.memberCount || 1) > 1 ? "s" : ""}
+                      </p>
+                    )}
                   </div>
                   {ws.id === activeWsId && <Check className="h-3.5 w-3.5 shrink-0" style={{ color: "#89E900" }} />}
                   {!ws.isPersonal && isPro && ws.id !== activeWsId && (
@@ -283,18 +292,18 @@ export function ProfileMenu({ collapsed }: { collapsed: boolean }) {
                 </div>
               ))}
 
-              {/* Free plan locked extra workspace */}
-              {!isPro && (
-                <div className="flex items-center gap-2 px-2.5 py-2 rounded-xl opacity-40 cursor-not-allowed"
-                  style={{ border: "1px dashed rgba(255,255,255,0.12)" }}>
+              {/* Create New Workspace option */}
+              {!showCreateWs && (
+                <button
+                  onClick={() => { if (isPro) setShowCreateWs(true); else { closeMenu(); setShowUpgradeModal(true); } }}
+                  className="w-full flex items-center gap-2 px-2.5 py-2 rounded-xl transition-colors hover:bg-white/5"
+                >
                   <div className="h-6 w-6 rounded-lg flex items-center justify-center shrink-0 bg-white/5">
-                    <Lock className="h-3 w-3 text-white/30" />
+                    <Plus className="h-3 w-3" style={{ color: "rgba(255,255,255,0.4)" }} />
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[11px] font-medium text-white/40">Create workspace</p>
-                    <p className="text-[10px] text-white/20">Pro plan required</p>
-                  </div>
-                </div>
+                  <span className="text-[12px] font-medium" style={{ color: "rgba(255,255,255,0.5)" }}>Create New Workspace</span>
+                  {!isPro && <span className="ml-auto text-[9px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "rgba(245,158,11,0.15)", color: "rgba(245,158,11,0.9)" }}>PRO</span>}
+                </button>
               )}
             </div>
 

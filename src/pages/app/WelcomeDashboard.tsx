@@ -672,28 +672,6 @@ export default function WelcomeDashboard() {
                 <span className="text-[10px] text-muted-foreground/40 capitalize">{selectedModel} model</span>
               </div>
 
-              {/* Tool selector chips */}
-              <div className="flex items-center gap-2 flex-wrap">
-                {TOOL_DEFS.map((tool) => {
-                  const Icon = tool.icon;
-                  const isActive = selectedTool === tool.id;
-                  const isLocked = tool.proOnly && !isPro;
-                  return (
-                    <button key={tool.id} onClick={() => handleToolSelect(tool.id)}
-                      className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-medium transition-all duration-150 ${
-                        isActive ? "bg-primary/10 text-primary" : "bg-white/4 text-muted-foreground hover:bg-white/7 hover:text-foreground"
-                      }`}>
-                      <Icon className={`h-4 w-4 shrink-0 ${isActive ? "text-primary" : ""}`} />
-                      <span>{tool.name}</span>
-                      {isLocked && (
-                        <span className="text-[8px] font-bold px-1 py-0.5 rounded-full"
-                          style={{ background: "rgba(245,158,11,0.15)", color: "rgba(245,158,11,0.85)" }}>PRO</span>
-                      )}
-                      {isActive && !isLocked && <div className="h-1.5 w-1.5 rounded-full bg-primary shrink-0" />}
-                    </button>
-                  );
-                })}
-              </div>
 
               {/* Try this prompt */}
               <div>
@@ -932,8 +910,32 @@ export default function WelcomeDashboard() {
             </PopoverTrigger>
             <PopoverContent align="start" side="top" className="w-64 p-1.5 rounded-xl bg-popover border border-white/10">
 
-              {/* Tool selection section */}
+              {/* Attach Image section — top */}
               <div className="px-3 pt-2 pb-1">
+                <p className="text-[9px] text-muted-foreground/60 uppercase tracking-wider font-semibold">Attach Image</p>
+              </div>
+              <button onClick={() => { productRef.current?.click(); setPlusOpen(false); }}
+                className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-foreground hover:bg-white/5 transition-colors">
+                <Upload className="h-4 w-4 text-muted-foreground shrink-0" />
+                <div className="text-left">
+                  <p className="text-sm">Product Image</p>
+                  <p className="text-[10px] text-muted-foreground/60">Main product to transform</p>
+                </div>
+              </button>
+              <button onClick={() => { referenceRef.current?.click(); setPlusOpen(false); }}
+                className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-foreground hover:bg-white/5 transition-colors">
+                <Link2 className="h-4 w-4 text-muted-foreground shrink-0" />
+                <div className="text-left">
+                  <p className="text-sm">Reference Image</p>
+                  <p className="text-[10px] text-muted-foreground/60">Style or inspiration</p>
+                </div>
+              </button>
+
+              {/* Divider */}
+              <div className="h-px bg-white/8 my-1.5 mx-2" />
+
+              {/* Tool selection section — below */}
+              <div className="px-3 pb-1">
                 <p className="text-[9px] text-muted-foreground/60 uppercase tracking-wider font-semibold">AI Tool</p>
               </div>
               {TOOL_DEFS.map((tool) => {
@@ -957,30 +959,6 @@ export default function WelcomeDashboard() {
                   </button>
                 );
               })}
-
-              {/* Divider */}
-              <div className="h-px bg-white/8 my-1.5 mx-2" />
-
-              {/* Image upload section */}
-              <div className="px-3 pb-1">
-                <p className="text-[9px] text-muted-foreground/60 uppercase tracking-wider font-semibold">Attach Image</p>
-              </div>
-              <button onClick={() => productRef.current?.click()}
-                className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-foreground hover:bg-white/5 transition-colors">
-                <Upload className="h-4 w-4 text-muted-foreground shrink-0" />
-                <div className="text-left">
-                  <p className="text-sm">Product Image</p>
-                  <p className="text-[10px] text-muted-foreground/60">Main product to transform</p>
-                </div>
-              </button>
-              <button onClick={() => referenceRef.current?.click()}
-                className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-foreground hover:bg-white/5 transition-colors">
-                <Link2 className="h-4 w-4 text-muted-foreground shrink-0" />
-                <div className="text-left">
-                  <p className="text-sm">Reference Image</p>
-                  <p className="text-[10px] text-muted-foreground/60">Style or inspiration</p>
-                </div>
-              </button>
             </PopoverContent>
           </Popover>
 
