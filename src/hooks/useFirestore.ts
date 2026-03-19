@@ -33,6 +33,7 @@ export interface FirestoreGeneration {
   status: "completed" | "failed";
   hasRealImages?: boolean;
   generationTime?: number;
+  catalogAttributes?: Record<string, unknown> | null;
   createdAt: Date;
 }
 
@@ -110,6 +111,7 @@ export function useGenerations() {
             status: data.status,
             hasRealImages: data.hasRealImages ?? false,
             generationTime: data.generationTime,
+            catalogAttributes: data.catalogAttributes ?? null,
             createdAt:
               data.createdAt instanceof Timestamp
                 ? data.createdAt.toDate()

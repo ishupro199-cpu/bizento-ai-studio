@@ -29,7 +29,7 @@ router.post("/prompt", async (req, res) => {
         },
         { role: "user", content: prompt },
       ],
-      max_completion_tokens: 512,
+      max_completion_tokens: 8192,
     });
 
     res.json({
@@ -61,7 +61,7 @@ router.post("/prompt/stream", async (req, res) => {
         },
         { role: "user", content: prompt },
       ],
-      max_completion_tokens: 512,
+      max_completion_tokens: 8192,
       stream: true,
     });
 

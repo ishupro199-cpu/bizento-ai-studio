@@ -7,11 +7,15 @@ export interface GenerationRequest {
   style: string;
   model: string;
   quality?: string;
+  aspectRatio?: string;
+  numOutputs?: number;
   userId?: string;
 }
 
 export interface GenerationResponse {
   success: boolean;
+  intent?: "generate" | "chat";
+  aiReply?: string;
   images: string[];
   bgRemovedUrl?: string;
   productInfo?: { category?: string; description?: string };
@@ -25,6 +29,8 @@ export interface GenerationResponse {
   creditsRemaining?: number;
   refunded?: boolean;
   requiredPlan?: string;
+  catalogAttributes?: Record<string, unknown>;
+  generationTime?: number;
 }
 
 async function getAuthToken(): Promise<string | null> {

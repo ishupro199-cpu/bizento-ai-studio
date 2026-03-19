@@ -131,7 +131,37 @@ const PRO_PROMPTS = [
   "Premium whiskey bottle with shattering ice in dramatic dark studio lighting",
 ];
 
-type ChatPhase = "idle" | "thinking" | "show-styles" | "generating" | "results" | "approved";
+type ChatPhase = "idle" | "thinking" | "show-styles" | "generating" | "results" | "approved" | "ai-chat";
+
+function detectClientIntent(prompt: string, hasImage: boolean): "generate" | "chat" {
+  if (hasImage) return "generate";
+  const lower = prompt.toLowerCase();
+  const generateKeywords = [
+    "generate","create","make","show","produce","photograph","design",
+    "photo","image","catalog","ad","cinematic","background","scene",
+    "luxury","minimal","neon","studio","lighting","shoot","render",
+    "bottle","product","sneaker","watch","bag","perfume","jewelry",
+    "phone","food","cosmetic","skincare","supplement","clothing","shoes",
+    "white background","dark background","marble","lifestyle",
+  ];
+  if (generateKeywords.some(k => lower.includes(k))) return "generate";
+  if (prompt.trim().split(/\s+/).length > 8) return "generate";
+  return "chat";
+}
+
+async function fetchAIReply(prompt: string): Promise<string> {
+  try {
+    const res = await fetch("/api/generate/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt }),
+    });
+    const data = await res.json();
+    return data.reply || "I'm here to help! Describe a product and I'll create stunning visuals for you.";
+  } catch {
+    return "I'm here to help you create professional product images! Tell me about your product.";
+  }
+}
 
 interface GenSettings {
   aspectRatio: string;
@@ -200,6 +230,7 @@ export default function WelcomeDashboard() {
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
   const [generatedImages, setGeneratedImages] = useState<GeneratedImage[]>([]);
   const [showApprovedPlatform, setShowApprovedPlatform] = useState(false);
+  const [aiReply, setAiReply] = useState<string | null>(null);
 
   // Inspiration prompts
   const [promptSeed, setPromptSeed] = useState(() => Math.floor(Math.random() * ALL_INSPIRATION_PROMPTS.length));
@@ -220,7 +251,7 @@ export default function WelcomeDashboard() {
 
   const currentCreditCost = calculateCreditCost(selectedTool, selectedModel as ModelId, genSettings.quality as QualityId);
   const hasEnoughCredits = user.creditsRemaining >= currentCreditCost;
-  const canSend = inputPrompt.trim().length > 0 && hasEnoughCredits && !isGenerating;
+  const canSend = inputPrompt.trim().length > 0 && !isGenerating && (hasEnoughCredits || phase === "ai-chat");
 
   const currentTool = TOOL_DEFS.find(t => t.id === selectedTool)!;
 
@@ -280,7 +311,8 @@ export default function WelcomeDashboard() {
   }, []);
 
   const handleSend = async () => {
-    if (!inputPrompt.trim() || !hasEnoughCredits || isGenerating) return;
+    if (!inputPrompt.trim() || isGenerating) return;
+    if (phase !== "ai-chat" && !hasEnoughCredits) return;
 
     const prompt = inputPrompt.trim();
     if (phase === "idle") {
@@ -297,11 +329,21 @@ export default function WelcomeDashboard() {
     setGeneratedImages([]);
     setSelectedStyle(null);
     setShowApprovedPlatform(false);
+    setAiReply(null);
 
     if (textareaRef.current) textareaRef.current.style.height = "auto";
+
+    const intent = detectClientIntent(prompt, !!productPreview);
     setPhase("thinking");
     await runThinkingAnimation();
-    setPhase("show-styles");
+
+    if (intent === "chat") {
+      const reply = await fetchAIReply(prompt);
+      setAiReply(reply);
+      setPhase("ai-chat");
+    } else {
+      setPhase("show-styles");
+    }
   };
 
   const startGeneration = useCallback(async (style: string, prompt: string) => {
@@ -320,6 +362,9 @@ export default function WelcomeDashboard() {
       tool: toolName,
       style,
       model: selectedModel,
+      quality: genSettings.quality,
+      aspectRatio: genSettings.aspectRatio,
+      numOutputs: genSettings.numOutputs,
       userId: authUser?.uid,
     });
 
@@ -360,7 +405,8 @@ export default function WelcomeDashboard() {
       }
     }
 
-    const imgs: GeneratedImage[] = GRADIENTS.map((g, i) => ({
+    const numImgs = genSettings.numOutputs || 3;
+    const imgs: GeneratedImage[] = GRADIENTS.slice(0, numImgs).map((g, i) => ({
       id: Date.now() + i,
       gradient: g,
       imageUrl: finalUrls[i],
@@ -377,14 +423,16 @@ export default function WelcomeDashboard() {
       tool: toolName,
       style,
       model: selectedModel,
+      quality: genSettings.quality,
       date: new Date(),
       gradient: GRADIENTS[0],
       uploadedImageUrl: productUrl || "",
-      variantCount: 3,
+      variantCount: numImgs,
       imageUrls: finalUrls,
       hasRealImages: isReal,
+      catalogAttributes: apiResp.catalogAttributes as any,
     } as any, serverHandledCredits);
-  }, [selectedTool, productUrl, selectedModel, authUser, addGeneration, runThinkingAnimation]);
+  }, [selectedTool, productUrl, selectedModel, authUser, addGeneration, runThinkingAnimation, genSettings]);
 
   const handleStyleSelect = async (styleId: string) => {
     setSelectedStyle(styleId);
@@ -410,6 +458,7 @@ export default function WelcomeDashboard() {
     setShowApprovedPlatform(false);
     setThinkingStep(0);
     setThinkingDone(false);
+    setAiReply(null);
     clearProduct();
     setReferencePreview(null);
     startNewChat();
@@ -651,12 +700,6 @@ export default function WelcomeDashboard() {
                   className="flex-1 bg-transparent resize-none text-sm text-foreground placeholder:text-muted-foreground/35 outline-none leading-relaxed max-h-32 overflow-y-auto scrollbar-none py-1"
                   onInput={(e) => { const el = e.currentTarget; el.style.height = "auto"; el.style.height = `${el.scrollHeight}px`; }} />
 
-                {/* Credit Pill */}
-                <div className={`shrink-0 flex items-center gap-1 px-2 py-1 rounded-full border text-[10px] font-semibold mb-0.5 transition-all duration-200 ${hasEnoughCredits ? "border-primary/25 bg-primary/8 text-primary" : "border-destructive/30 bg-destructive/8 text-destructive"}`}>
-                  <BoltIcon className="h-2.5 w-2.5" />
-                  <span>{currentCreditCost}</span>
-                </div>
-
                 {/* Send button */}
                 <button onClick={handleSend} disabled={!canSend} title="Send (Ctrl+Enter)"
                   className="h-8 w-8 shrink-0 flex items-center justify-center rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-150 mb-0.5">
@@ -664,12 +707,17 @@ export default function WelcomeDashboard() {
                 </button>
               </div>
 
-              {/* Active tool indicator */}
+              {/* Active tool indicator + credit pill */}
               <div className="flex items-center gap-2 px-1">
                 {(() => { const Icon = currentTool.icon; return <Icon className="h-3 w-3 text-muted-foreground/40" />; })()}
                 <span className="text-[10px] text-muted-foreground/40">{currentTool.name}</span>
                 <span className="text-[10px] text-muted-foreground/25">·</span>
                 <span className="text-[10px] text-muted-foreground/40 capitalize">{selectedModel} model</span>
+                <span className="text-[10px] text-muted-foreground/25">·</span>
+                <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-semibold transition-all duration-200 ${hasEnoughCredits ? "border-primary/25 bg-primary/8 text-primary" : "border-destructive/30 bg-destructive/8 text-destructive"}`}>
+                  <BoltIcon className="h-2.5 w-2.5" />
+                  <span>{currentCreditCost} credits</span>
+                </div>
               </div>
 
 
@@ -725,7 +773,7 @@ export default function WelcomeDashboard() {
         )}
 
         {/* Thinking / Generating steps */}
-        {(phase === "thinking" || phase === "generating" || phase === "show-styles" || phase === "results" || phase === "approved") && (
+        {(phase === "thinking" || phase === "ai-chat" || phase === "generating" || phase === "show-styles" || phase === "results" || phase === "approved") && (
           <div className="flex justify-start animate-fade-in">
             <div className="max-w-[80%] space-y-1">
               <div className="flex items-center gap-2 mb-2">
@@ -755,6 +803,27 @@ export default function WelcomeDashboard() {
                     </div>
                   );
                 })}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* AI Chat Reply */}
+        {phase === "ai-chat" && aiReply && (
+          <div className="flex justify-start animate-fade-in">
+            <div className="max-w-[80%] space-y-3">
+              <div className="bg-white/4 border border-white/10 rounded-2xl rounded-tl-sm px-4 py-3.5">
+                <p className="text-sm text-foreground leading-relaxed">{aiReply}</p>
+              </div>
+              <div className="flex gap-2">
+                <button onClick={() => { setInputPrompt("Generate a product photo for my "); setPhase("idle"); handleReset(); }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] border border-white/10 bg-white/4 text-muted-foreground hover:bg-white/8 hover:text-foreground transition-colors">
+                  <Sparkles className="h-3 w-3" /> Generate Image
+                </button>
+                <button onClick={handleReset}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] border border-white/10 bg-white/4 text-muted-foreground hover:bg-white/8 hover:text-foreground transition-colors">
+                  <RotateCcw className="h-3 w-3" /> Start Over
+                </button>
               </div>
             </div>
           </div>
@@ -1058,16 +1127,6 @@ export default function WelcomeDashboard() {
             }}
           />
 
-          {/* Credit Pill */}
-          <div className={`shrink-0 flex items-center gap-1 px-2 py-1 rounded-full border text-[10px] font-semibold mb-0.5 transition-all duration-200 ${
-            hasEnoughCredits
-              ? "border-primary/25 bg-primary/8 text-primary"
-              : "border-destructive/30 bg-destructive/8 text-destructive"
-          }`}>
-            <BoltIcon className="h-2.5 w-2.5" />
-            <span>{currentCreditCost}</span>
-          </div>
-
           {/* Send button */}
           <button onClick={handleSend}
             disabled={!canSend}
@@ -1077,12 +1136,17 @@ export default function WelcomeDashboard() {
           </button>
         </div>
 
-        {/* Active tool indicator */}
+        {/* Active tool indicator + credit pill */}
         <div className="flex items-center gap-2 mt-1.5 px-1">
           {(() => { const Icon = currentTool.icon; return <Icon className="h-3 w-3 text-muted-foreground/40" />; })()}
           <span className="text-[10px] text-muted-foreground/40">{currentTool.name}</span>
           <span className="text-[10px] text-muted-foreground/25">·</span>
           <span className="text-[10px] text-muted-foreground/40 capitalize">{selectedModel} model</span>
+          <span className="text-[10px] text-muted-foreground/25">·</span>
+          <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-semibold transition-all duration-200 ${hasEnoughCredits ? "border-primary/25 bg-primary/8 text-primary" : "border-destructive/30 bg-destructive/8 text-destructive"}`}>
+            <BoltIcon className="h-2.5 w-2.5" />
+            <span>{currentCreditCost} credits</span>
+          </div>
         </div>
 
       </div>}

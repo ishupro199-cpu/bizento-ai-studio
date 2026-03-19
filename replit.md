@@ -104,10 +104,25 @@ GST (18%) is applied at checkout. Plan expiry auto-downgrades to Free.
 - Marketing banners are publicly readable (used on landing page)
 
 ## AI Pipeline
-- **Tools**: Product Catalog, Marketing Ads, Cinematic Ads (Pro), Background Remove
-- **Models**: Flash (1 credit), Pro (2 credits), Cinematic (4 credits)
-- **Quality**: 720p/1K (Free), 2K/4K (Pro only — enforced server-side)
+- **Tools**: Product Catalog, Product Photography, Ad Creatives, Cinematic Ads (Pro)
+- **Models**: Flash (base cost), Pro (higher cost)
+- **Quality**: 720p/1K (Free), 2K (Starter+, +4 credits), 4K (Pro only, +8 credits)
 - **Style Presets**: Luxury, Marble, Floral, Minimal, Neon, Beach
+- **Replit AI**: gpt-5-mini via `AI_INTEGRATIONS_OPENAI_API_KEY` — builds smart tool-specific prompts, extracts catalog attributes, handles conversational chat
+- **Aspect Ratios**: 1:1, 4:5, 16:9, 9:16, 3:2 — passed to AI for optimal prompt building
+- **Contextual Chat**: If user sends a text message (no generation keywords), AI replies conversationally in Hindi/Hinglish or English
+
+## Catalog Attributes
+When generating catalog images, Replit AI extracts product attributes from the user's prompt:
+- Product Name, Category, Color, Material, Dimensions, Weight, Features, Target Audience, Mood, Style
+- Saved to Firestore `generations` collection under `catalogAttributes` field
+- Displayed as a collapsible table in `CatalogsPage.tsx`
+
+## AI Routes
+- `POST /api/ai-test/prompt` — Test Replit AI with any prompt
+- `POST /api/ai-test/prompt/stream` — Streaming AI response (SSE)
+- `GET /api/ai-test/health` — Check Replit AI integration status
+- `POST /api/generate/chat` — Conversational AI reply (no auth required, free)
 
 ## Double-Deduction Prevention
 Server pre-deducts credits and returns `creditsRemaining` in response. Frontend's `addGeneration()` skips `updateCredits()` when `apiResp.creditsRemaining` is defined (`serverDeducted` flag).

@@ -117,6 +117,19 @@ export function calculateCreditCost(
   return base + addon;
 }
 
+export interface CatalogAttributes {
+  productName?: string | null;
+  category?: string | null;
+  color?: string | null;
+  material?: string | null;
+  dimensions?: string | null;
+  weight?: string | null;
+  features?: string[];
+  targetAudience?: string | null;
+  mood?: string | null;
+  style?: string | null;
+}
+
 export interface GenerationRecord {
   id: string;
   prompt: string;
@@ -132,6 +145,7 @@ export interface GenerationRecord {
   imageUrls?: string[];
   hasRealImages?: boolean;
   generationTime?: number;
+  catalogAttributes?: CatalogAttributes;
 }
 
 interface UserProfile {
@@ -216,6 +230,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     gradient: g.gradient,
     uploadedImageUrl: g.uploadedImageUrl,
     imageUrls: g.imageUrls,
+    catalogAttributes: g.catalogAttributes as any,
   }));
 
   const creditCost = calculateCreditCost("catalog", selectedModel, "1K");
@@ -253,6 +268,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         status: "completed",
         hasRealImages: record.hasRealImages ?? false,
         generationTime: record.generationTime,
+        catalogAttributes: record.catalogAttributes ?? null,
         createdAt: new Date(),
       });
       if (!serverDeducted) {
