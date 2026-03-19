@@ -1,0 +1,406 @@
+You are a senior full-stack SaaS engineer and QA tester.
+
+Your task is to take the Bizento AI project and convert it into a fully working, production-ready SaaS system with complete backend, frontend, admin panel, database, storage, and payment integration.
+
+This is NOT a prototype.
+
+This must be:
+
+• fully functional
+• bug-free
+• real-time connected
+• tested end-to-end
+
+---
+
+---
+
+🎯 CORE REQUIREMENTS
+
+• NO mock data
+• NO fake APIs
+• NO placeholders
+
+Everything must use:
+
+• real database
+• real backend logic
+• real storage
+• real authentication
+• real payment system
+
+---
+
+---
+
+1️⃣ FULL SYSTEM ARCHITECTURE
+
+Build and connect:
+
+Frontend (User App)
+Backend (API server)
+Database
+Storage
+Admin Panel
+Payment System
+
+Ensure ALL parts are properly connected.
+
+---
+
+---
+
+2️⃣ AUTHENTICATION SYSTEM
+
+Implement secure auth:
+
+• Signup
+• Login
+• Logout
+• Session handling
+
+Store users in database.
+
+Protect routes (user + admin).
+
+---
+
+---
+
+3️⃣ DATABASE (STRICT)
+
+Use PostgreSQL / Firebase.
+
+Create and connect tables:
+
+Users
+Plans
+Credits
+Transactions
+Payments
+Generations
+AdminLogs
+
+---
+
+Ensure:
+
+• correct schema
+• relations
+• indexing
+• no data inconsistency
+
+---
+
+---
+
+4️⃣ CREDIT SYSTEM (REAL-TIME)
+
+Implement fully working logic:
+
+• calculate credits before generation
+• deduct credits from DB
+• log transaction
+
+If generation fails:
+
+• auto refund credits
+
+---
+
+Ensure:
+
+• no negative credits
+• no mismatch
+• real-time UI sync
+
+---
+
+---
+
+5️⃣ AI GENERATION SYSTEM
+
+Integrate real APIs:
+
+• image generation
+• prompt processing
+
+Handle:
+
+• image upload
+• processing
+• result generation
+
+Store:
+
+• generated images (storage)
+• metadata (database)
+
+---
+
+---
+
+6️⃣ STORAGE SYSTEM
+
+Use cloud storage:
+
+Firebase / S3
+
+Store:
+
+• uploaded images
+• generated outputs
+
+Save URLs in DB.
+
+---
+
+---
+
+7️⃣ FEATURE ACCESS CONTROL
+
+Implement strict role-based system:
+
+Free / Starter / Pro
+
+Admin
+
+---
+
+Restrict:
+
+• Cinematic Ads → Pro only
+• 4K → Pro only
+• Prompt Library → Starter & Pro
+
+---
+
+If blocked:
+
+Show upgrade UI.
+
+---
+
+---
+
+8️⃣ PRICING & PLAN SYSTEM
+
+Implement full logic:
+
+Free → 15 credits/month
+
+Starter → 100 + 20 bonus
+
+Pro → 450 + 50 bonus
+
+---
+
+Handle:
+
+• plan activation
+• expiry
+• renewal
+
+---
+
+---
+
+9️⃣ PAYMENT SYSTEM (RAZORPAY)
+
+Integrate FULL Razorpay flow.
+
+---
+
+BACKEND:
+
+• create order
+• verify payment
+
+---
+
+FRONTEND:
+
+• checkout page
+• show:
+
+- plan
+- credits
+- bonus
+- GST (18%)
+- final total
+
+---
+
+After success:
+
+• update plan
+• add credits
+• store payment
+
+---
+
+---
+
+🔟 ADMIN PANEL (IMPORTANT)
+
+Build full admin system.
+
+Admin can:
+
+• view all users
+• see credits usage
+• track payments
+• monitor generations
+• block users
+• manually adjust credits
+• view logs
+
+---
+
+Ensure:
+
+• admin routes protected
+• real-time data
+
+---
+
+---
+
+1️⃣1️⃣ PROMPT BOX SYSTEM
+
+Implement:
+
+• image upload (only 1)
+• preview
+• remove option
+
+• dynamic credit display
+
+• disable generate if no credits
+
+---
+
+---
+
+1️⃣2️⃣ REAL-TIME SYNC
+
+After every action:
+
+• credits update instantly
+• UI updates
+• DB stays consistent
+
+---
+
+---
+
+1️⃣3️⃣ ERROR HANDLING
+
+Handle ALL cases:
+
+• API failure
+• payment failure
+• insufficient credits
+• upload errors
+
+Show clean messages.
+
+---
+
+---
+
+1️⃣4️⃣ BUG FIXING (MANDATORY)
+
+You MUST:
+
+• scan entire project
+• detect bugs
+• fix all issues
+
+Check:
+
+• UI bugs
+• backend errors
+• broken APIs
+• incorrect calculations
+
+---
+
+---
+
+1️⃣5️⃣ WORKFLOW TESTING (CRITICAL)
+
+Test full system step-by-step:
+
+---
+
+USER FLOW:
+
+1. Signup
+2. Login
+3. Upload image
+4. Generate output
+5. Credits deducted
+6. Result stored
+7. Buy plan
+8. Payment success
+9. Credits updated
+10. Features unlocked
+
+---
+
+ADMIN FLOW:
+
+1. Login
+2. View users
+3. Check credits
+4. View transactions
+5. Monitor usage
+
+---
+
+Fix any issue found.
+
+---
+
+---
+
+1️⃣6️⃣ FINAL VERIFICATION
+
+Before completion:
+
+Ensure:
+
+• all features working
+• all flows working
+• no crashes
+• no missing connections
+• DB synced
+• payments working
+• storage working
+
+---
+
+---
+
+🎯 FINAL GOAL
+
+Deliver a complete, real SaaS product:
+
+• fully functional
+• fully connected
+• fully tested
+• ready to launch
+
+---
+
+IMPORTANT:
+
+You must:
+
+• review everything
+• fix everything
+• connect everything
+• verify everything
+
+Do not stop until system is fully working.
