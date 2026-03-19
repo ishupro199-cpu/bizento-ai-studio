@@ -193,11 +193,12 @@ function SidebarInner({
 }) {
   const location = useLocation();
   const navigate = useNavigate();
-  const { sessions, activeSessionId, setActiveSessionId, renameSession, deleteSession, archiveSession, startNewChat } = useChatContext();
+  const { sessions, activeSessionId, setActiveSessionId, renameSession, deleteSession, archiveSession, startNewChat, sessionHasMessages } = useChatContext();
   const [logoHovered, setLogoHovered] = useState(false);
 
   const handleNavClick = () => { if (isMobile) onClose(); };
   const handleNewChat = () => {
+    if (!sessionHasMessages) return;
     startNewChat();
     navigate("/app");
     if (isMobile) onClose();

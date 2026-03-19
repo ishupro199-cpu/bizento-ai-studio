@@ -13,12 +13,13 @@ import {
   ArrowPathIcon as RotateCcw,
   SparklesIcon as Sparkles,
   HandThumbUpIcon as ThumbsUp,
-  BoltIcon as Zap,
   XMarkIcon as X,
   LinkIcon as Link2,
   AdjustmentsHorizontalIcon as Settings2,
   LockClosedIcon as Lock,
   InformationCircleIcon as Info,
+  BuildingOffice2Icon as Building,
+  BoltIcon as BoltIcon,
 } from "@heroicons/react/24/outline";
 import { useLocation } from "react-router-dom";
 import { useAppContext } from "@/contexts/AppContext";
@@ -70,7 +71,7 @@ const TOOL_DEFS: Array<{
     id: "cinematic",
     name: "Cinematic Ads",
     icon: Clapperboard,
-    desc: "Generate high-quality cinematic CGI product ads with lighting, depth, and premium environments",
+    desc: "Generate high-quality cinematic CGI product ads with lighting and premium environments",
     tooltip: "Create cinematic CGI ads with advanced lighting, shadows, and realistic environments",
     proOnly: true,
   },
@@ -106,6 +107,27 @@ const QUALITY_OPTIONS: Array<{ id: QualityId; label: string; minPlan: "free" | "
   { id: "1K",   label: "1K",   minPlan: "free"    },
   { id: "2K",   label: "2K",   minPlan: "starter" },
   { id: "4K",   label: "4K",   minPlan: "pro"     },
+];
+
+const ALL_INSPIRATION_PROMPTS = [
+  "Luxury perfume bottle on marble surface with soft golden hour light",
+  "Minimalist product shot against clean white background for Amazon listing",
+  "Skincare cream with botanical ingredients in a serene spa setting",
+  "Sneakers displayed on urban concrete with graffiti wall backdrop",
+  "Premium watch on dark leather with dramatic single-source lighting",
+  "Coffee mug in a cozy morning café scene with warm blurred bokeh",
+  "Tech gadget with cool blue neon ambient glow in dark studio",
+  "Jewelry piece surrounded by soft pink rose petals and candlelight",
+  "Artisan candle with lavender sprigs on rustic weathered wood",
+  "Wireless headphones floating against abstract gradient background",
+  "Premium handbag on glass shelf with city skyline at dusk behind it",
+  "Supplement bottle with fitness equipment and high-energy action scene",
+];
+
+const PRO_PROMPTS = [
+  "Cinematic CGI ad: luxury fragrance bottle in slow-motion mist with dramatic light rays",
+  "High-end jewelry commercial with water droplets in crystal-clear ultra slow motion",
+  "Premium whiskey bottle with shattering ice in dramatic dark studio lighting",
 ];
 
 type ChatPhase = "idle" | "thinking" | "show-styles" | "generating" | "results" | "approved";
@@ -153,12 +175,11 @@ const PLAN_ORDER: Record<string, number> = { free: 0, starter: 1, pro: 2 };
 export default function WelcomeDashboard() {
   const { canGenerate, setShowUpgradeModal, user, selectedModel, setSelectedModel, addGeneration } = useAppContext();
   const { user: authUser } = useAuth();
-  const { createSession, startNewChat } = useChatContext();
+  const { createSession, startNewChat, markMessageSent } = useChatContext();
   const location = useLocation();
 
   const [inputPrompt, setInputPrompt] = useState("");
   const [selectedTool, setSelectedTool] = useState<ToolId>("catalog");
-  const [toolSelectorOpen, setToolSelectorOpen] = useState(false);
   const [plusOpen, setPlusOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [genSettings, setGenSettings] = useState<GenSettings>({ aspectRatio: "1:1", numOutputs: 3, quality: "1K" });
@@ -179,6 +200,9 @@ export default function WelcomeDashboard() {
   const [generatedImages, setGeneratedImages] = useState<GeneratedImage[]>([]);
   const [showApprovedPlatform, setShowApprovedPlatform] = useState(false);
 
+  // Inspiration prompts
+  const [promptSeed, setPromptSeed] = useState(() => Math.floor(Math.random() * ALL_INSPIRATION_PROMPTS.length));
+
   const chatEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const timerRef = useRef<number | null>(null);
@@ -193,6 +217,23 @@ export default function WelcomeDashboard() {
   const canSend = inputPrompt.trim().length > 0 && hasEnoughCredits && !isGenerating;
 
   const currentTool = TOOL_DEFS.find(t => t.id === selectedTool)!;
+
+  // Workspace name
+  const firstName = user.name?.split(" ")[0] || "there";
+  const workspaceName = user.plan === "free" ? "Personal Workspace" : `${firstName}'s Studio`;
+
+  // Suggested prompts (3 from pool based on seed + pro prompts for pro users)
+  const getSuggestedPrompts = useCallback(() => {
+    const pool = isPro ? [...ALL_INSPIRATION_PROMPTS, ...PRO_PROMPTS] : ALL_INSPIRATION_PROMPTS;
+    const len = pool.length;
+    return [
+      pool[promptSeed % len],
+      pool[(promptSeed + 4) % len],
+      pool[(promptSeed + 8) % len],
+    ];
+  }, [promptSeed, isPro]);
+
+  const suggestedPrompts = getSuggestedPrompts();
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -226,7 +267,10 @@ export default function WelcomeDashboard() {
     if (!inputPrompt.trim() || !hasEnoughCredits || isGenerating) return;
 
     const prompt = inputPrompt.trim();
-    if (phase === "idle") createSession(prompt);
+    if (phase === "idle") {
+      createSession(prompt);
+      markMessageSent();
+    }
 
     setSentPrompt(prompt);
     setSentProductPreview(productPreview);
@@ -366,10 +410,8 @@ export default function WelcomeDashboard() {
       return;
     }
     setSelectedTool(toolId);
-    setToolSelectorOpen(false);
+    setPlusOpen(false);
   };
-
-  const firstName = user.name?.split(" ")[0] || "there";
 
   return (
     <div className="flex flex-col h-full min-h-0 relative">
@@ -382,43 +424,109 @@ export default function WelcomeDashboard() {
 
       {/* ─── CHAT AREA ─── */}
       <div className="flex-1 overflow-y-auto px-3 sm:px-6 py-6 space-y-5 sidebar-scroll"
-        style={{ paddingBottom: phase === "show-styles" ? "260px" : "148px" }}>
+        style={{ paddingBottom: phase === "show-styles" ? "220px" : "100px" }}>
 
+        {/* IDLE STATE */}
         {phase === "idle" && (
-          <div className="flex flex-col items-center justify-center h-full min-h-[60vh] text-center space-y-5 animate-fade-in">
-            <div className="h-14 w-14 rounded-2xl flex items-center justify-center text-2xl font-black"
-              style={{ background: "rgba(137,233,0,0.12)", border: "1px solid rgba(137,233,0,0.2)", color: "#89E900" }}>
-              B
-            </div>
-            <div className="space-y-2">
-              <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground leading-tight">
-                Hi {firstName},
-              </h1>
-              <h2 className="text-xl sm:text-2xl font-medium tracking-tight" style={{ color: "rgba(255,255,255,0.45)" }}>
-                What do you want to create?
-              </h2>
-            </div>
-            <div className="flex flex-wrap justify-center gap-2 max-w-sm">
-              {TOOL_DEFS.map(({ icon: Icon, name, id }) => (
-                <button key={id} onClick={() => handleToolSelect(id)}
-                  className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium border transition-all duration-150 hover:border-primary/30 hover:text-primary hover:bg-primary/5"
-                  style={{ background: "rgba(255,255,255,0.04)", borderColor: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.55)" }}>
-                  <Icon className="h-3.5 w-3.5" />
-                  {name}
-                </button>
-              ))}
-            </div>
-            {!hasEnoughCredits && (
-              <div className="bg-destructive/10 border border-destructive/20 rounded-xl px-4 py-3 flex items-center gap-3">
-                <AlertTriangle className="h-4 w-4 text-destructive shrink-0" />
-                <span className="text-sm text-foreground">You've reached your generation limit.</span>
-                <Button size="sm" className="text-xs h-7 rounded-lg ml-2" onClick={() => setShowUpgradeModal(true)}>Upgrade</Button>
+          <div className="flex flex-col h-full min-h-[50vh] animate-fade-in">
+            {/* Top - Workspace name + greeting */}
+            <div className="flex flex-col items-center justify-center flex-1 text-center space-y-2.5">
+              {/* Workspace chip */}
+              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full border"
+                style={{ background: "rgba(137,233,0,0.06)", borderColor: "rgba(137,233,0,0.18)", color: "rgba(137,233,0,0.8)" }}>
+                <Building className="h-3 w-3" />
+                <span className="text-[11px] font-medium">{workspaceName}</span>
               </div>
-            )}
-            <p className="text-xs" style={{ color: "rgba(255,255,255,0.25)" }}>Upload a product image and describe your vision, or just describe it</p>
+
+              {/* Single-line compact greeting */}
+              <p className="text-base font-medium" style={{ color: "rgba(255,255,255,0.55)" }}>
+                Hi {firstName}, what do you want to create?
+              </p>
+
+              {!hasEnoughCredits && (
+                <div className="bg-destructive/10 border border-destructive/20 rounded-xl px-4 py-2.5 flex items-center gap-3">
+                  <AlertTriangle className="h-4 w-4 text-destructive shrink-0" />
+                  <span className="text-sm text-foreground">You've reached your generation limit.</span>
+                  <Button size="sm" className="text-xs h-7 rounded-lg ml-2" onClick={() => setShowUpgradeModal(true)}>Upgrade</Button>
+                </div>
+              )}
+            </div>
+
+            {/* Bottom - Tool cards */}
+            <div className="space-y-3 pb-2">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {TOOL_DEFS.map((tool) => {
+                  const Icon = tool.icon;
+                  const isActive = selectedTool === tool.id;
+                  const isLocked = tool.proOnly && !isPro;
+                  return (
+                    <button
+                      key={tool.id}
+                      onClick={() => handleToolSelect(tool.id)}
+                      className={`relative flex flex-col items-start gap-2 p-3 rounded-2xl border text-left transition-all duration-200 ${
+                        isActive
+                          ? "border-primary/40 bg-primary/8"
+                          : "border-white/8 bg-white/3 hover:border-white/16 hover:bg-white/5"
+                      }`}
+                    >
+                      {isActive && (
+                        <div className="absolute top-2 right-2 h-1.5 w-1.5 rounded-full bg-primary" />
+                      )}
+                      {isLocked && !isActive && (
+                        <div className="absolute top-2 right-2">
+                          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full"
+                            style={{ background: "rgba(245,158,11,0.15)", color: "rgba(245,158,11,0.9)", border: "1px solid rgba(245,158,11,0.2)" }}>
+                            PRO
+                          </span>
+                        </div>
+                      )}
+                      <div className={`h-7 w-7 rounded-xl flex items-center justify-center ${
+                        isActive ? "bg-primary/15" : "bg-white/6"
+                      }`}>
+                        <Icon className={`h-3.5 w-3.5 ${isActive ? "text-primary" : "text-muted-foreground"}`} />
+                      </div>
+                      <div>
+                        <p className={`text-xs font-semibold leading-snug ${isActive ? "text-primary" : "text-foreground"}`}>
+                          {tool.name}
+                        </p>
+                        <p className="text-[10px] text-muted-foreground/60 leading-snug mt-0.5 line-clamp-2">
+                          {tool.desc}
+                        </p>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Try this prompt */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-semibold text-muted-foreground/70 uppercase tracking-wider">Try this prompt</span>
+                  <button
+                    onClick={() => setPromptSeed(s => (s + 3) % ALL_INSPIRATION_PROMPTS.length)}
+                    className="flex items-center gap-1 text-[10px] text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+                  >
+                    <RotateCcw className="h-3 w-3" />
+                    Refresh
+                  </button>
+                </div>
+                <div className="space-y-1.5">
+                  {suggestedPrompts.map((prompt, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setInputPrompt(prompt)}
+                      className="w-full text-left px-3 py-2 rounded-xl border border-white/8 bg-white/3 hover:bg-white/5 hover:border-white/16 transition-all duration-150"
+                    >
+                      <p className="text-xs text-foreground/70 leading-relaxed">{prompt}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
+        {/* Sent message bubble */}
         {sentPrompt && (
           <div className="flex justify-end animate-fade-in">
             <div className="max-w-[75%] space-y-2">
@@ -445,6 +553,7 @@ export default function WelcomeDashboard() {
           </div>
         )}
 
+        {/* Thinking / Generating steps */}
         {(phase === "thinking" || phase === "generating" || phase === "show-styles" || phase === "results" || phase === "approved") && (
           <div className="flex justify-start animate-fade-in">
             <div className="max-w-[80%] space-y-1">
@@ -480,6 +589,7 @@ export default function WelcomeDashboard() {
           </div>
         )}
 
+        {/* Results */}
         {(phase === "results" || phase === "approved") && generatedImages.length > 0 && (
           <div className="flex justify-end animate-fade-in">
             <div className="max-w-[85%] space-y-3">
@@ -529,6 +639,7 @@ export default function WelcomeDashboard() {
           </div>
         )}
 
+        {/* Platform optimization */}
         {showApprovedPlatform && phase === "approved" && (
           <div className="flex justify-start animate-fade-in">
             <div className="max-w-[90%] w-full space-y-1">
@@ -585,82 +696,6 @@ export default function WelcomeDashboard() {
       {/* ─── PROMPT BAR ─── */}
       <div className="shrink-0 px-3 sm:px-6 pb-4 pt-2 border-t border-white/8 bg-background/80 backdrop-blur-sm">
 
-        {/* ── Tool Selector Strip ── */}
-        <div className="mb-2">
-          <div className="flex items-center gap-1.5 overflow-x-auto sidebar-scroll pb-0.5">
-            {TOOL_DEFS.map((tool) => {
-              const Icon = tool.icon;
-              const isActive = selectedTool === tool.id;
-              const isLocked = tool.proOnly && !isPro;
-              return (
-                <div key={tool.id} className="relative shrink-0">
-                  <button
-                    onClick={() => handleToolSelect(tool.id)}
-                    onMouseEnter={() => tool.id === "cinematic" && setCinematicTooltip(true)}
-                    onMouseLeave={() => setCinematicTooltip(false)}
-                    className={`group flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-medium border transition-all duration-200 whitespace-nowrap ${
-                      isActive
-                        ? "border-primary/50 bg-primary/10 text-primary shadow-sm shadow-primary/10"
-                        : "border-white/8 bg-white/3 text-muted-foreground hover:border-white/16 hover:bg-white/6 hover:text-foreground"
-                    }`}
-                  >
-                    <Icon className={`h-3 w-3 shrink-0 transition-colors ${isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground"}`} />
-                    <span>{tool.name}</span>
-                    {isLocked && (
-                      <Lock className="h-2.5 w-2.5 text-amber-500/70 ml-0.5" />
-                    )}
-                    {isActive && !isLocked && (
-                      <div className="h-1 w-1 rounded-full bg-primary ml-0.5" />
-                    )}
-                  </button>
-
-                  {/* Cinematic Ads Tooltip */}
-                  {tool.id === "cinematic" && cinematicTooltip && tool.tooltip && (
-                    <div className="absolute bottom-full left-0 mb-2 z-50 animate-fade-in pointer-events-none">
-                      <div className="bg-popover border border-white/12 rounded-xl px-3 py-2.5 shadow-xl max-w-[220px]">
-                        <div className="flex items-start gap-2">
-                          <Info className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />
-                          <p className="text-[11px] text-foreground leading-relaxed">{tool.tooltip}</p>
-                        </div>
-                        {isLocked && (
-                          <div className="mt-1.5 pt-1.5 border-t border-white/8 flex items-center gap-1">
-                            <Lock className="h-2.5 w-2.5 text-amber-500" />
-                            <span className="text-[10px] text-amber-500">Pro plan required</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-
-            {/* Model Selector inline */}
-            <div className="h-4 w-px bg-white/10 mx-0.5 shrink-0" />
-            {(["flash", "pro"] as ModelId[]).map((m) => {
-              const isActive = selectedModel === m;
-              const isLocked = m === "pro" && !PLANS[user.plan].allowPro;
-              return (
-                <button key={m}
-                  onClick={() => {
-                    if (isLocked) { setShowUpgradeModal(true); return; }
-                    setSelectedModel(m);
-                  }}
-                  className={`shrink-0 flex items-center gap-1 px-2 py-1.5 rounded-lg text-[10px] font-semibold border transition-all duration-150 uppercase tracking-wide ${
-                    isActive
-                      ? "border-primary/40 bg-primary/8 text-primary"
-                      : "border-white/8 bg-white/3 text-muted-foreground/60 hover:border-white/14 hover:text-muted-foreground"
-                  } ${isLocked ? "opacity-50 cursor-not-allowed" : ""}`}
-                  title={isLocked ? "Upgrade to use Pro model" : `${m} model`}>
-                  <Zap className={`h-2.5 w-2.5 ${isActive ? "text-primary" : ""}`} />
-                  {m}
-                  {isLocked && <Lock className="h-2 w-2 text-amber-500/60" />}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
         {/* Attached image previews */}
         {(productPreview || referencePreview) && (
           <div className="flex gap-2 mb-2">
@@ -694,23 +729,54 @@ export default function WelcomeDashboard() {
         {/* Input row */}
         <div className="flex items-end gap-2 bg-white/5 border border-white/12 rounded-2xl px-3 py-2.5 focus-within:border-white/22 transition-[border-color] duration-150">
 
-          {/* + button */}
+          {/* + button — opens popup with tools + image upload */}
           <Popover open={plusOpen} onOpenChange={setPlusOpen}>
             <PopoverTrigger asChild>
-              <button disabled={isGenerating || uploadingProduct} title="Attach"
+              <button disabled={isGenerating || uploadingProduct} title="Add / Select Tool"
                 className="h-8 w-8 shrink-0 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors text-muted-foreground hover:text-foreground mb-0.5 disabled:opacity-40">
                 <Plus className="h-4.5 w-4.5" />
               </button>
             </PopoverTrigger>
-            <PopoverContent align="start" side="top" className="w-60 p-1.5 rounded-xl bg-popover border border-white/10">
+            <PopoverContent align="start" side="top" className="w-64 p-1.5 rounded-xl bg-popover border border-white/10">
+
+              {/* Tool selection section */}
               <div className="px-3 pt-2 pb-1">
-                <p className="text-[9px] text-muted-foreground/60 uppercase tracking-wider font-semibold">Images</p>
+                <p className="text-[9px] text-muted-foreground/60 uppercase tracking-wider font-semibold">AI Tool</p>
+              </div>
+              {TOOL_DEFS.map((tool) => {
+                const Icon = tool.icon;
+                const isActive = selectedTool === tool.id;
+                const isLocked = tool.proOnly && !isPro;
+                return (
+                  <button
+                    key={tool.id}
+                    onClick={() => handleToolSelect(tool.id)}
+                    className={`w-full flex items-center gap-3 rounded-lg px-3 py-2 transition-colors ${
+                      isActive ? "bg-primary/10" : "hover:bg-white/5"
+                    }`}
+                  >
+                    <Icon className={`h-4 w-4 shrink-0 ${isActive ? "text-primary" : "text-muted-foreground"}`} />
+                    <div className="flex-1 text-left">
+                      <p className={`text-sm font-medium ${isActive ? "text-primary" : "text-foreground"}`}>{tool.name}</p>
+                    </div>
+                    {isLocked && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "rgba(245,158,11,0.15)", color: "rgba(245,158,11,0.9)" }}>PRO</span>}
+                    {isActive && !isLocked && <div className="h-1.5 w-1.5 rounded-full bg-primary" />}
+                  </button>
+                );
+              })}
+
+              {/* Divider */}
+              <div className="h-px bg-white/8 my-1.5 mx-2" />
+
+              {/* Image upload section */}
+              <div className="px-3 pb-1">
+                <p className="text-[9px] text-muted-foreground/60 uppercase tracking-wider font-semibold">Attach Image</p>
               </div>
               <button onClick={() => productRef.current?.click()}
                 className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-foreground hover:bg-white/5 transition-colors">
                 <Upload className="h-4 w-4 text-muted-foreground shrink-0" />
                 <div className="text-left">
-                  <p className="text-sm">Upload Product Image</p>
+                  <p className="text-sm">Product Image</p>
                   <p className="text-[10px] text-muted-foreground/60">Main product to transform</p>
                 </div>
               </button>
@@ -718,8 +784,8 @@ export default function WelcomeDashboard() {
                 className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-foreground hover:bg-white/5 transition-colors">
                 <Link2 className="h-4 w-4 text-muted-foreground shrink-0" />
                 <div className="text-left">
-                  <p className="text-sm">Upload Reference Image</p>
-                  <p className="text-[10px] text-muted-foreground/60">Style reference or inspiration</p>
+                  <p className="text-sm">Reference Image</p>
+                  <p className="text-[10px] text-muted-foreground/60">Style or inspiration</p>
                 </div>
               </button>
             </PopoverContent>
@@ -728,7 +794,7 @@ export default function WelcomeDashboard() {
           {/* Settings button */}
           <Popover open={settingsOpen} onOpenChange={setSettingsOpen}>
             <PopoverTrigger asChild>
-              <button title="Settings" disabled={isGenerating}
+              <button title="Generation Settings" disabled={isGenerating}
                 className="h-8 w-8 shrink-0 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors text-muted-foreground hover:text-foreground mb-0.5 disabled:opacity-40">
                 <Settings2 className="h-4 w-4" />
               </button>
@@ -794,7 +860,6 @@ export default function WelcomeDashboard() {
                     );
                   })}
                 </div>
-                {/* Live cost preview inside settings */}
                 <div className="mt-1 pt-2 border-t border-white/8 flex items-center justify-between">
                   <span className="text-[10px] text-muted-foreground">Cost for this quality</span>
                   <span className="text-[10px] font-semibold" style={{ color: "#89E900" }}>
@@ -812,7 +877,7 @@ export default function WelcomeDashboard() {
             onChange={(e) => setInputPrompt(e.target.value)}
             onKeyDown={handleKeyDown}
             disabled={isGenerating}
-            placeholder={`${currentTool.name} — describe your product or scene...`}
+            placeholder={`${currentTool.name} — describe your product...`}
             rows={1}
             className="flex-1 bg-transparent resize-none text-sm sm:text-base text-foreground placeholder:text-muted-foreground/35 outline-none leading-relaxed max-h-32 overflow-y-auto scrollbar-none py-1 disabled:opacity-50"
             onInput={(e) => {
@@ -828,7 +893,7 @@ export default function WelcomeDashboard() {
               ? "border-primary/25 bg-primary/8 text-primary"
               : "border-destructive/30 bg-destructive/8 text-destructive"
           }`}>
-            <Zap className="h-2.5 w-2.5" />
+            <BoltIcon className="h-2.5 w-2.5" />
             <span>{currentCreditCost}</span>
           </div>
 
@@ -841,17 +906,12 @@ export default function WelcomeDashboard() {
           </button>
         </div>
 
-        {/* Credits remaining bar */}
-        <div className="flex items-center justify-between mt-1.5 px-1">
-          <span className="text-[10px] text-muted-foreground/40">
-            {currentTool.name}
-            {selectedTool === "cinematic" && !isPro && (
-              <span className="ml-1.5 text-amber-500/70">· Pro required</span>
-            )}
-          </span>
-          <span className="text-[10px] text-muted-foreground/40">
-            {user.creditsRemaining} credits remaining
-          </span>
+        {/* Active tool indicator */}
+        <div className="flex items-center gap-2 mt-1.5 px-1">
+          {(() => { const Icon = currentTool.icon; return <Icon className="h-3 w-3 text-muted-foreground/40" />; })()}
+          <span className="text-[10px] text-muted-foreground/40">{currentTool.name}</span>
+          <span className="text-[10px] text-muted-foreground/25">·</span>
+          <span className="text-[10px] text-muted-foreground/40 capitalize">{selectedModel} model</span>
         </div>
       </div>
     </div>

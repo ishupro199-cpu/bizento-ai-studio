@@ -18,6 +18,8 @@ interface ChatContextType {
   deleteSession: (id: string) => void;
   archiveSession: (id: string) => void;
   startNewChat: () => void;
+  sessionHasMessages: boolean;
+  markMessageSent: () => void;
 }
 
 const ChatContext = createContext<ChatContextType | null>(null);
@@ -38,6 +40,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
   const [sessions, setSessions] = useState<ChatSession[]>(load);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+  const [sessionHasMessages, setSessionHasMessages] = useState(false);
 
   useEffect(() => {
     setSessions(load());
@@ -94,6 +97,11 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
   const startNewChat = useCallback(() => {
     setActiveSessionId(null);
+    setSessionHasMessages(false);
+  }, []);
+
+  const markMessageSent = useCallback(() => {
+    setSessionHasMessages(true);
   }, []);
 
   return (
@@ -106,6 +114,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       deleteSession,
       archiveSession,
       startNewChat,
+      sessionHasMessages,
+      markMessageSent,
     }}>
       {children}
     </ChatContext.Provider>
