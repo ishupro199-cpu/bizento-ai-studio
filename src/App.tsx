@@ -57,7 +57,6 @@ import SettingsPage from "@/pages/app/SettingsPage";
 
 // Admin pages
 import AdminDashboard from "@/pages/admin/AdminDashboard";
-import AdminPlaceholder from "@/pages/admin/AdminPlaceholder";
 import AdminUsersPage from "@/pages/admin/AdminUsersPage";
 import AdminModerationPage from "@/pages/admin/AdminModerationPage";
 import AdminAnalyticsPage from "@/pages/admin/AdminAnalyticsPage";
@@ -67,6 +66,13 @@ import AdminCreditsPage from "@/pages/admin/AdminCreditsPage";
 import AdminNotificationsPage from "@/pages/admin/AdminNotificationsPage";
 import AdminSettingsPage from "@/pages/admin/AdminSettingsPage";
 import AdminLogsPage from "@/pages/admin/AdminLogsPage";
+import AdminInspirationHub from "@/pages/admin/AdminInspirationHub";
+import AdminCmsPage from "@/pages/admin/AdminCmsPage";
+import AdminMarketingPage from "@/pages/admin/AdminMarketingPage";
+import AdminAiToolsPage from "@/pages/admin/AdminAiToolsPage";
+import AdminProjectsPage from "@/pages/admin/AdminProjectsPage";
+import AdminSupportPage from "@/pages/admin/AdminSupportPage";
+import AdminBlogPage from "@/pages/admin/AdminBlogPage";
 
 import NotFound from "@/pages/NotFound";
 
@@ -117,16 +123,16 @@ const App = () => (
               <Route path="users" element={<AdminUsersPage />} />
               <Route path="billing" element={<AdminBillingPage />} />
               <Route path="credits" element={<AdminCreditsPage />} />
-              <Route path="ai-tools" element={<AdminPlaceholder title="AI Tools" />} />
-              <Route path="projects" element={<AdminPlaceholder title="Projects" />} />
+              <Route path="ai-tools" element={<AdminAiToolsPage />} />
+              <Route path="projects" element={<AdminProjectsPage />} />
               <Route path="analytics" element={<AdminAnalyticsPage />} />
-              <Route path="marketing" element={<AdminPlaceholder title="Marketing" />} />
-              <Route path="cms" element={<AdminPlaceholder title="CMS" />} />
-              <Route path="blog" element={<AdminPlaceholder title="Blog" />} />
-              <Route path="prompts" element={<AdminPlaceholder title="Prompt Library" />} />
+              <Route path="marketing" element={<AdminMarketingPage />} />
+              <Route path="cms" element={<AdminCmsPage />} />
+              <Route path="blog" element={<AdminBlogPage />} />
+              <Route path="inspiration" element={<AdminInspirationHub />} />
               <Route path="notifications" element={<AdminNotificationsPage />} />
               <Route path="settings" element={<AdminSettingsPage />} />
-              <Route path="support" element={<AdminPlaceholder title="Support" />} />
+              <Route path="support" element={<AdminSupportPage />} />
               <Route path="logs" element={<AdminLogsPage />} />
               <Route path="moderation" element={<AdminModerationPage />} />
               <Route path="system" element={<AdminSystemPage />} />

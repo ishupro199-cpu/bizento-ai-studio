@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
-import { ConfigProvider, Layout, Menu, Avatar, Badge, Input, Dropdown, Button, theme } from "antd";
+import { ConfigProvider, Layout, Menu, Avatar, Badge, Input, Dropdown, theme } from "antd";
 import {
   HomeIcon,
   UsersIcon,
@@ -25,6 +25,7 @@ import {
   UserCircleIcon,
   ShieldCheckIcon,
   ExclamationTriangleIcon,
+  LightBulbIcon,
 } from "@heroicons/react/24/outline";
 import { BellIcon as BellSolid } from "@heroicons/react/24/solid";
 import { useAuth } from "@/contexts/AuthContext";
@@ -32,8 +33,7 @@ import { useAuth } from "@/contexts/AuthContext";
 const { Sider, Content, Header } = Layout;
 
 const ACCENT = "#89E900";
-const SIDEBAR_BG = "rgba(14,14,14,0.92)";
-const HEADER_BG = "rgba(20,20,20,0.75)";
+const SIDEBAR_BG = "rgba(14,14,14,0.95)";
 const CONTENT_BG = "#111113";
 const CARD_BG = "rgba(30,30,30,0.8)";
 const BORDER = "rgba(255,255,255,0.08)";
@@ -68,19 +68,11 @@ const adminTheme = {
       rowHoverBg: "rgba(255,255,255,0.03)",
       borderColor: BORDER,
     },
-    Input: {
-      colorBgContainer: "#242424",
-    },
-    Button: {
-      primaryColor: "#000",
-    },
-    Modal: {
-      contentBg: "#242424",
-      headerBg: "#242424",
-    },
-    Select: {
-      optionSelectedBg: "rgba(137,233,0,0.10)",
-    },
+    Input: { colorBgContainer: "#242424" },
+    Button: { primaryColor: "#000" },
+    Modal: { contentBg: "#242424", headerBg: "#242424" },
+    Select: { optionSelectedBg: "rgba(137,233,0,0.10)" },
+    Tabs: { inkBarColor: ACCENT, itemSelectedColor: ACCENT },
   },
 };
 
@@ -105,10 +97,10 @@ const menuGroups = [
   {
     label: "Content",
     items: [
+      { key: "/admin/inspiration", label: "Inspiration Hub", icon: LightBulbIcon },
       { key: "/admin/marketing", label: "Marketing", icon: MegaphoneIcon },
-      { key: "/admin/cms", label: "CMS", icon: RectangleStackIcon },
+      { key: "/admin/cms", label: "Content Manager", icon: RectangleStackIcon },
       { key: "/admin/blog", label: "Blog", icon: DocumentTextIcon },
-      { key: "/admin/prompts", label: "Prompt Library", icon: BookOpenIcon },
     ],
   },
   {
@@ -140,17 +132,8 @@ export function AdminLayout() {
     "/admin";
 
   const profileMenuItems = [
-    {
-      key: "profile",
-      label: "Profile",
-      icon: <UserCircleIcon style={{ width: 14, height: 14 }} />,
-    },
-    {
-      key: "logout",
-      label: "Sign out",
-      icon: <ArrowRightOnRectangleIcon style={{ width: 14, height: 14 }} />,
-      danger: true,
-    },
+    { key: "profile", label: "Profile", icon: <UserCircleIcon style={{ width: 14, height: 14 }} /> },
+    { key: "logout", label: "Sign out", icon: <ArrowRightOnRectangleIcon style={{ width: 14, height: 14 }} />, danger: true },
   ];
 
   const antMenuItems = menuGroups.map((group) => ({
@@ -164,23 +147,10 @@ export function AdminLayout() {
     children: group.items.map((item) => ({
       key: item.key,
       icon: (
-        <item.icon
-          style={{
-            width: 17,
-            height: 17,
-            color: activeKey === item.key ? ACCENT : "rgba(255,255,255,0.45)",
-            flexShrink: 0,
-          }}
-        />
+        <item.icon style={{ width: 17, height: 17, color: activeKey === item.key ? ACCENT : "rgba(255,255,255,0.45)", flexShrink: 0 }} />
       ),
       label: (
-        <span
-          style={{
-            fontSize: 13,
-            fontWeight: activeKey === item.key ? 600 : 400,
-            letterSpacing: "-0.1px",
-          }}
-        >
+        <span style={{ fontSize: 13, fontWeight: activeKey === item.key ? 600 : 400, letterSpacing: "-0.1px" }}>
           {item.label}
         </span>
       ),
@@ -192,77 +162,44 @@ export function AdminLayout() {
     <ConfigProvider theme={adminTheme}>
       <Layout style={{ minHeight: "100vh", background: CONTENT_BG }}>
         <Sider
-          collapsible
-          collapsed={collapsed}
-          trigger={null}
-          width={224}
-          collapsedWidth={64}
+          collapsible collapsed={collapsed} trigger={null}
+          width={224} collapsedWidth={64}
           style={{
             background: SIDEBAR_BG,
-            backdropFilter: "blur(40px) saturate(160%)",
-            WebkitBackdropFilter: "blur(40px) saturate(160%)",
+            backdropFilter: "blur(40px) saturate(180%)",
+            WebkitBackdropFilter: "blur(40px) saturate(180%)",
             borderRight: `1px solid ${BORDER}`,
-            position: "fixed",
-            left: 0,
-            top: 0,
-            bottom: 0,
-            zIndex: 100,
-            display: "flex",
-            flexDirection: "column",
+            position: "fixed", left: 0, top: 0, bottom: 0, zIndex: 100,
+            display: "flex", flexDirection: "column",
           }}
         >
           <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-                padding: collapsed ? "18px 0" : "18px 16px",
-                justifyContent: collapsed ? "center" : "flex-start",
-                borderBottom: `1px solid ${BORDER}`,
-              }}
-            >
-              <div
-                style={{
-                  width: 30,
-                  height: 30,
-                  borderRadius: 8,
-                  background: ACCENT,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: 0,
-                }}
-              >
+            {/* Logo */}
+            <div style={{
+              display: "flex", alignItems: "center", gap: 10,
+              padding: collapsed ? "18px 0" : "18px 16px",
+              justifyContent: collapsed ? "center" : "flex-start",
+              borderBottom: `1px solid ${BORDER}`,
+            }}>
+              <div style={{ width: 30, height: 30, borderRadius: 8, background: ACCENT, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                 <SparklesIcon style={{ width: 15, height: 15, color: "#000" }} />
               </div>
               {!collapsed && (
                 <div>
-                  <div style={{ fontWeight: 700, fontSize: 14, color: "#fff", letterSpacing: "-0.3px", lineHeight: 1.2 }}>
-                    Pixalera
-                  </div>
+                  <div style={{ fontWeight: 700, fontSize: 14, color: "#fff", letterSpacing: "-0.3px", lineHeight: 1.2 }}>Pixalera</div>
                   <div style={{ fontSize: 9, color: ACCENT, fontWeight: 700, letterSpacing: "1px" }}>ADMIN PANEL</div>
                 </div>
               )}
             </div>
 
+            {/* Admin profile */}
             {!collapsed && (
-              <div
-                style={{
-                  margin: "10px 10px 4px",
-                  padding: "10px 12px",
-                  borderRadius: 10,
-                  background: "rgba(255,255,255,0.04)",
-                  border: `1px solid ${BORDER}`,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 10,
-                }}
-              >
-                <Avatar
-                  size={32}
-                  style={{ background: ACCENT, color: "#000", fontWeight: 700, fontSize: 12, flexShrink: 0 }}
-                >
+              <div style={{
+                margin: "10px 10px 4px", padding: "10px 12px", borderRadius: 10,
+                background: "rgba(255,255,255,0.04)", border: `1px solid ${BORDER}`,
+                display: "flex", alignItems: "center", gap: 10,
+              }}>
+                <Avatar size={32} style={{ background: ACCENT, color: "#000", fontWeight: 700, fontSize: 12, flexShrink: 0 }}>
                   {(user?.email?.[0] || "A").toUpperCase()}
                 </Avatar>
                 <div style={{ flex: 1, minWidth: 0 }}>
@@ -275,40 +212,26 @@ export function AdminLayout() {
               </div>
             )}
 
+            {/* Navigation */}
             <div style={{ flex: 1, overflow: "auto", paddingTop: 4 }}>
               <Menu
-                mode="inline"
-                theme="dark"
-                selectedKeys={[activeKey]}
+                mode="inline" theme="dark" selectedKeys={[activeKey]}
                 style={{ background: "transparent", border: "none", padding: "0 8px" }}
                 onClick={({ key }) => navigate(key)}
                 items={antMenuItems}
               />
             </div>
 
-            <div
-              style={{
-                borderTop: `1px solid ${BORDER}`,
-                padding: "10px 8px",
-              }}
-            >
+            {/* Bottom controls */}
+            <div style={{ borderTop: `1px solid ${BORDER}`, padding: "10px 8px" }}>
               <button
                 onClick={() => signOut()}
                 style={{
-                  width: "100%",
-                  display: "flex",
-                  alignItems: "center",
+                  width: "100%", display: "flex", alignItems: "center",
                   justifyContent: collapsed ? "center" : "flex-start",
-                  gap: 8,
-                  padding: "8px 10px",
-                  background: "transparent",
-                  border: "none",
-                  cursor: "pointer",
-                  color: "rgba(248,113,113,0.7)",
-                  borderRadius: 8,
-                  fontSize: 12,
-                  transition: "all 0.2s",
-                  marginBottom: 4,
+                  gap: 8, padding: "8px 10px", background: "transparent", border: "none",
+                  cursor: "pointer", color: "rgba(248,113,113,0.7)", borderRadius: 8,
+                  fontSize: 12, transition: "all 0.2s", marginBottom: 4,
                 }}
                 onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(248,113,113,0.08)")}
                 onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
@@ -319,85 +242,48 @@ export function AdminLayout() {
               <button
                 onClick={() => setCollapsed(!collapsed)}
                 style={{
-                  width: "100%",
-                  display: "flex",
-                  alignItems: "center",
+                  width: "100%", display: "flex", alignItems: "center",
                   justifyContent: collapsed ? "center" : "flex-end",
-                  gap: 6,
-                  padding: "7px 10px",
-                  background: "transparent",
-                  border: "none",
-                  cursor: "pointer",
-                  color: "rgba(255,255,255,0.3)",
-                  borderRadius: 8,
-                  fontSize: 11,
-                  transition: "all 0.2s",
+                  gap: 6, padding: "7px 10px", background: "transparent", border: "none",
+                  cursor: "pointer", color: "rgba(255,255,255,0.3)", borderRadius: 8,
+                  fontSize: 11, transition: "all 0.2s",
                 }}
                 onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.05)")}
                 onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
               >
-                {collapsed ? (
-                  <ChevronDoubleRightIcon style={{ width: 14, height: 14 }} />
-                ) : (
-                  <>
-                    <span>Collapse</span>
-                    <ChevronDoubleLeftIcon style={{ width: 14, height: 14 }} />
-                  </>
-                )}
+                {collapsed
+                  ? <ChevronDoubleRightIcon style={{ width: 14, height: 14 }} />
+                  : <><span>Collapse</span><ChevronDoubleLeftIcon style={{ width: 14, height: 14 }} /></>
+                }
               </button>
             </div>
           </div>
         </Sider>
 
         <Layout style={{ marginLeft: collapsed ? 64 : 224, transition: "margin-left 0.2s", background: CONTENT_BG }}>
-          <Header
-            style={{
-              background: "rgba(20,20,20,0.75)",
-              backdropFilter: "blur(40px) saturate(180%)",
-              WebkitBackdropFilter: "blur(40px) saturate(180%)",
-              borderBottom: `1px solid ${BORDER}`,
-              padding: "0 20px",
-              display: "flex",
-              alignItems: "center",
-              gap: 12,
-              position: "sticky",
-              top: 0,
-              zIndex: 50,
-              height: 54,
-            }}
-          >
+          <Header style={{
+            background: "rgba(17,17,19,0.80)",
+            backdropFilter: "blur(40px) saturate(180%)",
+            WebkitBackdropFilter: "blur(40px) saturate(180%)",
+            borderBottom: `1px solid ${BORDER}`,
+            padding: "0 20px", display: "flex", alignItems: "center", gap: 12,
+            position: "sticky", top: 0, zIndex: 50, height: 54,
+          }}>
             <div style={{ flex: 1 }}>
               <Input
                 prefix={<MagnifyingGlassIcon style={{ width: 14, height: 14, color: "rgba(255,255,255,0.3)" }} />}
                 placeholder="Search users, generations..."
-                style={{
-                  maxWidth: 300,
-                  background: "#242424",
-                  border: `1px solid ${BORDER}`,
-                  borderRadius: 8,
-                  color: "#fff",
-                  fontSize: 13,
-                  height: 34,
-                }}
+                style={{ maxWidth: 300, background: "#1e1e1e", border: `1px solid ${BORDER}`, borderRadius: 8, color: "#fff", fontSize: 13, height: 34 }}
                 variant="borderless"
               />
             </div>
 
             <Badge count={3} size="small" color={ACCENT}>
-              <button
-                style={{
-                  width: 34,
-                  height: 34,
-                  borderRadius: 8,
-                  background: "rgba(255,255,255,0.05)",
-                  border: `1px solid ${BORDER}`,
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: 0,
-                }}
-              >
+              <button style={{
+                width: 34, height: 34, borderRadius: 8,
+                background: "rgba(255,255,255,0.05)", border: `1px solid ${BORDER}`,
+                cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+              }}>
                 <BellSolid style={{ width: 15, height: 15, color: "rgba(255,255,255,0.6)" }} />
               </button>
             </Badge>
@@ -405,28 +291,16 @@ export function AdminLayout() {
             <Dropdown
               menu={{
                 items: profileMenuItems,
-                onClick: ({ key }) => {
-                  if (key === "logout") signOut();
-                },
+                onClick: ({ key }) => { if (key === "logout") signOut(); },
               }}
               trigger={["click"]}
             >
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                  cursor: "pointer",
-                  padding: "4px 8px",
-                  borderRadius: 8,
-                  border: `1px solid ${BORDER}`,
-                  background: "rgba(255,255,255,0.04)",
-                }}
-              >
-                <Avatar
-                  size={24}
-                  style={{ background: ACCENT, color: "#000", fontWeight: 700, fontSize: 11, flexShrink: 0 }}
-                >
+              <div style={{
+                display: "flex", alignItems: "center", gap: 8, cursor: "pointer",
+                padding: "4px 8px", borderRadius: 8, border: `1px solid ${BORDER}`,
+                background: "rgba(255,255,255,0.04)",
+              }}>
+                <Avatar size={24} style={{ background: ACCENT, color: "#000", fontWeight: 700, fontSize: 11, flexShrink: 0 }}>
                   {(user?.email?.[0] || "A").toUpperCase()}
                 </Avatar>
                 <span style={{ fontSize: 12, color: "rgba(255,255,255,0.75)", fontWeight: 500, maxWidth: 110, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
