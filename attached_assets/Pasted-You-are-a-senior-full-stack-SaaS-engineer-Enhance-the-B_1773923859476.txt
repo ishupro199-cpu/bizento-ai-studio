@@ -1,0 +1,234 @@
+You are a senior full-stack SaaS engineer.
+
+Enhance the Bizento AI system by implementing a complete Referral & Rewards System with Sidebar Integration.
+
+This must be fully functional, real-time, and production-ready.
+
+---
+
+---
+
+1️⃣ SIDEBAR INTEGRATION (IMPORTANT)
+
+Update the main dashboard sidebar.
+
+Add a new menu item:
+
+"Rewards"
+
+Position:
+
+• Place it ABOVE the "History" section
+
+---
+
+Sidebar order:
+
+• Generate
+• My Catalogs
+• My Ads
+• Images
+• Rewards  ← (NEW)
+• History
+
+---
+
+When clicked:
+
+→ Open Rewards Dashboard page
+
+---
+
+---
+
+2️⃣ REWARDS DASHBOARD (UI)
+
+Create a clean, modern page.
+
+---
+
+HEADER:
+
+"Invite & Earn Credits"
+
+---
+
+SHOW:
+
+• Referral link
+• Copy button
+
+Example:
+
+[ bizento.ai/ref/USER_ID ] [Copy]
+
+---
+
+STATS CARDS:
+
+• Total referrals
+• Credits earned
+• Pending rewards
+
+---
+
+---
+
+3️⃣ SHARE SYSTEM
+
+Add buttons:
+
+• WhatsApp
+• Telegram
+• Twitter (X)
+• Copy link
+
+---
+
+Default message:
+
+"Create AI product ads in seconds 🚀
+Try Bizento AI: {referral_link}"
+
+---
+
+---
+
+4️⃣ REFERRAL LOGIC
+
+Each user gets unique referral link:
+
+/ref/{user_id}
+
+---
+
+When new user signs up via link:
+
+• store referrer_id
+
+Reward ONLY when:
+
+• signup completed + verified
+OR
+• first generation completed
+
+---
+
+---
+
+5️⃣ REWARD STRUCTURE
+
+Referrer → +20 credits
+Referred user → +10 credits
+
+---
+
+---
+
+6️⃣ BONUS MILESTONES
+
+3 referrals → +10 credits
+10 referrals → +50 credits
+25 referrals → +150 credits
+
+---
+
+---
+
+7️⃣ DATABASE STRUCTURE
+
+Create tables:
+
+Referrals:
+
+• id
+• referrer_id
+• referred_user_id
+• status
+• reward_given
+• created_at
+
+---
+
+Rewards:
+
+• id
+• user_id
+• credits
+• type (referral / bonus)
+• created_at
+
+---
+
+---
+
+8️⃣ REAL-TIME UPDATE
+
+When reward triggered:
+
+• update credits instantly
+• update dashboard stats
+• show notification:
+
+"You earned 20 credits 🎉"
+
+---
+
+---
+
+9️⃣ ANTI-SPAM SYSTEM
+
+Prevent:
+
+• self-referral
+• duplicate accounts
+• fake signups
+• same IP abuse
+
+---
+
+---
+
+🔟 ADMIN PANEL SUPPORT
+
+Admin can:
+
+• view all referrals
+• track rewards
+• detect abuse
+• manually adjust credits
+
+---
+
+---
+
+1️⃣1️⃣ UX INTERACTIONS
+
+• smooth animations
+• hover effects
+• clean cards
+• responsive layout
+
+---
+
+---
+
+1️⃣2️⃣ FINAL GOAL
+
+System must:
+
+• drive growth
+• feel premium
+• work in real-time
+• integrate perfectly with sidebar
+
+---
+
+IMPORTANT:
+
+• no fake data
+• real database
+• real-time sync
+• fully tested
+
+This must behave like a real SaaS growth engine.

@@ -202,6 +202,27 @@ async function saveBlobToFirebase(blobUrl: string, userId: string, filename: str
 
 const PLAN_ORDER: Record<string, number> = { free: 0, starter: 1, pro: 2 };
 
+async function detectToolFromPrompt(prompt: string, hasImage: boolean): Promise<ToolId> {
+  try {
+    const res = await fetch("/api/generate/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        prompt: `You are a tool classifier. Based on the user's request, choose exactly ONE tool from this list: catalog, photo, creative, cinematic. Reply with ONLY the tool name, nothing else.\n\nUser request: "${prompt}"\nHas product image: ${hasImage}\n\nRules:\n- catalog: product catalog, marketplace, white/clean background, Amazon listing\n- photo: lifestyle photography, scene, environment, outdoor/indoor setting\n- creative: ads, social media, marketing, promotions, banners\n- cinematic: CGI, cinematic, premium video-style, dramatic lighting\n\nYour answer (one word only):`,
+        history: [],
+      }),
+    });
+    const data = await res.json();
+    const reply = (data.reply || "").toLowerCase().trim().split(/\s/)[0];
+    if (reply.startsWith("cinematic")) return "cinematic";
+    if (reply.startsWith("photo")) return "photo";
+    if (reply.startsWith("creative") || reply.startsWith("ad")) return "creative";
+    return "catalog";
+  } catch {
+    return "catalog";
+  }
+}
+
 export default function WelcomeDashboard() {
   const { canGenerate, setShowUpgradeModal, user, selectedModel, setSelectedModel, addGeneration } = useAppContext();
   const { user: authUser } = useAuth();
@@ -209,7 +230,9 @@ export default function WelcomeDashboard() {
   const location = useLocation();
 
   const [inputPrompt, setInputPrompt] = useState("");
-  const [selectedTool, setSelectedTool] = useState<ToolId>("catalog");
+  const [selectedTool, setSelectedTool] = useState<ToolId | "default">("default");
+  const [autoDetectedTool, setAutoDetectedTool] = useState<ToolId | null>(null);
+  const [defaultSuggestion, setDefaultSuggestion] = useState<string | null>(null);
   const [plusOpen, setPlusOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [genSettings, setGenSettings] = useState<GenSettings>({ aspectRatio: "1:1", numOutputs: 3, quality: "1K" });
@@ -248,11 +271,14 @@ export default function WelcomeDashboard() {
   const isGenerating = phase === "thinking" || phase === "generating" || phase === "chat-thinking";
   const planLevel = PLAN_ORDER[user.plan] ?? 0;
 
-  const currentCreditCost = calculateCreditCost(selectedTool, selectedModel as ModelId, genSettings.quality as QualityId);
+  const creditToolId: ToolId = selectedTool === "default" ? "catalog" : selectedTool;
+  const currentCreditCost = calculateCreditCost(creditToolId, selectedModel as ModelId, genSettings.quality as QualityId);
   const hasEnoughCredits = user.creditsRemaining >= currentCreditCost;
   const canSend = inputPrompt.trim().length > 0 && !isGenerating && (hasEnoughCredits || phase === "ai-chat");
 
-  const currentTool = TOOL_DEFS.find(t => t.id === selectedTool)!;
+  const currentTool = selectedTool === "default"
+    ? { id: "default" as const, name: "Default (Auto)", icon: BoltIcon, desc: "AI picks best tool from your prompt" }
+    : TOOL_DEFS.find(t => t.id === selectedTool)!;
 
   // Workspace name from shared context
   const firstName = user.name?.split(" ")[0] || "there";
@@ -468,14 +494,16 @@ export default function WelcomeDashboard() {
     if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); handleSend(); }
   };
 
-  const handleToolSelect = (toolId: ToolId) => {
-    const toolDef = TOOL_DEFS.find(t => t.id === toolId);
-    if (toolDef?.proOnly && !isPro) {
-      setShowUpgradeModal(true);
-      return;
+  const handleToolSelect = (toolId: ToolId | "default") => {
+    if (toolId !== "default") {
+      const toolDef = TOOL_DEFS.find(t => t.id === toolId);
+      if (toolDef?.proOnly && !isPro) {
+        setShowUpgradeModal(true);
+        return;
+      }
     }
     setSelectedTool(toolId);
-    setPlusOpen(false);
+    setSettingsOpen(false);
   };
 
   return (

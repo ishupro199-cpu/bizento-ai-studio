@@ -55,6 +55,7 @@ import CreditsPage from "@/pages/app/CreditsPage";
 import PlanPage from "@/pages/app/PlanPage";
 import CheckoutPage from "@/pages/app/CheckoutPage";
 import SettingsPage from "@/pages/app/SettingsPage";
+import RewardsPage from "@/pages/app/RewardsPage";
 
 // Admin pages
 import AdminDashboard from "@/pages/admin/AdminDashboard";
@@ -74,6 +75,7 @@ import AdminAiToolsPage from "@/pages/admin/AdminAiToolsPage";
 import AdminProjectsPage from "@/pages/admin/AdminProjectsPage";
 import AdminSupportPage from "@/pages/admin/AdminSupportPage";
 import AdminBlogPage from "@/pages/admin/AdminBlogPage";
+import AdminReferralsPage from "@/pages/admin/AdminReferralsPage";
 
 import NotFound from "@/pages/NotFound";
 
@@ -117,6 +119,7 @@ const App = () => (
               <Route path="plan" element={<PlanPage />} />
               <Route path="checkout" element={<CheckoutPage />} />
               <Route path="settings" element={<SettingsPage />} />
+              <Route path="rewards" element={<RewardsPage />} />
             </Route>
 
             {/* Admin Panel — Admin only */}
@@ -138,6 +141,7 @@ const App = () => (
               <Route path="logs" element={<AdminLogsPage />} />
               <Route path="moderation" element={<AdminModerationPage />} />
               <Route path="system" element={<AdminSystemPage />} />
+              <Route path="referrals" element={<AdminReferralsPage />} />
             </Route>
 
             <Route path="*" element={<NotFound />} />

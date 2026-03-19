@@ -4,6 +4,7 @@ import { ConfigProvider, Layout, Menu, Avatar, Badge, Input, Dropdown, theme } f
 import {
   HomeIcon,
   UsersIcon,
+  UserGroupIcon,
   CreditCardIcon,
   BoltIcon,
   CpuChipIcon,
@@ -90,6 +91,7 @@ const menuGroups = [
       { key: "/admin/users", label: "Users", icon: UsersIcon },
       { key: "/admin/billing", label: "Billing & Plans", icon: CreditCardIcon },
       { key: "/admin/credits", label: "Credits", icon: BoltIcon },
+      { key: "/admin/referrals", label: "Referrals", icon: UserGroupIcon },
       { key: "/admin/ai-tools", label: "AI Tools", icon: CpuChipIcon },
       { key: "/admin/projects", label: "Projects", icon: FolderIcon },
     ],

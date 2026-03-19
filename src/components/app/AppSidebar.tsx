@@ -5,6 +5,7 @@ import {
   PhotoIcon,
   CreditCardIcon,
   LightBulbIcon,
+  GiftIcon,
   ChevronRightIcon,
   ChevronLeftIcon,
   XMarkIcon,
@@ -27,6 +28,7 @@ const navItems = [
   { title: "My Catalogs", url: "/app/catalogs", icon: FolderOpenIcon },
   { title: "My Ads", url: "/app/ads", icon: MegaphoneIcon },
   { title: "Images", url: "/app/images", icon: PhotoIcon },
+  { title: "Rewards", url: "/app/rewards", icon: GiftIcon },
 ];
 
 interface AppSidebarProps {
