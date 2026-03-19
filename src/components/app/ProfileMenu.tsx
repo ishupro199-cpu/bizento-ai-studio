@@ -2,12 +2,15 @@ import { useRef, useState, useEffect, useCallback } from "react";
 import {
   ChevronDown, ChevronRight, Zap, Palette, Settings,
   HelpCircle, LogOut, BookOpen, FileText, Shield,
-  Bug, Keyboard, Crown
+  Bug, Keyboard, Crown, Plus, Check, Link, Copy,
+  FolderOpen, Lock, X
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAppContext, PLANS } from "@/contexts/AppContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 
 const HELP_ITEMS = [
   { icon: BookOpen, label: "Help Center" },
@@ -24,7 +27,7 @@ const PLAN_BADGE: Record<string, { label: string; cls: string }> = {
 };
 
 const GLASS_BG: React.CSSProperties = {
-  background: "rgba(24,24,24,0.95)",
+  background: "rgba(18,20,26,0.97)",
   backdropFilter: "blur(28px)",
   WebkitBackdropFilter: "blur(28px)",
 };
@@ -41,9 +44,20 @@ export function ProfileMenu({ collapsed }: { collapsed: boolean }) {
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [open, setOpen] = useState(false);
-  const [popupPos, setPopupPos] = useState({ x: 0, y: 0, w: 252 });
+  const [popupPos, setPopupPos] = useState({ x: 0, y: 0, w: 260 });
   const [submenuOpen, setSubmenuOpen] = useState(false);
   const [submenuY, setSubmenuY] = useState(0);
+  const [showCreateWs, setShowCreateWs] = useState(false);
+  const [newWsName, setNewWsName] = useState("");
+
+  const { workspaces, activeWorkspaceId, activeWorkspace, setActiveWorkspaceId, addWorkspace } = useWorkspace();
+
+  const firstName = user.name?.split(" ")[0] || "User";
+  const isPro = user.plan === "pro";
+
+  const activeWsId = activeWorkspaceId;
+  const activeWs = activeWorkspace;
+  const setActiveWsId = setActiveWorkspaceId;
 
   const initials = user.name
     ? user.name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)
@@ -54,25 +68,28 @@ export function ProfileMenu({ collapsed }: { collapsed: boolean }) {
   const recomputePos = useCallback(() => {
     if (!triggerRef.current) return;
     const r = triggerRef.current.getBoundingClientRect();
-    const popW = 252;
-    const popH = 342;
+    const popW = 260;
+    const popH = isPro ? 480 : 420;
     const gap = 8;
     let x = r.left;
     let y = r.top - popH - gap;
     if (y < 8) y = r.bottom + gap;
     if (x + popW > window.innerWidth - 8) x = window.innerWidth - popW - 8;
     setPopupPos({ x, y, w: popW });
-  }, []);
+  }, [isPro]);
 
   const openMenu = () => {
     recomputePos();
     setOpen(true);
     setSubmenuOpen(false);
+    setShowCreateWs(false);
   };
 
   const closeMenu = useCallback(() => {
     setOpen(false);
     setSubmenuOpen(false);
+    setShowCreateWs(false);
+    setNewWsName("");
   }, []);
 
   useEffect(() => {
@@ -113,6 +130,20 @@ export function ProfileMenu({ collapsed }: { collapsed: boolean }) {
     closeMenu();
     await signOut();
     navigate("/login");
+  };
+
+  const handleCreateWorkspace = () => {
+    if (!newWsName.trim()) return;
+    const ws = addWorkspace(newWsName.trim());
+    setActiveWsId(ws.id);
+    setShowCreateWs(false);
+    setNewWsName("");
+    toast.success(`Workspace "${newWsName.trim()}" created`);
+  };
+
+  const handleCopyInviteLink = (wsId: string) => {
+    const link = `${window.location.origin}/join/${wsId}`;
+    navigator.clipboard.writeText(link).then(() => toast.success("Invite link copied!"));
   };
 
   return (
@@ -162,7 +193,7 @@ export function ProfileMenu({ collapsed }: { collapsed: boolean }) {
             zIndex: 9999,
             ...GLASS_BG,
           }}
-          className="flex flex-col rounded-2xl border border-white/[0.09] shadow-[0_16px_48px_rgba(0,0,0,0.7)] animate-in fade-in-0 slide-in-from-bottom-2 duration-150"
+          className="flex flex-col rounded-2xl border border-white/[0.09] shadow-[0_16px_48px_rgba(0,0,0,0.75)] animate-in fade-in-0 slide-in-from-bottom-2 duration-150"
         >
           {/* Header */}
           <div className="px-4 pt-4 pb-3">
@@ -186,6 +217,130 @@ export function ProfileMenu({ collapsed }: { collapsed: boolean }) {
                 </span>
               </div>
             </div>
+          </div>
+
+          <div className="h-px mx-3 bg-white/[0.07]" />
+
+          {/* ── Workspace Section ── */}
+          <div className="px-3 pt-3 pb-2">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.28)" }}>
+                Workspaces
+              </span>
+              {isPro && !showCreateWs && (
+                <button
+                  onClick={() => setShowCreateWs(true)}
+                  className="flex items-center gap-1 text-[10px] font-medium transition-colors"
+                  style={{ color: "#89E900" }}
+                >
+                  <Plus className="h-3 w-3" /> New
+                </button>
+              )}
+            </div>
+
+            {/* Workspace list */}
+            <div className="space-y-1">
+              {workspaces.map(ws => (
+                <div
+                  key={ws.id}
+                  className="flex items-center gap-2 px-2.5 py-2 rounded-xl cursor-pointer transition-all duration-150 group/ws"
+                  style={{
+                    background: ws.id === activeWsId ? "rgba(137,233,0,0.08)" : "transparent",
+                    border: ws.id === activeWsId ? "1px solid rgba(137,233,0,0.18)" : "1px solid transparent",
+                  }}
+                  onMouseEnter={e => {
+                    if (ws.id !== activeWsId) (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.04)";
+                  }}
+                  onMouseLeave={e => {
+                    if (ws.id !== activeWsId) (e.currentTarget as HTMLElement).style.background = "transparent";
+                  }}
+                  onClick={() => setActiveWsId(ws.id)}
+                >
+                  <div className="h-6 w-6 rounded-lg flex items-center justify-center shrink-0"
+                    style={{ background: ws.id === activeWsId ? "rgba(137,233,0,0.15)" : "rgba(255,255,255,0.07)" }}>
+                    <FolderOpen className="h-3 w-3" style={{ color: ws.id === activeWsId ? "#89E900" : "rgba(255,255,255,0.4)" }} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[12px] font-medium truncate leading-none"
+                      style={{ color: ws.id === activeWsId ? "#89E900" : "rgba(255,255,255,0.75)" }}>
+                      {ws.name}
+                    </p>
+                    <p className="text-[10px] mt-0.5" style={{ color: "rgba(255,255,255,0.28)" }}>
+                      {ws.isPersonal ? "Personal" : `${ws.memberCount || 1} member${(ws.memberCount || 1) > 1 ? "s" : ""}`}
+                    </p>
+                  </div>
+                  {ws.id === activeWsId && <Check className="h-3.5 w-3.5 shrink-0" style={{ color: "#89E900" }} />}
+                  {!ws.isPersonal && isPro && ws.id !== activeWsId && (
+                    <button
+                      onClick={e => { e.stopPropagation(); handleCopyInviteLink(ws.id); }}
+                      className="h-5 w-5 flex items-center justify-center rounded-lg opacity-0 group-hover/ws:opacity-100 transition-all"
+                      style={{ color: "rgba(255,255,255,0.4)" }}
+                      title="Copy invite link"
+                    >
+                      <Link className="h-3 w-3" />
+                    </button>
+                  )}
+                </div>
+              ))}
+
+              {/* Free plan locked extra workspace */}
+              {!isPro && (
+                <div className="flex items-center gap-2 px-2.5 py-2 rounded-xl opacity-40 cursor-not-allowed"
+                  style={{ border: "1px dashed rgba(255,255,255,0.12)" }}>
+                  <div className="h-6 w-6 rounded-lg flex items-center justify-center shrink-0 bg-white/5">
+                    <Lock className="h-3 w-3 text-white/30" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[11px] font-medium text-white/40">Create workspace</p>
+                    <p className="text-[10px] text-white/20">Pro plan required</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Create workspace form */}
+            {showCreateWs && (
+              <div className="mt-2 p-2.5 rounded-xl border border-white/10 bg-white/3 animate-in fade-in-0 slide-in-from-top-1 duration-150">
+                <div className="flex items-center gap-1.5 mb-2">
+                  <input
+                    autoFocus
+                    value={newWsName}
+                    onChange={e => setNewWsName(e.target.value)}
+                    onKeyDown={e => { if (e.key === "Enter") handleCreateWorkspace(); if (e.key === "Escape") setShowCreateWs(false); }}
+                    placeholder="Workspace name..."
+                    className="flex-1 bg-white/6 rounded-lg px-2.5 py-1.5 text-[12px] text-white outline-none placeholder:text-white/25"
+                    style={{ border: "1px solid rgba(255,255,255,0.1)" }}
+                  />
+                  <button
+                    onClick={() => setShowCreateWs(false)}
+                    className="h-7 w-7 flex items-center justify-center rounded-lg hover:bg-white/8 transition-colors"
+                    style={{ color: "rgba(255,255,255,0.35)" }}
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+                <button
+                  onClick={handleCreateWorkspace}
+                  disabled={!newWsName.trim()}
+                  className="w-full text-[11px] font-semibold py-1.5 rounded-lg transition-all disabled:opacity-40"
+                  style={{ background: "rgba(137,233,0,0.15)", color: "#89E900", border: "1px solid rgba(137,233,0,0.25)" }}
+                >
+                  Create
+                </button>
+              </div>
+            )}
+
+            {/* Copy link for active workspace (if pro + non-personal) */}
+            {isPro && activeWs && !activeWs.isPersonal && (
+              <button
+                onClick={() => handleCopyInviteLink(activeWs.id)}
+                className="mt-1.5 w-full flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-[11px] font-medium transition-colors hover:bg-white/5"
+                style={{ color: "rgba(255,255,255,0.45)" }}
+              >
+                <Copy className="h-3 w-3 shrink-0" />
+                Copy invite link
+              </button>
+            )}
           </div>
 
           <div className="h-px mx-3 bg-white/[0.07]" />

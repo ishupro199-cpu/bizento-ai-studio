@@ -37,6 +37,7 @@ import { callGenerationApi } from "@/lib/generationApi";
 import { toast } from "sonner";
 import { augmentPrompt } from "@/lib/promptAugmentation";
 import { useAuth } from "@/contexts/AuthContext";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { storage } from "@/lib/firebase";
 import { PlatformOptimization } from "@/components/app/PlatformOptimization";
@@ -207,6 +208,8 @@ export default function WelcomeDashboard() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const timerRef = useRef<number | null>(null);
 
+  const { activeWorkspace } = useWorkspace();
+
   const isPro = user.plan === "pro";
   const isStarter = user.plan === "starter";
   const isGenerating = phase === "thinking" || phase === "generating";
@@ -218,9 +221,9 @@ export default function WelcomeDashboard() {
 
   const currentTool = TOOL_DEFS.find(t => t.id === selectedTool)!;
 
-  // Workspace name
+  // Workspace name from shared context
   const firstName = user.name?.split(" ")[0] || "there";
-  const workspaceName = user.plan === "free" ? "Personal Workspace" : `${firstName}'s Studio`;
+  const workspaceName = activeWorkspace?.name || (user.plan === "free" ? "Personal Workspace" : `${firstName}'s Studio`);
 
   // Suggested prompts (3 from pool based on seed + pro prompts for pro users)
   const getSuggestedPrompts = useCallback(() => {
@@ -430,7 +433,7 @@ export default function WelcomeDashboard() {
         {phase === "idle" && (
           <div className="flex flex-col h-full min-h-[50vh] animate-fade-in">
             {/* Top - Workspace name + greeting */}
-            <div className="flex flex-col items-center justify-center flex-1 text-center space-y-2.5">
+            <div className="flex flex-col items-center justify-center flex-1 text-center space-y-2">
               {/* Workspace chip */}
               <div className="flex items-center gap-1.5 px-3 py-1 rounded-full border"
                 style={{ background: "rgba(137,233,0,0.06)", borderColor: "rgba(137,233,0,0.18)", color: "rgba(137,233,0,0.8)" }}>
@@ -439,7 +442,8 @@ export default function WelcomeDashboard() {
               </div>
 
               {/* Single-line compact greeting */}
-              <p className="text-base font-medium" style={{ color: "rgba(255,255,255,0.55)" }}>
+              <p className="text-sm font-medium whitespace-nowrap overflow-hidden text-ellipsis max-w-full px-4"
+                style={{ color: "rgba(255,255,255,0.5)", letterSpacing: "-0.01em" }}>
                 Hi {firstName}, what do you want to create?
               </p>
 
@@ -450,78 +454,6 @@ export default function WelcomeDashboard() {
                   <Button size="sm" className="text-xs h-7 rounded-lg ml-2" onClick={() => setShowUpgradeModal(true)}>Upgrade</Button>
                 </div>
               )}
-            </div>
-
-            {/* Bottom - Tool cards */}
-            <div className="space-y-3 pb-2">
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                {TOOL_DEFS.map((tool) => {
-                  const Icon = tool.icon;
-                  const isActive = selectedTool === tool.id;
-                  const isLocked = tool.proOnly && !isPro;
-                  return (
-                    <button
-                      key={tool.id}
-                      onClick={() => handleToolSelect(tool.id)}
-                      className={`relative flex flex-col items-start gap-2 p-3 rounded-2xl border text-left transition-all duration-200 ${
-                        isActive
-                          ? "border-primary/40 bg-primary/8"
-                          : "border-white/8 bg-white/3 hover:border-white/16 hover:bg-white/5"
-                      }`}
-                    >
-                      {isActive && (
-                        <div className="absolute top-2 right-2 h-1.5 w-1.5 rounded-full bg-primary" />
-                      )}
-                      {isLocked && !isActive && (
-                        <div className="absolute top-2 right-2">
-                          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full"
-                            style={{ background: "rgba(245,158,11,0.15)", color: "rgba(245,158,11,0.9)", border: "1px solid rgba(245,158,11,0.2)" }}>
-                            PRO
-                          </span>
-                        </div>
-                      )}
-                      <div className={`h-7 w-7 rounded-xl flex items-center justify-center ${
-                        isActive ? "bg-primary/15" : "bg-white/6"
-                      }`}>
-                        <Icon className={`h-3.5 w-3.5 ${isActive ? "text-primary" : "text-muted-foreground"}`} />
-                      </div>
-                      <div>
-                        <p className={`text-xs font-semibold leading-snug ${isActive ? "text-primary" : "text-foreground"}`}>
-                          {tool.name}
-                        </p>
-                        <p className="text-[10px] text-muted-foreground/60 leading-snug mt-0.5 line-clamp-2">
-                          {tool.desc}
-                        </p>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Try this prompt */}
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-semibold text-muted-foreground/70 uppercase tracking-wider">Try this prompt</span>
-                  <button
-                    onClick={() => setPromptSeed(s => (s + 3) % ALL_INSPIRATION_PROMPTS.length)}
-                    className="flex items-center gap-1 text-[10px] text-muted-foreground/50 hover:text-muted-foreground transition-colors"
-                  >
-                    <RotateCcw className="h-3 w-3" />
-                    Refresh
-                  </button>
-                </div>
-                <div className="space-y-1.5">
-                  {suggestedPrompts.map((prompt, i) => (
-                    <button
-                      key={i}
-                      onClick={() => setInputPrompt(prompt)}
-                      className="w-full text-left px-3 py-2 rounded-xl border border-white/8 bg-white/3 hover:bg-white/5 hover:border-white/16 transition-all duration-150"
-                    >
-                      <p className="text-xs text-foreground/70 leading-relaxed">{prompt}</p>
-                    </button>
-                  ))}
-                </div>
-              </div>
             </div>
           </div>
         )}
@@ -913,6 +845,67 @@ export default function WelcomeDashboard() {
           <span className="text-[10px] text-muted-foreground/25">·</span>
           <span className="text-[10px] text-muted-foreground/40 capitalize">{selectedModel} model</span>
         </div>
+
+        {/* ── Tool selector chips (idle only) ── */}
+        {phase === "idle" && (
+          <div className="mt-3 flex items-center gap-1.5 flex-wrap">
+            {TOOL_DEFS.map((tool) => {
+              const Icon = tool.icon;
+              const isActive = selectedTool === tool.id;
+              const isLocked = tool.proOnly && !isPro;
+              return (
+                <button
+                  key={tool.id}
+                  onClick={() => handleToolSelect(tool.id)}
+                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-xs font-medium transition-all duration-150 ${
+                    isActive
+                      ? "border-primary/40 bg-primary/10 text-primary"
+                      : "border-white/10 bg-white/4 text-muted-foreground hover:bg-white/7 hover:border-white/18 hover:text-foreground"
+                  }`}
+                >
+                  <Icon className={`h-3 w-3 shrink-0 ${isActive ? "text-primary" : ""}`} />
+                  <span>{tool.name}</span>
+                  {isLocked && (
+                    <span className="text-[8px] font-bold px-1 py-0.5 rounded-full ml-0.5"
+                      style={{ background: "rgba(245,158,11,0.15)", color: "rgba(245,158,11,0.85)" }}>
+                      PRO
+                    </span>
+                  )}
+                  {isActive && !isLocked && (
+                    <div className="h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {/* ── Try this prompt (idle only) ── */}
+        {phase === "idle" && (
+          <div className="mt-3 pt-3 border-t border-white/6">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[10px] font-semibold text-muted-foreground/55 uppercase tracking-wider">Try this prompt</span>
+              <button
+                onClick={() => setPromptSeed(s => (s + 3) % ALL_INSPIRATION_PROMPTS.length)}
+                className="flex items-center gap-1 text-[10px] text-muted-foreground/45 hover:text-muted-foreground transition-colors"
+              >
+                <RotateCcw className="h-3 w-3" />
+                Refresh
+              </button>
+            </div>
+            <div className="space-y-1.5">
+              {suggestedPrompts.map((prompt, i) => (
+                <button
+                  key={i}
+                  onClick={() => setInputPrompt(prompt)}
+                  className="w-full text-left px-3 py-2 rounded-xl border border-white/8 bg-white/3 hover:bg-white/5 hover:border-white/14 transition-all duration-150"
+                >
+                  <p className="text-[11px] text-foreground/65 leading-relaxed">{prompt}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -5,6 +5,7 @@ import { UpgradeModal } from "@/components/app/UpgradeModal";
 import { Outlet } from "react-router-dom";
 import { AppProvider } from "@/contexts/AppContext";
 import { ChatProvider } from "@/contexts/ChatContext";
+import { WorkspaceProvider } from "@/contexts/WorkspaceContext";
 
 export function AppLayout() {
   const [collapsed, setCollapsed] = useState(false);
@@ -12,6 +13,7 @@ export function AppLayout() {
 
   return (
     <AppProvider>
+      <WorkspaceProvider>
       <ChatProvider>
         <div className="min-h-screen flex w-full bg-background">
           <AppSidebar
@@ -29,6 +31,7 @@ export function AppLayout() {
         </div>
         <UpgradeModal />
       </ChatProvider>
+      </WorkspaceProvider>
     </AppProvider>
   );
 }
