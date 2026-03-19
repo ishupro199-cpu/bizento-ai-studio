@@ -1,5 +1,8 @@
 import { Router } from "express";
+import { FieldValue } from "firebase-admin/firestore";
 import { generateImages, removeBackground, analyzeProduct } from "../services/pipeline.js";
+import { verifyFirebaseToken, checkCreditAndSuspend, refundCredits } from "../middleware/auth.js";
+import { getAdminDb } from "../config/firebase.js";
 
 const router = Router();
 
@@ -19,68 +22,110 @@ const TOOL_PROMPTS = {
   "Ad Creatives": "social media advertisement, eye-catching composition, bold visual, marketing material",
 };
 
-router.post("/", async (req, res) => {
-  const { imageUrl, prompt, tool, style, model, userId } = req.body;
-  if (!prompt) return res.status(400).json({ error: "prompt required" });
+router.post(
+  "/",
+  verifyFirebaseToken,
+  checkCreditAndSuspend,
+  async (req, res) => {
+    const { imageUrl, prompt, tool, style, model, quality } = req.body;
+    const uid = req.uid;
 
-  const hasToken = !!process.env.REPLICATE_API_TOKEN;
-  const scenePrompt = STYLE_SCENE_PROMPTS[style] ?? STYLE_SCENE_PROMPTS.luxury;
-  const toolPrompt = TOOL_PROMPTS[tool] ?? TOOL_PROMPTS["Generate Catalog"];
-  const fullPrompt = [prompt, scenePrompt, toolPrompt, "photorealistic, 8K, commercial photography"].join(", ");
-  const modelQuality = model === "pro" ? "high quality, ultra realistic, detailed, masterpiece" : "good quality, realistic";
-  const finalPrompt = `${fullPrompt}, ${modelQuality}`;
-
-  try {
-    let productInfo = { category: "product" };
-    let bgRemovedUrl = imageUrl || null;
-    let generatedUrls = null;
-
-    if (hasToken) {
-      if (imageUrl) {
-        [productInfo, bgRemovedUrl] = await Promise.all([
-          analyzeProduct(imageUrl).catch(() => ({ category: "product" })),
-          removeBackground(imageUrl).catch(() => imageUrl),
-        ]);
-      }
-      const productDesc = productInfo.description
-        ? `${productInfo.description}, ` : "";
-      generatedUrls = await generateImages(
-        `${productDesc}${prompt}`,
-        scenePrompt,
-        3
-      );
+    if (!prompt) {
+      return res.status(400).json({ error: "prompt required" });
     }
 
-    if (generatedUrls && generatedUrls.length > 0) {
+    const hasToken = !!process.env.REPLICATE_API_TOKEN;
+    const scenePrompt = STYLE_SCENE_PROMPTS[style] ?? STYLE_SCENE_PROMPTS.luxury;
+    const toolPrompt = TOOL_PROMPTS[tool] ?? TOOL_PROMPTS["Generate Catalog"];
+    const fullPrompt = [prompt, scenePrompt, toolPrompt, "photorealistic, 8K, commercial photography"].join(", ");
+    const modelQuality = model === "pro"
+      ? "high quality, ultra realistic, detailed, masterpiece"
+      : "good quality, realistic";
+    const finalPrompt = `${fullPrompt}, ${modelQuality}`;
+
+    const startTime = Date.now();
+    let generationId = null;
+
+    try {
+      let productInfo = { category: "product" };
+      let bgRemovedUrl = imageUrl || null;
+      let generatedUrls = null;
+
+      if (hasToken) {
+        if (imageUrl) {
+          [productInfo, bgRemovedUrl] = await Promise.all([
+            analyzeProduct(imageUrl).catch(() => ({ category: "product" })),
+            removeBackground(imageUrl).catch(() => imageUrl),
+          ]);
+        }
+        const productDesc = productInfo.description ? `${productInfo.description}, ` : "";
+        generatedUrls = await generateImages(`${productDesc}${prompt}`, scenePrompt, 3);
+      }
+
+      const generationTime = Math.round((Date.now() - startTime) / 1000);
+      const hasRealImages = !!(generatedUrls && generatedUrls.length > 0);
+
+      const adminDb = getAdminDb();
+      if (adminDb) {
+        await adminDb.collection("admin").doc("stats").set(
+          {
+            totalGenerations: FieldValue.increment(1),
+            totalCreditsUsed: FieldValue.increment(req.creditCost || 3),
+          },
+          { merge: true }
+        ).catch(() => {});
+      }
+
+      if (hasRealImages) {
+        return res.json({
+          success: true,
+          images: generatedUrls,
+          bgRemovedUrl,
+          productInfo,
+          augmentedPrompt: finalPrompt,
+          hasRealImages: true,
+          generationId,
+          creditsConsumed: req.creditCost || 3,
+          creditsRemaining: req.balanceAfter,
+        });
+      }
+
       return res.json({
         success: true,
-        images: generatedUrls,
-        bgRemovedUrl,
+        images: [],
+        bgRemovedUrl: bgRemovedUrl || imageUrl || null,
         productInfo,
         augmentedPrompt: finalPrompt,
-        hasRealImages: true,
+        hasRealImages: false,
+        requiresApiKey: !hasToken,
+        generationId,
+        creditsConsumed: req.creditCost || 3,
+        creditsRemaining: req.balanceAfter,
+      });
+    } catch (err) {
+      console.error("Generation error:", err.message);
+
+      if (req.creditDeducted && uid) {
+        await refundCredits(
+          uid,
+          req.creditCost || 0,
+          tool,
+          model || "flash",
+          `Generation failed: ${err.message}`,
+          getAdminDb()
+        );
+      }
+
+      return res.status(500).json({
+        error: err.message,
+        success: false,
+        images: [],
+        hasRealImages: false,
+        refunded: req.creditDeducted || false,
       });
     }
-
-    return res.json({
-      success: true,
-      images: [],
-      bgRemovedUrl: bgRemovedUrl || imageUrl || null,
-      productInfo,
-      augmentedPrompt: finalPrompt,
-      hasRealImages: false,
-      requiresApiKey: !hasToken,
-    });
-  } catch (err) {
-    console.error("Generation error:", err.message);
-    return res.status(500).json({
-      error: err.message,
-      success: false,
-      images: [],
-      hasRealImages: false,
-    });
   }
-});
+);
 
 router.get("/health", (_req, res) => {
   res.json({

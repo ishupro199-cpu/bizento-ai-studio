@@ -1,92 +1,94 @@
 import { useState, useEffect } from "react";
-import { Card, Table, Tag, Typography, Select, Input, Button } from "antd";
+import { Table, Card, Input, Select, Tag, Typography, Skeleton } from "antd";
 import {
-  ClipboardDocumentListIcon,
   MagnifyingGlassIcon,
-  ArrowDownTrayIcon,
+  ShieldCheckIcon,
+  UserMinusIcon,
+  CreditCardIcon,
+  BoltIcon,
+  TrashIcon,
+  ArrowPathIcon,
 } from "@heroicons/react/24/outline";
-import { collection, query, orderBy, limit, onSnapshot, Timestamp, addDoc, serverTimestamp } from "firebase/firestore";
+import {
+  collection,
+  query,
+  orderBy,
+  limit,
+  onSnapshot,
+  Timestamp,
+} from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { useAuth } from "@/contexts/AuthContext";
+import { format } from "date-fns";
 
-const ACCENT = "#89E900";
 const CARD_BG = "#242424";
 const BORDER = "#2e2e2e";
+const ACCENT = "#89E900";
+
 const { Title, Text } = Typography;
 
-const actionColors: Record<string, string> = {
-  user_ban: "#f87171",
-  user_activate: ACCENT,
-  credits_add: "#60a5fa",
-  credits_remove: "#f59e0b",
-  plan_change: "#a78bfa",
-  settings_update: "#34d399",
-  notification_send: "#f59e0b",
-  user_delete: "#f87171",
-  login: "rgba(255,255,255,0.4)",
+const ACTION_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
+  plan_change:   { label: "Plan Changed",  color: "#60a5fa", bg: "rgba(96,165,250,0.12)" },
+  credit_adjust: { label: "Credits Adj.",  color: ACCENT,    bg: "rgba(137,233,0,0.10)" },
+  user_suspend:  { label: "Suspended",     color: "#f87171", bg: "rgba(248,113,113,0.10)" },
+  user_activate: { label: "Activated",     color: "#34d399", bg: "rgba(52,211,153,0.10)" },
+  user_delete:   { label: "Deleted",       color: "#f87171", bg: "rgba(248,113,113,0.10)" },
+  admin_login:   { label: "Admin Login",   color: "#a78bfa", bg: "rgba(167,139,250,0.10)" },
+  system:        { label: "System",        color: "#6b7280", bg: "rgba(107,114,128,0.10)" },
 };
 
-interface LogEntry {
-  key: string;
+interface AdminLog {
+  id: string;
   action: string;
-  target: string;
   adminEmail: string;
+  targetUserEmail: string;
   details: string;
-  timestamp: Date;
-}
-
-export function useAdminLogger() {
-  const { user } = useAuth();
-
-  const log = async (action: string, target: string, details: string) => {
-    try {
-      await addDoc(collection(db, "admin_logs"), {
-        action,
-        target,
-        details,
-        adminEmail: user?.email || "unknown",
-        adminUid: user?.uid || "",
-        timestamp: serverTimestamp(),
-      });
-    } catch {
-    }
-  };
-
-  return { log };
+  meta: Record<string, any>;
+  createdAt: Date;
 }
 
 export default function AdminLogsPage() {
-  const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [logs, setLogs] = useState<AdminLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [actionFilter, setActionFilter] = useState("all");
 
   useEffect(() => {
-    const q = query(collection(db, "admin_logs"), orderBy("timestamp", "desc"), limit(100));
+    const q = query(
+      collection(db, "adminLogs"),
+      orderBy("createdAt", "desc"),
+      limit(200)
+    );
+
     const unsub = onSnapshot(q, (snap) => {
-      setLogs(snap.docs.map((d) => {
-        const data = d.data();
-        return {
-          key: d.id,
-          action: data.action || "",
-          target: data.target || "",
-          adminEmail: data.adminEmail || "system",
-          details: data.details || "",
-          timestamp: data.timestamp instanceof Timestamp ? data.timestamp.toDate() : new Date(),
-        };
-      }));
+      setLogs(
+        snap.docs.map((d) => {
+          const data = d.data();
+          const raw = data.createdAt;
+          return {
+            id: d.id,
+            action: data.action || "system",
+            adminEmail: data.adminEmail || "system",
+            targetUserEmail: data.targetUserEmail || "",
+            details: data.details || "",
+            meta: data.meta || {},
+            createdAt: raw instanceof Timestamp ? raw.toDate() : raw ? new Date(raw) : new Date(),
+          };
+        })
+      );
       setLoading(false);
     }, () => setLoading(false));
+
     return () => unsub();
   }, []);
 
   const filtered = logs.filter((l) => {
-    const matchSearch = l.target.toLowerCase().includes(search.toLowerCase()) || l.adminEmail.toLowerCase().includes(search.toLowerCase()) || l.details.toLowerCase().includes(search.toLowerCase());
+    const matchSearch =
+      l.details.toLowerCase().includes(search.toLowerCase()) ||
+      l.adminEmail.toLowerCase().includes(search.toLowerCase()) ||
+      l.targetUserEmail.toLowerCase().includes(search.toLowerCase());
     const matchAction = actionFilter === "all" || l.action === actionFilter;
     return matchSearch && matchAction;
   });
-
-  const allActions = Array.from(new Set(logs.map((l) => l.action))).filter(Boolean);
 
   const columns = [
     {
@@ -94,40 +96,48 @@ export default function AdminLogsPage() {
       dataIndex: "action",
       key: "action",
       render: (action: string) => {
-        const color = actionColors[action] || "rgba(255,255,255,0.45)";
-        const label = action.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+        const cfg = ACTION_CONFIG[action] || ACTION_CONFIG.system;
         return (
-          <Tag style={{ background: `${color}18`, border: `1px solid ${color}35`, color, borderRadius: 6, fontSize: 11, fontWeight: 600 }}>
-            {label}
+          <Tag style={{ background: cfg.bg, border: `1px solid ${cfg.color}30`, color: cfg.color, borderRadius: 6, fontSize: 11, fontWeight: 600 }}>
+            {cfg.label}
           </Tag>
         );
       },
     },
     {
-      title: "Target",
-      dataIndex: "target",
-      key: "target",
-      render: (t: string) => <Text style={{ color: "rgba(255,255,255,0.7)", fontSize: 13, fontFamily: "monospace" }}>{t}</Text>,
-    },
-    {
       title: "Details",
       dataIndex: "details",
       key: "details",
-      render: (d: string) => <Text style={{ color: "rgba(255,255,255,0.45)", fontSize: 12 }}>{d}</Text>,
+      render: (details: string) => (
+        <Text style={{ color: "rgba(255,255,255,0.75)", fontSize: 13 }}>{details}</Text>
+      ),
     },
     {
       title: "Admin",
       dataIndex: "adminEmail",
       key: "adminEmail",
-      render: (e: string) => <Text style={{ color: "rgba(255,255,255,0.45)", fontSize: 12 }}>{e}</Text>,
+      render: (email: string) => (
+        <Text style={{ color: "rgba(255,255,255,0.45)", fontSize: 12 }}>{email}</Text>
+      ),
+    },
+    {
+      title: "Target",
+      dataIndex: "targetUserEmail",
+      key: "targetUserEmail",
+      render: (email: string) =>
+        email ? (
+          <Text style={{ color: "rgba(255,255,255,0.45)", fontSize: 12 }}>{email}</Text>
+        ) : (
+          <Text style={{ color: "rgba(255,255,255,0.2)", fontSize: 12 }}>—</Text>
+        ),
     },
     {
       title: "Time",
-      dataIndex: "timestamp",
-      key: "timestamp",
+      dataIndex: "createdAt",
+      key: "createdAt",
       render: (d: Date) => (
-        <Text style={{ color: "rgba(255,255,255,0.3)", fontSize: 12 }}>
-          {d.toLocaleDateString("en-US", { month: "short", day: "numeric" })} {d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
+        <Text style={{ color: "rgba(255,255,255,0.35)", fontSize: 12 }}>
+          {format(d, "MMM d, yyyy · h:mm a")}
         </Text>
       ),
     },
@@ -137,64 +147,63 @@ export default function AdminLogsPage() {
     <div style={{ fontFamily: '"SF Pro Display", -apple-system, BlinkMacSystemFont, "Inter", sans-serif' }}>
       <div style={{ marginBottom: 22, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div>
-          <Title level={3} style={{ color: "#fff", margin: 0, fontWeight: 700, letterSpacing: "-0.5px", fontSize: 22 }}>Admin Logs</Title>
-          <Text style={{ color: "rgba(255,255,255,0.38)", fontSize: 13 }}>Audit trail of all admin actions</Text>
+          <Title level={3} style={{ color: "#fff", margin: 0, fontWeight: 700, letterSpacing: "-0.5px", fontSize: 22 }}>
+            Admin Logs
+          </Title>
+          {loading ? (
+            <Skeleton.Input active style={{ width: 180, height: 18, marginTop: 4 }} />
+          ) : (
+            <Text style={{ color: "rgba(255,255,255,0.38)", fontSize: 13 }}>
+              {logs.length} total events
+            </Text>
+          )}
         </div>
-        <Button
-          icon={<ArrowDownTrayIcon style={{ width: 15, height: 15 }} />}
-          style={{ background: "rgba(255,255,255,0.06)", border: `1px solid ${BORDER}`, color: "rgba(255,255,255,0.7)", fontWeight: 600, borderRadius: 8, height: 36, display: "flex", alignItems: "center", gap: 6 }}
-        >
-          Export
-        </Button>
-      </div>
-
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginBottom: 18 }}>
-        {[
-          { label: "Total Logs", value: logs.length, color: "#60a5fa" },
-          { label: "Today", value: logs.filter((l) => new Date().toDateString() === l.timestamp.toDateString()).length, color: ACCENT },
-          { label: "User Actions", value: logs.filter((l) => l.action.startsWith("user_")).length, color: "#a78bfa" },
-          { label: "Credit Actions", value: logs.filter((l) => l.action.startsWith("credits_")).length, color: "#f59e0b" },
-        ].map((s) => (
-          <Card key={s.label} style={{ background: CARD_BG, border: `1px solid ${BORDER}`, borderRadius: 14 }} styles={{ body: { padding: "16px 18px" } }}>
-            <Text style={{ fontSize: 12, color: "rgba(255,255,255,0.4)", display: "block", marginBottom: 6 }}>{s.label}</Text>
-            <div style={{ fontSize: 26, fontWeight: 700, color: s.color, letterSpacing: "-0.5px" }}>{s.value}</div>
-          </Card>
-        ))}
       </div>
 
       <Card style={{ background: CARD_BG, border: `1px solid ${BORDER}`, borderRadius: 14 }} styles={{ body: { padding: 0 } }}>
-        <div style={{ padding: "14px 16px", borderBottom: `1px solid ${BORDER}`, display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "14px 16px", borderBottom: `1px solid ${BORDER}`, flexWrap: "wrap" }}>
           <Input
             prefix={<MagnifyingGlassIcon style={{ width: 14, height: 14, color: "rgba(255,255,255,0.3)" }} />}
             placeholder="Search logs..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            style={{ maxWidth: 240, background: "#2a2a2a", border: `1px solid #383838`, borderRadius: 8 }}
+            style={{ maxWidth: 260, background: "#2a2a2a", border: `1px solid #383838`, borderRadius: 8 }}
             variant="borderless"
           />
           <Select
             value={actionFilter}
             onChange={setActionFilter}
-            style={{ width: 160 }}
-            options={[{ label: "All Actions", value: "all" }, ...allActions.map((a) => ({ label: a.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()), value: a }))]}
+            style={{ width: 155 }}
+            options={[
+              { label: "All Actions", value: "all" },
+              { label: "Plan Changed", value: "plan_change" },
+              { label: "Credits Adj.", value: "credit_adjust" },
+              { label: "Suspended", value: "user_suspend" },
+              { label: "Activated", value: "user_activate" },
+              { label: "Deleted", value: "user_delete" },
+            ]}
           />
           <div style={{ flex: 1 }} />
-          <Text style={{ fontSize: 12, color: "rgba(255,255,255,0.3)" }}>{filtered.length} entries</Text>
+          <Text style={{ fontSize: 12, color: "rgba(255,255,255,0.35)" }}>{filtered.length} results</Text>
         </div>
 
         {logs.length === 0 && !loading ? (
-          <div style={{ padding: "48px 24px", textAlign: "center" }}>
-            <ClipboardDocumentListIcon style={{ width: 36, height: 36, color: "rgba(255,255,255,0.15)", margin: "0 auto 12px" }} />
-            <Text style={{ color: "rgba(255,255,255,0.3)", fontSize: 13, display: "block" }}>No admin logs yet</Text>
-            <Text style={{ color: "rgba(255,255,255,0.2)", fontSize: 12 }}>Admin actions like banning users or changing plans will appear here</Text>
+          <div style={{ padding: "48px 20px", textAlign: "center" }}>
+            <ShieldCheckIcon style={{ width: 40, height: 40, color: "rgba(255,255,255,0.15)", margin: "0 auto 12px" }} />
+            <Text style={{ color: "rgba(255,255,255,0.35)", fontSize: 14, display: "block" }}>
+              No admin logs yet
+            </Text>
+            <Text style={{ color: "rgba(255,255,255,0.2)", fontSize: 12 }}>
+              Logs will appear here when admin actions are performed
+            </Text>
           </div>
         ) : (
           <Table
             dataSource={filtered}
             columns={columns}
-            rowKey="key"
+            rowKey="id"
             loading={loading}
-            pagination={{ pageSize: 15, size: "small" }}
+            pagination={{ pageSize: 20, size: "small", showTotal: (total) => <Text style={{ color: "rgba(255,255,255,0.35)", fontSize: 12 }}>{total} logs</Text> }}
             style={{ background: "transparent" }}
             size="small"
           />

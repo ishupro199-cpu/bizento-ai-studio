@@ -1,0 +1,220 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ─── Helper Functions ───────────────────────────────────────────────────
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isAuthenticated() && request.auth.uid == uid;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin";
+    }
+
+    function incomingData() {
+      return request.resource.data;
+    }
+
+    function existingData() {
+      return resource.data;
+    }
+
+    function notChangingField(field) {
+      return !(field in incomingData()) || incomingData()[field] == existingData()[field];
+    }
+
+    function creditsDoNotIncrease() {
+      return !(("creditsRemaining" in incomingData())) ||
+             incomingData().creditsRemaining <= existingData().creditsRemaining;
+    }
+
+    function isNotSuspended() {
+      return !exists(/databases/$(database)/documents/users/$(request.auth.uid)) ||
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get("suspended", false) == false;
+    }
+
+    // ─── Users Collection ───────────────────────────────────────────────────
+    // Schema: { name, email, phoneNumber, photoURL, plan, creditsRemaining,
+    //           creditsUsed, flashGenerations, proGenerations, role,
+    //           emailVerified, providers, suspended, planExpiry,
+    //           planPurchasedAt, createdAt, updatedAt }
+
+    match /users/{uid} {
+      // Read: own profile or admin
+      allow read: if isOwner(uid) || isAdmin();
+
+      // Create: only the authenticated user can create their own doc (on signup)
+      // role must be "user", initial credits must be <= 15 (free tier)
+      allow create: if isOwner(uid) &&
+                       incomingData().role == "user" &&
+                       incomingData().get("creditsRemaining", 0) <= 15 &&
+                       incomingData().get("plan", "free") == "free";
+
+      // Update: admin can change anything; user can update safe fields only
+      allow update: if isAdmin() ||
+                       (isOwner(uid) &&
+                        notChangingField("role") &&
+                        notChangingField("plan") &&
+                        notChangingField("suspended") &&
+                        notChangingField("planExpiry") &&
+                        creditsDoNotIncrease());
+    }
+
+    // ─── Generations Collection ─────────────────────────────────────────────
+    // Schema: { userId, prompt, augmentedPrompt, tool, style, model, quality,
+    //           creditsConsumed, imageUrls, uploadedImageUrl, bgRemovedUrl,
+    //           status, hasRealImages, generationTime, createdAt }
+
+    match /generations/{genId} {
+      // Read: own generations or admin
+      allow read: if isAuthenticated() &&
+                     (resource.data.userId == request.auth.uid || isAdmin());
+
+      // Create: authenticated, not suspended, userId matches
+      allow create: if isAuthenticated() &&
+                       isNotSuspended() &&
+                       incomingData().userId == request.auth.uid &&
+                       incomingData().get("creditsConsumed", 0) > 0;
+
+      // Delete: own generations only
+      allow delete: if isAuthenticated() &&
+                       resource.data.userId == request.auth.uid;
+
+      // Update: admin only (for moderation)
+      allow update: if isAdmin();
+    }
+
+    // ─── Transactions Collection ─────────────────────────────────────────────
+    // Schema: { userId, type, credits, balanceBefore, balanceAfter,
+    //           description, tool, model, generationId, paymentId, createdAt }
+    // Valid types: deduction | refund | bonus | plan_purchase | admin_adjust | expiry_reset
+
+    match /transactions/{txId} {
+      // Read: own transactions or admin
+      allow read: if isAuthenticated() &&
+                     (resource.data.userId == request.auth.uid || isAdmin());
+
+      // Create: client can only write deduction/refund/expiry_reset for themselves
+      // (plan_purchase and admin_adjust must be written by server admin SDK)
+      allow create: if isAuthenticated() &&
+                       incomingData().userId == request.auth.uid &&
+                       incomingData().type in ["deduction", "refund", "expiry_reset"] &&
+                       incomingData().credits >= 0;
+
+      // No client updates or deletes — transactions are immutable audit records
+      allow update, delete: if isAdmin();
+    }
+
+    // ─── Payments Collection ─────────────────────────────────────────────────
+    // Schema: { userId, orderId, plan, amount, gstAmount, totalAmount,
+    //           credits, bonusCredits, status, razorpayOrderId,
+    //           razorpayPaymentId, razorpaySignature, createdAt, updatedAt }
+
+    match /payments/{payId} {
+      // Read: own payments or admin
+      allow read: if isAuthenticated() &&
+                     (resource.data.userId == request.auth.uid || isAdmin());
+
+      // Create: client can create a pending payment record before Razorpay flow
+      allow create: if isAuthenticated() &&
+                       incomingData().userId == request.auth.uid &&
+                       incomingData().status == "pending";
+
+      // Update/delete: server admin only (to mark success/failed after verification)
+      allow update, delete: if isAdmin();
+    }
+
+    // ─── Admin Logs Collection ───────────────────────────────────────────────
+    // Schema: { adminId, adminEmail, action, targetUserId, targetUserEmail,
+    //           details, meta, createdAt }
+
+    match /adminLogs/{logId} {
+      // Read: admin only
+      allow read: if isAdmin();
+
+      // Write: admin only (from admin SDK or admin-authenticated client)
+      allow create: if isAdmin();
+      allow update, delete: if false; // Logs are immutable
+    }
+
+    // ─── Admin Stats Doc ─────────────────────────────────────────────────────
+    // Singleton: admin/stats
+
+    match /admin/{docId} {
+      // Read: any authenticated user (used by admin dashboard + stats hooks)
+      allow read: if isAuthenticated();
+
+      // Write: only stats doc, authenticated users (updateAdminStats client call)
+      // plan distribution and payment updates must be via server admin SDK
+      allow write: if isAuthenticated() && docId == "stats";
+    }
+
+    // ─── Blog Posts ───────────────────────────────────────────────────────────
+    // Schema: { title, content, author, published, createdAt }
+
+    match /blogPosts/{postId} {
+      allow read: if resource.data.get("published", false) == true || isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+
+    // ─── Inspiration Prompts ─────────────────────────────────────────────────
+
+    match /inspirationPrompts/{promptId} {
+      allow read: if isAuthenticated();
+      allow create, update, delete: if isAdmin();
+    }
+
+    // ─── Marketing Banners ───────────────────────────────────────────────────
+
+    match /marketingBanners/{bannerId} {
+      allow read: if true; // Public (used on landing page)
+      allow create, update, delete: if isAdmin();
+    }
+
+    // ─── Notifications ───────────────────────────────────────────────────────
+    // Schema: { userId, title, message, read, createdAt }
+
+    match /notifications/{notifId} {
+      allow read: if isAuthenticated() &&
+                     (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isAdmin();
+      allow update: if isAuthenticated() &&
+                       resource.data.userId == request.auth.uid; // Mark read
+      allow delete: if isAdmin();
+    }
+
+    // ─── Support Tickets ─────────────────────────────────────────────────────
+    // Schema: { userId, email, subject, message, status, createdAt }
+
+    match /supportTickets/{ticketId} {
+      allow read: if isAuthenticated() &&
+                     (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated() &&
+                       incomingData().userId == request.auth.uid;
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // ─── Credits Logs (Legacy) ────────────────────────────────────────────────
+
+    match /credits_logs/{logId} {
+      allow read: if isAuthenticated() &&
+                     (resource.data.get("userId", "") == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated();
+      allow update, delete: if isAdmin();
+    }
+
+    // ─── Deny All Other Reads/Writes ─────────────────────────────────────────
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -1,0 +1,73 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // ─── Helper Functions ─────────────────────────────────────────────────
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isAuthenticated() && request.auth.uid == uid;
+    }
+
+    function isImageFile() {
+      return request.resource.contentType.matches('image/.*');
+    }
+
+    function isUnder10MB() {
+      return request.resource.size < 10 * 1024 * 1024;
+    }
+
+    // ─── User Product Uploads (input images) ────────────────────────────────
+    // Path: uploads/{userId}/{filename}
+
+    match /uploads/{userId}/{allPaths=**} {
+      // Read: only the owner can read their uploads
+      allow read: if isOwner(userId);
+
+      // Write: owner only, must be image, max 10 MB
+      allow write: if isOwner(userId) &&
+                      isImageFile() &&
+                      isUnder10MB();
+
+      allow delete: if isOwner(userId);
+    }
+
+    // ─── AI-Generated Images (output images) ────────────────────────────────
+    // Path: generated/{userId}/{filename}
+
+    match /generated/{userId}/{allPaths=**} {
+      // Read: owner can read their generated images
+      allow read: if isOwner(userId);
+
+      // Write: server (admin SDK) writes generated images — deny client writes
+      allow write: if false;
+      allow delete: if isOwner(userId);
+    }
+
+    // ─── Background-Removed Images ──────────────────────────────────────────
+    // Path: bg_removed/{userId}/{filename}
+
+    match /bg_removed/{userId}/{allPaths=**} {
+      allow read: if isOwner(userId);
+      allow write: if false; // Server only
+      allow delete: if isOwner(userId);
+    }
+
+    // ─── Public Marketing Assets ─────────────────────────────────────────────
+    // Path: public/{filename}
+
+    match /public/{allPaths=**} {
+      allow read: if true; // Publicly accessible
+      allow write: if false; // Admin SDK only
+    }
+
+    // ─── Block everything else ────────────────────────────────────────────────
+
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

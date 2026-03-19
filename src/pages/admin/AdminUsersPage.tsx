@@ -16,6 +16,19 @@ import { db } from "@/lib/firebase";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 
+async function adminApiCall(endpoint: string, body: Record<string, any>) {
+  const token = await auth.currentUser?.getIdToken();
+  const res = await fetch(`/api/admin${endpoint}`, {
+    method: endpoint.includes("/users/") && endpoint.endsWith("/delete") ? "DELETE" : "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(body),
+  });
+  return res.json();
+}
+
 const ACCENT = "#89E900";
 const CARD_BG = "#242424";
 const BORDER = "#2e2e2e";
@@ -75,8 +88,17 @@ export default function AdminUsersPage() {
   const toggleSuspend = async (record: FirestoreUser) => {
     try {
       const newSuspended = record.status === "Active";
-      await updateDoc(doc(db, "users", record.key), { suspended: newSuspended });
-      messageApi.success(`User ${newSuspended ? "suspended" : "activated"} successfully`);
+      const res = await adminApiCall("/users/suspend", {
+        targetUserId: record.key,
+        suspend: newSuspended,
+        reason: "Admin action",
+      });
+      if (res.success) {
+        messageApi.success(`User ${newSuspended ? "suspended" : "activated"} successfully`);
+      } else {
+        await updateDoc(doc(db, "users", record.key), { suspended: newSuspended });
+        messageApi.success(`User ${newSuspended ? "suspended" : "activated"} successfully`);
+      }
     } catch {
       messageApi.error("Failed to update user status");
     }
@@ -121,10 +143,20 @@ export default function AdminUsersPage() {
     if (!creditsModal.user) return;
     setActionLoading(true);
     try {
-      const current = creditsModal.user.credits;
-      const newCredits = values.action === "add" ? current + values.credits : Math.max(0, current - values.credits);
-      await updateDoc(doc(db, "users", creditsModal.user.key), { creditsRemaining: newCredits });
-      messageApi.success(`Credits ${values.action === "add" ? "added" : "removed"} successfully`);
+      const res = await adminApiCall("/credits/adjust", {
+        targetUserId: creditsModal.user.key,
+        amount: values.credits,
+        action: values.action,
+        reason: "Admin manual adjustment",
+      });
+      if (res.success) {
+        messageApi.success(`Credits ${values.action === "add" ? "added" : "removed"} successfully`);
+      } else {
+        const current = creditsModal.user.credits;
+        const newCredits = values.action === "add" ? current + values.credits : Math.max(0, current - values.credits);
+        await updateDoc(doc(db, "users", creditsModal.user.key), { creditsRemaining: newCredits });
+        messageApi.success(`Credits ${values.action === "add" ? "added" : "removed"} successfully`);
+      }
       setCreditsModal({ open: false, user: null });
       creditsForm.resetFields();
     } catch {

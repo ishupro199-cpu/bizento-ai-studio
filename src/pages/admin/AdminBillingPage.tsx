@@ -1,281 +1,257 @@
 import { useState, useEffect } from "react";
-import { Card, Table, Tag, Typography, Button, Modal, Form, Input, InputNumber, Switch, message, Select } from "antd";
+import { Card, Table, Tag, Typography, Select, Skeleton, Row, Col } from "antd";
 import {
   CreditCardIcon,
-  PlusIcon,
-  TrashIcon,
-  PencilIcon,
+  CurrencyRupeeIcon,
   CheckCircleIcon,
+  XCircleIcon,
+  ClockIcon,
 } from "@heroicons/react/24/outline";
-import { collection, onSnapshot, addDoc, deleteDoc, doc, setDoc, serverTimestamp, Timestamp } from "firebase/firestore";
+import {
+  collection,
+  query,
+  orderBy,
+  limit,
+  onSnapshot,
+  Timestamp,
+} from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { format } from "date-fns";
 
-const ACCENT = "#89E900";
 const CARD_BG = "#242424";
 const BORDER = "#2e2e2e";
+const ACCENT = "#89E900";
+
 const { Title, Text } = Typography;
 
-interface Plan {
-  key: string;
-  name: string;
-  price: number;
-  credits: number;
-  features: string[];
-  popular: boolean;
-  active: boolean;
-  createdAt: Date;
-}
+const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
+  success: { label: "Paid",    color: ACCENT,    bg: "rgba(137,233,0,0.10)" },
+  pending: { label: "Pending", color: "#f59e0b", bg: "rgba(245,158,11,0.10)" },
+  failed:  { label: "Failed",  color: "#f87171", bg: "rgba(248,113,113,0.10)" },
+};
 
-interface Transaction {
-  key: string;
+const PLAN_COLORS: Record<string, string> = {
+  pro: "#a78bfa",
+  starter: "#60a5fa",
+  free: "#6b7280",
+};
+
+interface Payment {
+  id: string;
   userId: string;
-  userEmail: string;
   plan: string;
   amount: number;
+  gstAmount: number;
+  totalAmount: number;
+  credits: number;
+  bonusCredits: number;
   status: string;
+  razorpayPaymentId: string;
   createdAt: Date;
 }
 
 export default function AdminBillingPage() {
-  const [plans, setPlans] = useState<Plan[]>([]);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [planLoading, setPlanLoading] = useState(true);
-  const [txLoading, setTxLoading] = useState(true);
-  const [planModal, setPlanModal] = useState<{ open: boolean; editing: Plan | null }>({ open: false, editing: null });
-  const [form] = Form.useForm();
-  const [saving, setSaving] = useState(false);
-  const [messageApi, contextHolder] = message.useMessage();
+  const [payments, setPayments] = useState<Payment[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [statusFilter, setStatusFilter] = useState("all");
 
   useEffect(() => {
-    const unsub1 = onSnapshot(collection(db, "plans"), (snap) => {
-      setPlans(snap.docs.map((d) => {
-        const data = d.data();
-        return { key: d.id, name: data.name || "", price: data.price || 0, credits: data.credits || 0, features: data.features || [], popular: data.popular || false, active: data.active ?? true, createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate() : new Date() };
-      }));
-      setPlanLoading(false);
-    }, () => setPlanLoading(false));
+    const q = query(
+      collection(db, "payments"),
+      orderBy("createdAt", "desc"),
+      limit(100)
+    );
 
-    const unsub2 = onSnapshot(collection(db, "transactions"), (snap) => {
-      setTransactions(snap.docs.map((d) => {
-        const data = d.data();
-        return { key: d.id, userId: data.userId || "", userEmail: data.userEmail || "", plan: data.plan || "", amount: data.amount || 0, status: data.status || "pending", createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate() : new Date() };
-      }).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()));
-      setTxLoading(false);
-    }, () => setTxLoading(false));
+    const unsub = onSnapshot(q, (snap) => {
+      setPayments(
+        snap.docs.map((d) => {
+          const data = d.data();
+          const raw = data.createdAt;
+          return {
+            id: d.id,
+            userId: data.userId || "",
+            plan: data.plan || "free",
+            amount: data.amount || 0,
+            gstAmount: data.gstAmount || 0,
+            totalAmount: data.totalAmount || 0,
+            credits: data.credits || 0,
+            bonusCredits: data.bonusCredits || 0,
+            status: data.status || "pending",
+            razorpayPaymentId: data.razorpayPaymentId || "",
+            createdAt: raw instanceof Timestamp ? raw.toDate() : raw ? new Date(raw) : new Date(),
+          };
+        })
+      );
+      setLoading(false);
+    }, () => setLoading(false));
 
-    return () => { unsub1(); unsub2(); };
+    return () => unsub();
   }, []);
 
-  const openCreate = () => {
-    form.resetFields();
-    setPlanModal({ open: true, editing: null });
-  };
+  const filtered = payments.filter(
+    (p) => statusFilter === "all" || p.status === statusFilter
+  );
 
-  const openEdit = (plan: Plan) => {
-    form.setFieldsValue({ ...plan, features: plan.features.join("\n") });
-    setPlanModal({ open: true, editing: plan });
-  };
+  const totalRevenue = payments
+    .filter((p) => p.status === "success")
+    .reduce((sum, p) => sum + p.totalAmount, 0);
 
-  const handleSave = async (values: any) => {
-    setSaving(true);
-    try {
-      const data = { ...values, features: (values.features || "").split("\n").map((s: string) => s.trim()).filter(Boolean), updatedAt: serverTimestamp() };
-      if (planModal.editing) {
-        await setDoc(doc(db, "plans", planModal.editing.key), data, { merge: true });
-        messageApi.success("Plan updated");
-      } else {
-        await addDoc(collection(db, "plans"), { ...data, createdAt: serverTimestamp() });
-        messageApi.success("Plan created");
-      }
-      setPlanModal({ open: false, editing: null });
-    } catch {
-      messageApi.error("Failed to save plan");
-    }
-    setSaving(false);
-  };
+  const successCount = payments.filter((p) => p.status === "success").length;
+  const pendingCount = payments.filter((p) => p.status === "pending").length;
+  const failedCount = payments.filter((p) => p.status === "failed").length;
 
-  const deletePlan = async (id: string) => {
-    Modal.confirm({
-      title: "Delete Plan",
-      content: "Are you sure? This cannot be undone.",
-      okText: "Delete",
-      okButtonProps: { danger: true },
-      onOk: async () => {
-        try {
-          await deleteDoc(doc(db, "plans", id));
-          messageApi.success("Plan deleted");
-        } catch {
-          messageApi.error("Failed to delete");
-        }
-      },
-    });
-  };
+  const summaryCards = [
+    { label: "Total Revenue", value: `₹${totalRevenue.toFixed(2)}`, icon: CurrencyRupeeIcon, color: ACCENT, bg: "rgba(137,233,0,0.10)" },
+    { label: "Successful", value: successCount, icon: CheckCircleIcon, color: "#34d399", bg: "rgba(52,211,153,0.10)" },
+    { label: "Pending", value: pendingCount, icon: ClockIcon, color: "#f59e0b", bg: "rgba(245,158,11,0.10)" },
+    { label: "Failed", value: failedCount, icon: XCircleIcon, color: "#f87171", bg: "rgba(248,113,113,0.10)" },
+  ];
 
-  const revenue = transactions.filter((t) => t.status === "completed").reduce((sum, t) => sum + t.amount, 0);
-
-  const planColumns = [
+  const columns = [
     {
-      title: "Plan",
-      key: "plan",
-      render: (_: any, record: Plan) => (
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{ width: 36, height: 36, borderRadius: 10, background: "rgba(137,233,0,0.10)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <CreditCardIcon style={{ width: 16, height: 16, color: ACCENT }} />
-          </div>
-          <div>
-            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <Text style={{ color: "#fff", fontWeight: 600, fontSize: 13 }}>{record.name}</Text>
-              {record.popular && <Tag style={{ background: "rgba(137,233,0,0.10)", border: "1px solid rgba(137,233,0,0.25)", color: ACCENT, borderRadius: 6, fontSize: 10, fontWeight: 700, lineHeight: "14px", padding: "1px 6px" }}>POPULAR</Tag>}
-            </div>
-            <Text style={{ color: "rgba(255,255,255,0.38)", fontSize: 12 }}>{record.credits} credits included</Text>
-          </div>
-        </div>
+      title: "Payment ID",
+      dataIndex: "razorpayPaymentId",
+      key: "razorpayPaymentId",
+      render: (id: string) => (
+        <Text style={{ color: "rgba(255,255,255,0.5)", fontSize: 12, fontFamily: "monospace" }}>
+          {id ? id.slice(0, 20) + "…" : "—"}
+        </Text>
       ),
     },
     {
-      title: "Price",
-      dataIndex: "price",
-      key: "price",
-      render: (p: number) => <Text style={{ color: "#fff", fontWeight: 600, fontSize: 14 }}>${p}<span style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", fontWeight: 400 }}>/mo</span></Text>,
-    },
-    {
-      title: "Status",
-      dataIndex: "active",
-      key: "active",
-      render: (a: boolean) => (
-        <Tag style={{ background: a ? "rgba(137,233,0,0.10)" : "rgba(255,255,255,0.05)", border: `1px solid ${a ? "rgba(137,233,0,0.25)" : "rgba(255,255,255,0.10)"}`, color: a ? ACCENT : "rgba(255,255,255,0.4)", borderRadius: 20, fontSize: 11, fontWeight: 600, padding: "2px 10px" }}>
-          ● {a ? "Active" : "Inactive"}
+      title: "Plan",
+      dataIndex: "plan",
+      key: "plan",
+      render: (plan: string) => (
+        <Tag style={{
+          background: `${PLAN_COLORS[plan] || "#6b7280"}18`,
+          border: `1px solid ${PLAN_COLORS[plan] || "#6b7280"}35`,
+          color: PLAN_COLORS[plan] || "#6b7280",
+          borderRadius: 6, fontSize: 11, fontWeight: 600,
+        }}>
+          {plan.charAt(0).toUpperCase() + plan.slice(1)}
         </Tag>
       ),
     },
     {
-      title: "Features",
-      dataIndex: "features",
-      key: "features",
-      render: (f: string[]) => <Text style={{ color: "rgba(255,255,255,0.45)", fontSize: 12 }}>{f.length} features</Text>,
+      title: "Credits",
+      key: "credits",
+      render: (_: any, r: Payment) => (
+        <Text style={{ color: "rgba(255,255,255,0.7)", fontSize: 13 }}>
+          {r.credits}{r.bonusCredits > 0 ? ` + ${r.bonusCredits}` : ""}
+        </Text>
+      ),
     },
     {
-      title: "",
-      key: "actions",
-      align: "right" as const,
-      render: (_: any, record: Plan) => (
-        <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
-          <Button type="text" size="small" icon={<PencilIcon style={{ width: 14, height: 14, color: "rgba(255,255,255,0.45)" }} />} style={{ height: 28, width: 28, padding: 0, display: "flex", alignItems: "center", justifyContent: "center" }} onClick={() => openEdit(record)} />
-          <Button type="text" size="small" icon={<TrashIcon style={{ width: 14, height: 14, color: "#f87171" }} />} style={{ height: 28, width: 28, padding: 0, display: "flex", alignItems: "center", justifyContent: "center" }} onClick={() => deletePlan(record.key)} />
+      title: "Amount (INR)",
+      key: "amount",
+      render: (_: any, r: Payment) => (
+        <div>
+          <Text style={{ color: "#fff", fontSize: 13, fontWeight: 600 }}>₹{r.totalAmount.toFixed(2)}</Text>
+          <Text style={{ color: "rgba(255,255,255,0.35)", fontSize: 11, display: "block" }}>
+            ₹{r.amount.toFixed(2)} + ₹{r.gstAmount.toFixed(2)} GST
+          </Text>
         </div>
       ),
     },
-  ];
-
-  const txColumns = [
-    { title: "User", dataIndex: "userEmail", key: "userEmail", render: (e: string) => <Text style={{ color: "rgba(255,255,255,0.7)", fontSize: 13 }}>{e || "Anonymous"}</Text> },
-    { title: "Plan", dataIndex: "plan", key: "plan", render: (p: string) => <Tag style={{ background: "rgba(167,139,250,0.10)", border: "1px solid rgba(167,139,250,0.25)", color: "#a78bfa", borderRadius: 6, fontSize: 11 }}>{p}</Tag> },
-    { title: "Amount", dataIndex: "amount", key: "amount", render: (a: number) => <Text style={{ color: "#fff", fontWeight: 600, fontSize: 13 }}>${a.toFixed(2)}</Text> },
     {
       title: "Status",
       dataIndex: "status",
       key: "status",
-      render: (s: string) => {
-        const colors: Record<string, string> = { completed: ACCENT, pending: "#f59e0b", failed: "#f87171" };
-        const c = colors[s] || "rgba(255,255,255,0.4)";
-        return <Tag style={{ background: `${c}18`, border: `1px solid ${c}35`, color: c, borderRadius: 6, fontSize: 11, fontWeight: 600 }}>{s}</Tag>;
+      render: (status: string) => {
+        const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.pending;
+        return (
+          <Tag style={{ background: cfg.bg, border: `1px solid ${cfg.color}30`, color: cfg.color, borderRadius: 20, fontSize: 11, fontWeight: 600, padding: "2px 10px" }}>
+            ● {cfg.label}
+          </Tag>
+        );
       },
     },
-    { title: "Date", dataIndex: "createdAt", key: "createdAt", render: (d: Date) => <Text style={{ color: "rgba(255,255,255,0.3)", fontSize: 12 }}>{d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</Text> },
+    {
+      title: "Date",
+      dataIndex: "createdAt",
+      key: "createdAt",
+      render: (d: Date) => (
+        <Text style={{ color: "rgba(255,255,255,0.35)", fontSize: 12 }}>
+          {format(d, "MMM d, yyyy · h:mm a")}
+        </Text>
+      ),
+    },
   ];
 
   return (
     <div style={{ fontFamily: '"SF Pro Display", -apple-system, BlinkMacSystemFont, "Inter", sans-serif' }}>
-      {contextHolder}
-      <div style={{ marginBottom: 22, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <div>
-          <Title level={3} style={{ color: "#fff", margin: 0, fontWeight: 700, letterSpacing: "-0.5px", fontSize: 22 }}>Billing & Plans</Title>
-          <Text style={{ color: "rgba(255,255,255,0.38)", fontSize: 13 }}>Manage subscription plans and track transactions</Text>
-        </div>
-        <Button icon={<PlusIcon style={{ width: 15, height: 15 }} />} onClick={openCreate} style={{ background: ACCENT, border: "none", color: "#000", fontWeight: 600, borderRadius: 8, height: 36, display: "flex", alignItems: "center", gap: 6 }}>
-          New Plan
-        </Button>
+      <div style={{ marginBottom: 22 }}>
+        <Title level={3} style={{ color: "#fff", margin: 0, fontWeight: 700, letterSpacing: "-0.5px", fontSize: 22 }}>
+          Billing & Payments
+        </Title>
+        <Text style={{ color: "rgba(255,255,255,0.38)", fontSize: 13 }}>
+          All Razorpay transactions
+        </Text>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginBottom: 18 }}>
-        {[
-          { label: "Total Plans", value: plans.length, color: ACCENT },
-          { label: "Active Plans", value: plans.filter((p) => p.active).length, color: "#34d399" },
-          { label: "Total Revenue", value: `$${revenue.toFixed(2)}`, color: "#a78bfa" },
-          { label: "Transactions", value: transactions.length, color: "#60a5fa" },
-        ].map((s) => (
-          <Card key={s.label} style={{ background: CARD_BG, border: `1px solid ${BORDER}`, borderRadius: 14 }} styles={{ body: { padding: "16px 18px" } }}>
-            <Text style={{ fontSize: 12, color: "rgba(255,255,255,0.4)", display: "block", marginBottom: 6 }}>{s.label}</Text>
-            <div style={{ fontSize: 24, fontWeight: 700, color: s.color, letterSpacing: "-0.5px" }}>{s.value}</div>
-          </Card>
+      <Row gutter={[14, 14]} style={{ marginBottom: 16 }}>
+        {summaryCards.map((s) => (
+          <Col key={s.label} xs={12} sm={12} lg={6}>
+            <Card
+              style={{ background: CARD_BG, border: `1px solid ${BORDER}`, borderRadius: 14 }}
+              styles={{ body: { padding: "18px 20px" } }}
+            >
+              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
+                <div>
+                  <Text style={{ fontSize: 12, color: "rgba(255,255,255,0.42)", display: "block", marginBottom: 8 }}>{s.label}</Text>
+                  {loading ? (
+                    <Skeleton.Input active style={{ width: 80, height: 24 }} />
+                  ) : (
+                    <div style={{ fontSize: 24, fontWeight: 700, color: "#fff", letterSpacing: "-0.5px" }}>{s.value}</div>
+                  )}
+                </div>
+                <div style={{ width: 40, height: 40, borderRadius: 10, background: s.bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <s.icon style={{ width: 20, height: 20, color: s.color }} />
+                </div>
+              </div>
+            </Card>
+          </Col>
         ))}
-      </div>
-
-      <Card style={{ background: CARD_BG, border: `1px solid ${BORDER}`, borderRadius: 14, marginBottom: 16 }} styles={{ body: { padding: 0 } }}>
-        <div style={{ padding: "14px 18px", borderBottom: `1px solid ${BORDER}` }}>
-          <Text style={{ color: "#fff", fontWeight: 600, fontSize: 14 }}>Subscription Plans</Text>
-        </div>
-        <Table dataSource={plans} columns={planColumns} rowKey="key" loading={planLoading} pagination={false} style={{ background: "transparent" }} size="small" />
-      </Card>
+      </Row>
 
       <Card style={{ background: CARD_BG, border: `1px solid ${BORDER}`, borderRadius: 14 }} styles={{ body: { padding: 0 } }}>
-        <div style={{ padding: "14px 18px", borderBottom: `1px solid ${BORDER}` }}>
-          <Text style={{ color: "#fff", fontWeight: 600, fontSize: 14 }}>Recent Transactions</Text>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "14px 16px", borderBottom: `1px solid ${BORDER}` }}>
+          <Select
+            value={statusFilter}
+            onChange={setStatusFilter}
+            style={{ width: 140 }}
+            options={[
+              { label: "All Status", value: "all" },
+              { label: "Paid", value: "success" },
+              { label: "Pending", value: "pending" },
+              { label: "Failed", value: "failed" },
+            ]}
+          />
+          <div style={{ flex: 1 }} />
+          <Text style={{ fontSize: 12, color: "rgba(255,255,255,0.35)" }}>{filtered.length} records</Text>
         </div>
-        {transactions.length === 0 && !txLoading ? (
-          <div style={{ padding: "40px 24px", textAlign: "center" }}>
-            <CreditCardIcon style={{ width: 34, height: 34, color: "rgba(255,255,255,0.12)", margin: "0 auto 10px" }} />
-            <Text style={{ color: "rgba(255,255,255,0.3)", fontSize: 13, display: "block" }}>No transactions yet</Text>
+
+        {payments.length === 0 && !loading ? (
+          <div style={{ padding: "48px 20px", textAlign: "center" }}>
+            <CreditCardIcon style={{ width: 40, height: 40, color: "rgba(255,255,255,0.15)", margin: "0 auto 12px" }} />
+            <Text style={{ color: "rgba(255,255,255,0.35)", fontSize: 14, display: "block" }}>No payments yet</Text>
+            <Text style={{ color: "rgba(255,255,255,0.2)", fontSize: 12 }}>
+              Payments will appear here after Razorpay is configured and users purchase plans
+            </Text>
           </div>
         ) : (
-          <Table dataSource={transactions} columns={txColumns} rowKey="key" loading={txLoading} pagination={{ pageSize: 8, size: "small" }} style={{ background: "transparent" }} size="small" />
+          <Table
+            dataSource={filtered}
+            columns={columns}
+            rowKey="id"
+            loading={loading}
+            pagination={{ pageSize: 15, size: "small", showTotal: (total) => <Text style={{ color: "rgba(255,255,255,0.35)", fontSize: 12 }}>{total} payments</Text> }}
+            style={{ background: "transparent" }}
+            size="small"
+          />
         )}
       </Card>
-
-      <Modal
-        title={<span style={{ color: "#fff", fontSize: 15, fontWeight: 600 }}>{planModal.editing ? "Edit Plan" : "Create Plan"}</span>}
-        open={planModal.open}
-        onCancel={() => setPlanModal({ open: false, editing: null })}
-        footer={null}
-        styles={{ content: { background: "#242424", border: `1px solid ${BORDER}` }, header: { background: "#242424", borderBottom: `1px solid ${BORDER}` }, mask: { backdropFilter: "blur(4px)" } }}
-      >
-        <Form form={form} onFinish={handleSave} layout="vertical" style={{ marginTop: 10 }} initialValues={{ active: true, popular: false }}>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-            <Form.Item name="name" label={<span style={{ color: "rgba(255,255,255,0.55)", fontSize: 12 }}>Plan Name</span>} rules={[{ required: true }]}>
-              <Input style={{ background: "#2a2a2a", border: `1px solid #383838` }} placeholder="Pro" />
-            </Form.Item>
-            <Form.Item name="price" label={<span style={{ color: "rgba(255,255,255,0.55)", fontSize: 12 }}>Price ($/month)</span>} rules={[{ required: true }]}>
-              <InputNumber min={0} style={{ width: "100%", background: "#2a2a2a", border: `1px solid #383838` }} />
-            </Form.Item>
-          </div>
-          <Form.Item name="credits" label={<span style={{ color: "rgba(255,255,255,0.55)", fontSize: 12 }}>Credits Included</span>} rules={[{ required: true }]}>
-            <InputNumber min={0} style={{ width: "100%", background: "#2a2a2a", border: `1px solid #383838` }} />
-          </Form.Item>
-          <Form.Item name="features" label={<span style={{ color: "rgba(255,255,255,0.55)", fontSize: 12 }}>Features (one per line)</span>}>
-            <Input.TextArea rows={4} placeholder="Unlimited generations&#10;Priority support&#10;API access" style={{ background: "#2a2a2a", border: `1px solid #383838` }} />
-          </Form.Item>
-          <div style={{ display: "flex", gap: 20, marginBottom: 16 }}>
-            <Form.Item name="popular" valuePropName="checked" style={{ margin: 0 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <Switch size="small" />
-                <Text style={{ color: "rgba(255,255,255,0.55)", fontSize: 12 }}>Mark as Popular</Text>
-              </div>
-            </Form.Item>
-            <Form.Item name="active" valuePropName="checked" style={{ margin: 0 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <Switch size="small" defaultChecked />
-                <Text style={{ color: "rgba(255,255,255,0.55)", fontSize: 12 }}>Active</Text>
-              </div>
-            </Form.Item>
-          </div>
-          <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
-            <Button onClick={() => setPlanModal({ open: false, editing: null })}>Cancel</Button>
-            <Button htmlType="submit" loading={saving} style={{ background: ACCENT, border: "none", color: "#000", fontWeight: 600 }}>
-              {planModal.editing ? "Update" : "Create"}
-            </Button>
-          </div>
-        </Form>
-      </Modal>
     </div>
   );
 }

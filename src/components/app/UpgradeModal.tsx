@@ -1,12 +1,19 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Check, Sparkles } from "lucide-react";
+import { Check, Sparkles, ArrowRight } from "lucide-react";
 import { useAppContext, PLANS, PlanId } from "@/contexts/AppContext";
+import { useNavigate } from "react-router-dom";
 
 export function UpgradeModal() {
-  const { showUpgradeModal, setShowUpgradeModal, user, switchPlan } = useAppContext();
+  const { showUpgradeModal, setShowUpgradeModal, user } = useAppContext();
+  const navigate = useNavigate();
   const planOrder: PlanId[] = ["free", "starter", "pro"];
+
+  const handleUpgrade = (planId: PlanId) => {
+    setShowUpgradeModal(false);
+    navigate(`/app/checkout?plan=${planId}`);
+  };
 
   return (
     <Dialog open={showUpgradeModal} onOpenChange={setShowUpgradeModal}>
@@ -17,7 +24,7 @@ export function UpgradeModal() {
             Upgrade Your Plan
           </DialogTitle>
           <DialogDescription className="text-muted-foreground">
-            Unlock more credits and access to the Pro model
+            Unlock more credits and premium features
           </DialogDescription>
         </DialogHeader>
 
@@ -25,14 +32,34 @@ export function UpgradeModal() {
           {planOrder.map((planId) => {
             const plan = PLANS[planId];
             const isCurrent = user.plan === planId;
+            const isFree = planId === "free";
+
             return (
-              <div key={planId} className={`glass rounded-xl p-4 space-y-3 relative ${isCurrent ? "border-primary" : ""}`}>
+              <div
+                key={planId}
+                className={`glass rounded-xl p-4 space-y-3 relative border ${
+                  isCurrent ? "border-primary/50" : "border-white/5"
+                }`}
+              >
                 {isCurrent && (
-                  <Badge className="absolute -top-2 left-3 bg-primary text-primary-foreground text-[10px]">Current</Badge>
+                  <Badge className="absolute -top-2 left-3 bg-primary text-black text-[10px]">
+                    Current
+                  </Badge>
+                )}
+                {planId === "pro" && !isCurrent && (
+                  <Badge className="absolute -top-2 right-3 bg-purple-500/20 text-purple-300 border-purple-500/30 text-[10px]">
+                    Best Value
+                  </Badge>
                 )}
                 <div>
                   <h3 className="text-sm font-bold text-foreground">{plan.name}</h3>
-                  <p className="text-2xl font-bold text-foreground mt-1">{plan.price}<span className="text-xs text-muted-foreground font-normal">/mo</span></p>
+                  <p className="text-2xl font-bold text-foreground mt-1">
+                    {plan.price}
+                    <span className="text-xs text-muted-foreground font-normal">/{plan.billingPeriod}</span>
+                  </p>
+                  {plan.bonusCredits > 0 && (
+                    <p className="text-xs text-green-400 mt-0.5">+{plan.bonusCredits} bonus credits</p>
+                  )}
                 </div>
                 <ul className="space-y-1.5">
                   {plan.features.map((f) => (
@@ -46,10 +73,18 @@ export function UpgradeModal() {
                   size="sm"
                   className="w-full text-xs"
                   variant={isCurrent ? "outline" : "default"}
-                  disabled={isCurrent}
-                  onClick={() => { switchPlan(planId); setShowUpgradeModal(false); }}
+                  disabled={isCurrent || isFree}
+                  onClick={() => !isCurrent && !isFree && handleUpgrade(planId)}
                 >
-                  {isCurrent ? "Current Plan" : "Switch"}
+                  {isCurrent ? (
+                    "Current Plan"
+                  ) : isFree ? (
+                    "Free"
+                  ) : (
+                    <span className="flex items-center gap-1.5">
+                      Upgrade <ArrowRight className="h-3 w-3" />
+                    </span>
+                  )}
                 </Button>
               </div>
             );

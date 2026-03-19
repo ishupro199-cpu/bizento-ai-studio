@@ -33,6 +33,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { callGenerationApi } from "@/lib/generationApi";
+import { toast } from "sonner";
 import { augmentPrompt } from "@/lib/promptAugmentation";
 import { useAuth } from "@/contexts/AuthContext";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
@@ -264,6 +265,22 @@ export default function WelcomeDashboard() {
 
     const [, apiResp] = await Promise.all([animPromise, apiPromise]);
 
+    if (!apiResp.success && apiResp.code) {
+      setPhase("idle");
+      if (apiResp.code === "INSUFFICIENT_CREDITS") {
+        toast.error("Not enough credits. Upgrade your plan to continue.");
+        setShowUpgradeModal(true);
+      } else if (apiResp.code === "USER_SUSPENDED") {
+        toast.error("Your account has been suspended. Contact support.");
+      } else if (apiResp.code === "PLAN_REQUIRED") {
+        toast.error(`This feature requires the ${apiResp.requiredPlan?.toUpperCase()} plan.`);
+        setShowUpgradeModal(true);
+      } else {
+        toast.error(apiResp.error || "Generation failed. Please try again.");
+      }
+      return;
+    }
+
     let finalUrls: string[] = [];
     let isReal = false;
 
@@ -293,6 +310,7 @@ export default function WelcomeDashboard() {
     setGeneratedImages(imgs);
     setPhase("results");
 
+    const serverHandledCredits = typeof apiResp.creditsRemaining === "number";
     addGeneration({
       prompt,
       augmentedPrompt: apiResp.augmentedPrompt ?? augmented,
@@ -305,7 +323,7 @@ export default function WelcomeDashboard() {
       variantCount: 3,
       imageUrls: finalUrls,
       hasRealImages: isReal,
-    });
+    } as any, serverHandledCredits);
   }, [selectedTool, productUrl, selectedModel, authUser, addGeneration, runThinkingAnimation]);
 
   const handleStyleSelect = async (styleId: string) => {

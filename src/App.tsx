@@ -53,6 +53,7 @@ import PromptLibraryPage from "@/pages/app/PromptLibraryPage";
 import InspirationHubPage from "@/pages/app/InspirationHubPage";
 import CreditsPage from "@/pages/app/CreditsPage";
 import PlanPage from "@/pages/app/PlanPage";
+import CheckoutPage from "@/pages/app/CheckoutPage";
 import SettingsPage from "@/pages/app/SettingsPage";
 
 // Admin pages
@@ -114,6 +115,7 @@ const App = () => (
               <Route path="images" element={<ImagesPage />} />
               <Route path="credits" element={<CreditsPage />} />
               <Route path="plan" element={<PlanPage />} />
+              <Route path="checkout" element={<CheckoutPage />} />
               <Route path="settings" element={<SettingsPage />} />
             </Route>
 

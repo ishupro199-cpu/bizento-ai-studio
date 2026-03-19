@@ -150,7 +150,7 @@ interface AppContextType {
   selectedModel: ModelId;
   setSelectedModel: (model: ModelId) => boolean;
   generations: GenerationRecord[];
-  addGeneration: (record: Omit<GenerationRecord, "id" | "creditsConsumed">) => void;
+  addGeneration: (record: Omit<GenerationRecord, "id" | "creditsConsumed">, serverDeducted?: boolean) => void;
   deleteGeneration: (id: string) => void;
   catalogs: GenerationRecord[];
   ads: GenerationRecord[];
@@ -231,14 +231,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [user.plan]);
 
   const addGeneration = useCallback(
-    (record: Omit<GenerationRecord, "id" | "creditsConsumed">) => {
+    (record: Omit<GenerationRecord, "id" | "creditsConsumed">, serverDeducted = false) => {
       const toolId = Object.entries({
         "Generate Catalog": "catalog",
         "Product Photography": "photo",
         "Ad Creatives": "creative",
         "Cinematic Ads": "cinematic",
       }).find(([name]) => record.tool === name)?.[1] as ToolId ?? "catalog";
-      const cost = calculateCreditCost(toolId, record.model, "1K");
+      const quality = (record as any).quality as QualityId || "1K";
+      const cost = calculateCreditCost(toolId, record.model, quality);
       firestoreAdd({
         prompt: record.prompt,
         augmentedPrompt: record.augmentedPrompt || "",
@@ -254,11 +255,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
         generationTime: record.generationTime,
         createdAt: new Date(),
       });
-      updateCredits(cost, record.model);
-      updateAdminStats(record.tool, record.model, cost, {
-        hasRealImages: record.hasRealImages ?? false,
-        generationTime: record.generationTime,
-      });
+      if (!serverDeducted) {
+        updateCredits(cost, record.model);
+        updateAdminStats(record.tool, record.model, cost, {
+          hasRealImages: record.hasRealImages ?? false,
+          generationTime: record.generationTime,
+        });
+      }
     },
     [firestoreAdd, updateCredits]
   );
