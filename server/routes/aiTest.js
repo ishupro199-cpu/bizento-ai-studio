@@ -3,10 +3,16 @@ import OpenAI from "openai";
 
 const router = Router();
 
-const openai = new OpenAI({
-  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
-  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
-});
+let _openai = null;
+function getOpenAI() {
+  if (!_openai) {
+    _openai = new OpenAI({
+      apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY || "placeholder",
+      baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
+    });
+  }
+  return _openai;
+}
 
 router.get("/health", (_req, res) => {
   res.json({
@@ -20,7 +26,7 @@ router.post("/prompt", async (req, res) => {
     const { prompt, model = "gpt-5-mini" } = req.body;
     if (!prompt) return res.status(400).json({ error: "prompt is required" });
 
-    const response = await openai.chat.completions.create({
+    const response = await getOpenAI().chat.completions.create({
       model,
       messages: [
         {
@@ -52,7 +58,7 @@ router.post("/prompt/stream", async (req, res) => {
     res.setHeader("Cache-Control", "no-cache");
     res.setHeader("Connection", "keep-alive");
 
-    const stream = await openai.chat.completions.create({
+    const stream = await getOpenAI().chat.completions.create({
       model,
       messages: [
         {

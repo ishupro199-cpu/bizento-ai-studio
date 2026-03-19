@@ -7,10 +7,16 @@ import { getAdminDb } from "../config/firebase.js";
 
 const router = Router();
 
-const openai = new OpenAI({
-  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
-  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
-});
+let _openai = null;
+function getOpenAI() {
+  if (!_openai) {
+    _openai = new OpenAI({
+      apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY || "placeholder",
+      baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
+    });
+  }
+  return _openai;
+}
 
 const TOOL_SYSTEM_PROMPTS = {
   "Generate Catalog": `You are an expert e-commerce product photography prompt engineer for PixaLera AI.
@@ -105,7 +111,7 @@ Aspect Ratio: ${aspectRatio} (${ratioHint})
 
 Build the perfect image generation prompt for this product.`;
 
-    const resp = await openai.chat.completions.create({
+    const resp = await getOpenAI().chat.completions.create({
       model: "gpt-5-mini",
       messages: [
         { role: "system", content: systemPrompt },
@@ -125,7 +131,7 @@ async function extractCatalogAttributes(prompt, productInfo) {
   if (!hasAI) return null;
 
   try {
-    const resp = await openai.chat.completions.create({
+    const resp = await getOpenAI().chat.completions.create({
       model: "gpt-5-mini",
       messages: [
         {
@@ -174,7 +180,7 @@ async function generateAIReply(prompt) {
   if (!hasAI) return null;
 
   try {
-    const resp = await openai.chat.completions.create({
+    const resp = await getOpenAI().chat.completions.create({
       model: "gpt-5-mini",
       messages: [
         {
