@@ -5,6 +5,7 @@ import {
   ChevronRight, Star,
 } from "lucide-react";
 import { WebsiteNav } from "@/components/website/WebsiteNav";
+import { WebsiteFooter } from "@/components/website/WebsiteFooter";
 
 const TOOLS = [
   {
@@ -72,38 +73,21 @@ const TESTIMONIALS = [
   { name: "Sneha Kapoor", role: "CMO, PureGlow", avatar: "S", quote: "Our Instagram content went from average to stunning. The AI understands our aesthetic perfectly. We produce 5x more content now." },
 ];
 
-function WebsiteNav() {
-  return (
-    <nav className="border-b" style={{ borderColor: "#1E2028", background: "rgba(13,15,20,0.95)", backdropFilter: "blur(20px)" }}>
-      <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2.5">
-          <PixaleraIcon size={30} />
-          <span className="text-[16px] font-black" style={{ color: "#F0EBD8" }}>
-            Pixalera<span style={{ color: "#89E900" }}>.</span>
-          </span>
-        </Link>
-        <div className="flex items-center gap-3">
-          <Link to="/pricing" className="text-[13px] font-medium hover:text-white transition-colors" style={{ color: "#8A8F9E" }}>Pricing</Link>
-          <Link to="/login" className="text-[13px] font-medium hover:text-white transition-colors" style={{ color: "#8A8F9E" }}>Log in</Link>
-          <Link to="/signup"
-            className="text-[13px] font-semibold px-4 py-2 rounded-xl transition-all"
-            style={{ background: "#89E900", color: "#0D0F14" }}>
-            Get Started
-          </Link>
-        </div>
-      </div>
-    </nav>
-  );
-}
-
 export default function FeaturesPage() {
   return (
     <div className="min-h-screen font-bricolage" style={{ background: "#0D0F14", color: "#E8EAF0" }}>
       <WebsiteNav />
 
       {/* ── HERO ── */}
-      <section className="py-24 px-6 text-center" style={{ background: "radial-gradient(ellipse at top, rgba(137,233,0,0.06) 0%, transparent 70%)" }}>
-        <div className="max-w-4xl mx-auto">
+      <section className="relative py-24 px-6 text-center overflow-hidden">
+        <img src="/hero-studio-bg.png" alt="" aria-hidden="true"
+          className="absolute inset-0 w-full h-full object-cover object-center pointer-events-none"
+          style={{ opacity: 0.3 }} />
+        <div className="absolute inset-0 pointer-events-none"
+          style={{ background: "linear-gradient(to bottom, rgba(10,11,15,0.7) 0%, rgba(10,11,15,0.5) 50%, rgba(10,11,15,0.85) 100%)" }} />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none"
+          style={{ width: 600, height: 600, background: "radial-gradient(circle, rgba(137,233,0,0.07) 0%, transparent 70%)" }} />
+        <div className="relative z-10 max-w-4xl mx-auto">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-6 border text-[13px] font-medium"
             style={{ background: "rgba(137,233,0,0.07)", borderColor: "rgba(137,233,0,0.25)", color: "#89E900" }}>
             <Sparkles className="h-3.5 w-3.5" />
@@ -267,6 +251,7 @@ export default function FeaturesPage() {
         </div>
       </section>
 
+      <WebsiteFooter />
     </div>
   );
 }

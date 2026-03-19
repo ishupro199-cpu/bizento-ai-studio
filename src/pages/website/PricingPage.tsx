@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Check, X, Zap, ArrowRight } from "lucide-react";
-import { PixaleraIcon } from "@/components/PixaleraIcon";
+import { WebsiteNav } from "@/components/website/WebsiteNav";
+import { WebsiteFooter } from "@/components/website/WebsiteFooter";
 
 const PLANS = [
   {
@@ -130,40 +131,19 @@ export default function PricingPage() {
   return (
     <div className="min-h-screen font-bricolage" style={{ background: "#0D0F14", color: "#E8EAF0" }}>
 
-      {/* Grid bg */}
-      <div className="fixed inset-0 pointer-events-none opacity-[0.02]"
-        style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0h40M0 40h40M0 0v40M40 0v40' stroke='%2389E900' stroke-width='0.5'/%3E%3C/svg%3E")`,
-          backgroundSize: "40px 40px",
-        }}
-      />
+      <WebsiteNav />
 
-      {/* Nav */}
-      <nav className="flex items-center justify-between px-6 py-4 max-w-7xl mx-auto relative z-10">
-        <Link to="/" className="flex items-center gap-2.5">
-          <PixaleraIcon size={32} />
-          <span className="text-[17px] font-black tracking-tight" style={{ color: "#F0EBD8", letterSpacing: "-0.02em" }}>
-            Pixalera<span style={{ color: "#89E900" }}>.</span>
-          </span>
-        </Link>
-        <div className="flex items-center gap-3">
-          <Link to="/login" className="text-[14px] font-medium px-4 py-2 rounded-xl transition-colors" style={{ color: "#8A8F9E" }}>
-            Log in
-          </Link>
-          <Link
-            to="/signup"
-            className="text-[14px] font-semibold px-5 py-2.5 rounded-xl flex items-center gap-1.5 transition-all"
-            style={{ background: "#89E900", color: "#0D0F14", boxShadow: "0 0 24px rgba(137,233,0,0.2)" }}
-          >
-            Get Started <ArrowRight className="h-3.5 w-3.5" />
-          </Link>
-        </div>
-      </nav>
-
-      <div className="relative z-10 max-w-6xl mx-auto px-6 py-16">
-
-        {/* Header */}
-        <div className="text-center mb-16">
+      {/* Hero */}
+      <section className="relative py-16 px-6 text-center overflow-hidden">
+        <img src="/hero-studio-bg.png" alt="" aria-hidden="true"
+          className="absolute inset-0 w-full h-full object-cover object-center pointer-events-none"
+          style={{ opacity: 0.25 }} />
+        <div className="absolute inset-0 pointer-events-none"
+          style={{ background: "linear-gradient(to bottom, rgba(10,11,15,0.7) 0%, rgba(10,11,15,0.5) 50%, rgba(10,11,15,0.9) 100%)" }} />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none"
+          style={{ width: 600, height: 600, background: "radial-gradient(circle, rgba(137,233,0,0.07) 0%, transparent 70%)" }} />
+        <div className="relative z-10 max-w-6xl mx-auto">
+        <div className="text-center mb-0">
           <div
             className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-6 border text-[13px] font-medium"
             style={{ background: "rgba(137,233,0,0.07)", borderColor: "rgba(137,233,0,0.25)", color: "#89E900" }}
@@ -179,7 +159,10 @@ export default function PricingPage() {
             No hidden fees, cancel anytime.
           </p>
         </div>
+        </div>
+      </section>
 
+      <div className="max-w-6xl mx-auto px-6 py-16">
         {/* Pricing cards */}
         <div className="grid md:grid-cols-3 gap-5 mb-20">
           {PLANS.map((plan) => (
@@ -304,6 +287,8 @@ export default function PricingPage() {
           </Link>
         </div>
       </div>
+
+      <WebsiteFooter />
     </div>
   );
 }
