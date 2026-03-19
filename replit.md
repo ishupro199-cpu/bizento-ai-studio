@@ -51,6 +51,7 @@ server/
 ## Required Environment Secrets
 | Secret | Purpose |
 |--------|---------|
+| `GEMINI_API_KEY` | Google Gemini AI for chat (primary) — set as env var |
 | `REPLICATE_API_TOKEN` | Real AI image generation via Replicate |
 | `FIREBASE_SERVICE_ACCOUNT` | Firebase Admin SDK (JSON string) — required for server-side Firestore |
 | `RAZORPAY_KEY_ID` | Razorpay payment gateway |
@@ -108,7 +109,8 @@ GST (18%) is applied at checkout. Plan expiry auto-downgrades to Free.
 - **Models**: Flash (base cost), Pro (higher cost)
 - **Quality**: 720p/1K (Free), 2K (Starter+, +4 credits), 4K (Pro only, +8 credits)
 - **Style Presets**: Luxury, Marble, Floral, Minimal, Neon, Beach
-- **Replit AI**: gpt-5-mini via `AI_INTEGRATIONS_OPENAI_API_KEY` — builds smart tool-specific prompts, extracts catalog attributes, handles conversational chat
+- **Gemini AI** (primary chat): `gemini-2.0-flash` via `GEMINI_API_KEY` — handles all conversational chat, context-aware replies, Hindi/Hinglish support
+- **Replit AI** (fallback): gpt-4o-mini via `AI_INTEGRATIONS_OPENAI_API_KEY` — fallback if Gemini fails, also builds tool-specific prompts and extracts catalog attributes
 - **Aspect Ratios**: 1:1, 4:5, 16:9, 9:16, 3:2 — passed to AI for optimal prompt building
 - **Contextual Chat**: If user sends a text message (no generation keywords), AI replies conversationally in Hindi/Hinglish or English
 

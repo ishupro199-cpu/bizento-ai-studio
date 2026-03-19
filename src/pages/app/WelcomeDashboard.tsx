@@ -11,7 +11,6 @@ import {
   ArrowUpTrayIcon as Upload,
   PhotoIcon as ImageIcon,
   ArrowPathIcon as RotateCcw,
-  SparklesIcon as Sparkles,
   HandThumbUpIcon as ThumbsUp,
   XMarkIcon as X,
   LinkIcon as Link2,
@@ -131,7 +130,7 @@ const PRO_PROMPTS = [
   "Premium whiskey bottle with shattering ice in dramatic dark studio lighting",
 ];
 
-type ChatPhase = "idle" | "thinking" | "show-styles" | "generating" | "results" | "approved" | "ai-chat";
+type ChatPhase = "idle" | "chat-thinking" | "thinking" | "show-styles" | "generating" | "results" | "approved" | "ai-chat";
 
 function detectClientIntent(prompt: string, hasImage: boolean): "generate" | "chat" {
   if (hasImage) return "generate";
@@ -149,12 +148,12 @@ function detectClientIntent(prompt: string, hasImage: boolean): "generate" | "ch
   return "chat";
 }
 
-async function fetchAIReply(prompt: string): Promise<string> {
+async function fetchAIReply(prompt: string, history?: Array<{role: string; content: string}>): Promise<string> {
   try {
     const res = await fetch("/api/generate/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt }),
+      body: JSON.stringify({ prompt, history: history || [] }),
     });
     const data = await res.json();
     return data.reply || "I'm here to help! Describe a product and I'll create stunning visuals for you.";
@@ -246,7 +245,7 @@ export default function WelcomeDashboard() {
 
   const isPro = user.plan === "pro";
   const isStarter = user.plan === "starter";
-  const isGenerating = phase === "thinking" || phase === "generating";
+  const isGenerating = phase === "thinking" || phase === "generating" || phase === "chat-thinking";
   const planLevel = PLAN_ORDER[user.plan] ?? 0;
 
   const currentCreditCost = calculateCreditCost(selectedTool, selectedModel as ModelId, genSettings.quality as QualityId);
@@ -334,14 +333,15 @@ export default function WelcomeDashboard() {
     if (textareaRef.current) textareaRef.current.style.height = "auto";
 
     const intent = detectClientIntent(prompt, !!productPreview);
-    setPhase("thinking");
-    await runThinkingAnimation();
 
     if (intent === "chat") {
+      setPhase("chat-thinking");
       const reply = await fetchAIReply(prompt);
       setAiReply(reply);
       setPhase("ai-chat");
     } else {
+      setPhase("thinking");
+      await runThinkingAnimation();
       setPhase("show-styles");
     }
   };
@@ -772,13 +772,34 @@ export default function WelcomeDashboard() {
           </div>
         )}
 
+        {/* Chat thinking (simple typing indicator) */}
+        {phase === "chat-thinking" && (
+          <div className="flex justify-start animate-fade-in">
+            <div className="max-w-[80%] space-y-1">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="h-6 w-6 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
+                  <BoltIcon className="h-3 w-3 text-primary" />
+                </div>
+                <span className="text-xs text-muted-foreground font-medium">Pixalera AI</span>
+              </div>
+              <div className="bg-white/4 border border-white/10 rounded-2xl rounded-tl-sm px-4 py-3.5">
+                <div className="flex items-center gap-1.5">
+                  <div className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: "0ms" }} />
+                  <div className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: "150ms" }} />
+                  <div className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: "300ms" }} />
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Thinking / Generating steps */}
         {(phase === "thinking" || phase === "ai-chat" || phase === "generating" || phase === "show-styles" || phase === "results" || phase === "approved") && (
           <div className="flex justify-start animate-fade-in">
             <div className="max-w-[80%] space-y-1">
               <div className="flex items-center gap-2 mb-2">
                 <div className="h-6 w-6 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
-                  <Sparkles className="h-3 w-3 text-primary" />
+                  <BoltIcon className="h-3 w-3 text-primary" />
                 </div>
                 <span className="text-xs text-muted-foreground font-medium">Pixalera AI</span>
               </div>
@@ -818,7 +839,7 @@ export default function WelcomeDashboard() {
               <div className="flex gap-2">
                 <button onClick={() => { setInputPrompt("Generate a product photo for my "); setPhase("idle"); handleReset(); }}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] border border-white/10 bg-white/4 text-muted-foreground hover:bg-white/8 hover:text-foreground transition-colors">
-                  <Sparkles className="h-3 w-3" /> Generate Image
+                  <BoltIcon className="h-3 w-3" /> Generate Image
                 </button>
                 <button onClick={handleReset}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] border border-white/10 bg-white/4 text-muted-foreground hover:bg-white/8 hover:text-foreground transition-colors">
@@ -847,6 +868,12 @@ export default function WelcomeDashboard() {
                     <span className="absolute top-1.5 left-1.5 text-[8px] bg-black/50 rounded-full px-1.5 py-0.5 text-white/70">
                       {["A", "B", "C"][idx]}
                     </span>
+                    {!isPro && !isStarter && img.isReal && img.imageUrl && (
+                      <div className="absolute bottom-1.5 right-1.5 flex items-center gap-1 bg-black/60 backdrop-blur-sm rounded-full px-1.5 py-0.5">
+                        <BoltIcon className="h-2.5 w-2.5 text-primary" />
+                        <span className="text-[7px] text-primary font-bold tracking-wide">PIXALERA</span>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -885,7 +912,7 @@ export default function WelcomeDashboard() {
             <div className="max-w-[90%] w-full space-y-1">
               <div className="flex items-center gap-2 mb-2">
                 <div className="h-6 w-6 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
-                  <Sparkles className="h-3 w-3 text-primary" />
+                  <BoltIcon className="h-3 w-3 text-primary" />
                 </div>
                 <span className="text-xs text-muted-foreground font-medium">Pixalera AI</span>
               </div>
@@ -907,7 +934,7 @@ export default function WelcomeDashboard() {
       {phase === "show-styles" && (
         <div className="px-3 sm:px-6 pb-2 animate-fade-in">
           <div className="mb-2 flex items-center gap-2">
-            <Sparkles className="h-3.5 w-3.5 text-primary" />
+            <BoltIcon className="h-3.5 w-3.5 text-primary" />
             <p className="text-xs font-medium text-muted-foreground">Choose a style preset, or skip to auto-select</p>
           </div>
           <div className="flex gap-2.5 overflow-x-auto pb-2 sidebar-scroll">

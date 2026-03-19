@@ -1,7 +1,7 @@
 import { useState } from "react";
 import {
   Download, RefreshCw, Edit3, Megaphone, Image as ImageIcon,
-  DownloadCloud, RotateCcw, Sparkles, Clock,
+  DownloadCloud, RotateCcw, Sparkles, Clock, Zap,
   CheckCircle2, AlertCircle, ThumbsUp, ArrowRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ interface GenerationResultsProps {
   results: GenerationResult[];
   prompt: string;
   isPro: boolean;
+  isFree?: boolean;
   onRegenerate: () => void;
 }
 
@@ -35,9 +36,10 @@ interface ResultCardProps {
   onOpen: () => void;
   onRegenerate: () => void;
   approved: boolean;
+  isFree?: boolean;
 }
 
-function ResultCard({ img, idx, selected, onSelect, onOpen, onRegenerate, approved }: ResultCardProps) {
+function ResultCard({ img, idx, selected, onSelect, onOpen, onRegenerate, approved, isFree }: ResultCardProps) {
   const [imgLoaded, setImgLoaded] = useState(false);
   const [imgError, setImgError] = useState(false);
   const showRealImage = img.isReal && img.imageUrl && !imgError;
@@ -106,10 +108,18 @@ function ResultCard({ img, idx, selected, onSelect, onOpen, onRegenerate, approv
           </span>
           {img.isReal && img.imageUrl && !imgError && (
             <span className="text-[9px] bg-primary/20 backdrop-blur-sm rounded-full px-2 py-0.5 text-primary font-medium flex items-center gap-0.5">
-              <Sparkles className="h-2.5 w-2.5" /> AI
+              <Zap className="h-2.5 w-2.5" /> AI
             </span>
           )}
         </div>
+
+        {/* Free user watermark */}
+        {isFree && img.isReal && img.imageUrl && !imgError && (
+          <div className="absolute bottom-2 right-2 flex items-center gap-1 bg-black/65 backdrop-blur-sm rounded-full px-2 py-1 pointer-events-none">
+            <Zap className="h-3 w-3 text-primary shrink-0" />
+            <span className="text-[8px] text-primary font-bold tracking-wide">PIXALERA</span>
+          </div>
+        )}
 
         {approved && (
           <div className="absolute inset-0 bg-background/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
@@ -160,7 +170,7 @@ function ResultCard({ img, idx, selected, onSelect, onOpen, onRegenerate, approv
   );
 }
 
-export function GenerationResults({ results, prompt, isPro, onRegenerate }: GenerationResultsProps) {
+export function GenerationResults({ results, prompt, isPro, isFree, onRegenerate }: GenerationResultsProps) {
   const [lightboxImage, setLightboxImage] = useState<GenerationResult | null>(null);
   const [approved, setApproved] = useState(false);
   const [selectedVariant, setSelectedVariant] = useState<number | null>(null);
@@ -237,6 +247,7 @@ export function GenerationResults({ results, prompt, isPro, onRegenerate }: Gene
             onOpen={() => setLightboxImage(img)}
             onRegenerate={onRegenerate}
             approved={approved}
+            isFree={isFree}
           />
         ))}
       </div>

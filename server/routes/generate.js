@@ -4,6 +4,7 @@ import OpenAI from "openai";
 import { generateImages, removeBackground, analyzeProduct } from "../services/pipeline.js";
 import { verifyFirebaseToken, checkCreditAndSuspend, refundCredits } from "../middleware/auth.js";
 import { getAdminDb } from "../config/firebase.js";
+import { generateChatReply, augmentPromptWithGemini } from "../services/gemini.js";
 
 const router = Router();
 
@@ -334,12 +335,10 @@ router.post(
 );
 
 router.post("/chat", async (req, res) => {
-  const { prompt } = req.body;
+  const { prompt, history = [] } = req.body;
   if (!prompt) return res.status(400).json({ error: "prompt required" });
-  const reply = await generateAIReply(prompt);
-  res.json({
-    reply: reply || "I'm here to help you create stunning product visuals! Tell me about your product.",
-  });
+  const { reply, model } = await generateChatReply(prompt, history, getOpenAI);
+  res.json({ reply, model });
 });
 
 router.get("/health", (_req, res) => {
