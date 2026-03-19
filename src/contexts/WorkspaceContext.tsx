@@ -23,7 +23,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const firstName = user.name?.split(" ")[0] || "User";
 
   const [workspaces, setWorkspaces] = useState<Workspace[]>([
-    { id: "personal", name: `${firstName}'s Personal`, isPersonal: true },
+    { id: "personal", name: `${firstName}'s Workspace`, isPersonal: true },
   ]);
   const [activeWorkspaceId, setActiveWorkspaceId] = useState("personal");
 

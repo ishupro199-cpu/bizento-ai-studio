@@ -208,7 +208,10 @@ export default function WelcomeDashboard() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const timerRef = useRef<number | null>(null);
 
-  const { activeWorkspace } = useWorkspace();
+  const { workspaces, activeWorkspace, activeWorkspaceId, setActiveWorkspaceId, addWorkspace } = useWorkspace();
+  const [wsPopoverOpen, setWsPopoverOpen] = useState(false);
+  const [showCreateWs, setShowCreateWs] = useState(false);
+  const [newWsName, setNewWsName] = useState("");
 
   const isPro = user.plan === "pro";
   const isStarter = user.plan === "starter";
@@ -223,7 +226,17 @@ export default function WelcomeDashboard() {
 
   // Workspace name from shared context
   const firstName = user.name?.split(" ")[0] || "there";
-  const workspaceName = activeWorkspace?.name || (user.plan === "free" ? "Personal Workspace" : `${firstName}'s Studio`);
+  const workspaceName = activeWorkspace?.name || `${firstName}'s Workspace`;
+
+  const handleCreateWorkspace = () => {
+    if (!newWsName.trim()) return;
+    const ws = addWorkspace(newWsName.trim());
+    setActiveWorkspaceId(ws.id);
+    setShowCreateWs(false);
+    setNewWsName("");
+    setWsPopoverOpen(false);
+    toast.success(`Workspace "${newWsName.trim()}" created`);
+  };
 
   // Suggested prompts (3 from pool based on seed + pro prompts for pro users)
   const getSuggestedPrompts = useCallback(() => {
@@ -436,11 +449,49 @@ export default function WelcomeDashboard() {
 
               {/* Workspace chip + greeting */}
               <div className="text-center space-y-2 mb-5">
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full"
-                  style={{ background: "rgba(137,233,0,0.07)", border: "1px solid rgba(137,233,0,0.18)", color: "rgba(137,233,0,0.8)" }}>
-                  <Building className="h-3 w-3" />
-                  <span className="text-[11px] font-medium">{workspaceName}</span>
-                </div>
+                <Popover open={wsPopoverOpen} onOpenChange={(o) => { setWsPopoverOpen(o); if (!o) { setShowCreateWs(false); setNewWsName(""); } }}>
+                  <PopoverTrigger asChild>
+                    <button className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full transition-all hover:opacity-80"
+                      style={{ background: "rgba(137,233,0,0.07)", border: "1px solid rgba(137,233,0,0.18)", color: "rgba(137,233,0,0.8)" }}>
+                      <Building className="h-3 w-3" />
+                      <span className="text-[11px] font-medium">{workspaceName}</span>
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent align="center" side="bottom" className="w-56 p-1.5 rounded-xl bg-popover border border-white/10">
+                    <div className="px-3 pt-2 pb-1">
+                      <p className="text-[9px] text-muted-foreground/60 uppercase tracking-wider font-semibold">Workspaces</p>
+                    </div>
+                    {workspaces.map(ws => (
+                      <button key={ws.id} onClick={() => { setActiveWorkspaceId(ws.id); setWsPopoverOpen(false); }}
+                        className={`w-full flex items-center gap-2.5 rounded-lg px-3 py-2 transition-colors ${ws.id === activeWorkspaceId ? "bg-primary/10" : "hover:bg-white/5"}`}>
+                        <Building className={`h-3.5 w-3.5 shrink-0 ${ws.id === activeWorkspaceId ? "text-primary" : "text-muted-foreground"}`} />
+                        <span className={`flex-1 text-left text-sm font-medium truncate ${ws.id === activeWorkspaceId ? "text-primary" : "text-foreground"}`}>{ws.name}</span>
+                        {ws.id === activeWorkspaceId && <div className="h-1.5 w-1.5 rounded-full bg-primary shrink-0" />}
+                      </button>
+                    ))}
+                    <div className="h-px bg-white/8 my-1.5 mx-2" />
+                    {!showCreateWs ? (
+                      <button onClick={() => { if (isPro) setShowCreateWs(true); else { setWsPopoverOpen(false); setShowUpgradeModal(true); } }}
+                        className="w-full flex items-center gap-2.5 rounded-lg px-3 py-2 transition-colors hover:bg-white/5">
+                        <Plus className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                        <span className="flex-1 text-left text-sm text-muted-foreground">Create New Workspace</span>
+                        {!isPro && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "rgba(245,158,11,0.15)", color: "rgba(245,158,11,0.9)" }}>PRO</span>}
+                      </button>
+                    ) : (
+                      <div className="px-2 pb-1 space-y-1.5 animate-in fade-in-0 slide-in-from-top-1 duration-150">
+                        <input autoFocus value={newWsName} onChange={e => setNewWsName(e.target.value)}
+                          onKeyDown={e => { if (e.key === "Enter") handleCreateWorkspace(); if (e.key === "Escape") setShowCreateWs(false); }}
+                          placeholder="Workspace name..." className="w-full bg-white/6 rounded-lg px-2.5 py-1.5 text-[12px] text-foreground outline-none placeholder:text-muted-foreground/40"
+                          style={{ border: "1px solid rgba(255,255,255,0.1)" }} />
+                        <div className="flex gap-1.5">
+                          <button onClick={() => setShowCreateWs(false)} className="flex-1 py-1 rounded-lg text-[11px] text-muted-foreground bg-white/5 hover:bg-white/8 transition-colors">Cancel</button>
+                          <button onClick={handleCreateWorkspace} disabled={!newWsName.trim()} className="flex-1 py-1 rounded-lg text-[11px] font-semibold transition-all disabled:opacity-40"
+                            style={{ background: "rgba(137,233,0,0.15)", color: "#89E900", border: "1px solid rgba(137,233,0,0.25)" }}>Create</button>
+                        </div>
+                      </div>
+                    )}
+                  </PopoverContent>
+                </Popover>
                 <p className="text-sm font-medium whitespace-nowrap overflow-hidden text-ellipsis"
                   style={{ color: "rgba(255,255,255,0.5)", letterSpacing: "-0.01em" }}>
                   Hi {firstName}, what do you want to create?
@@ -498,6 +549,26 @@ export default function WelcomeDashboard() {
                   </PopoverTrigger>
                   <PopoverContent align="start" side="top" className="w-64 p-1.5 rounded-xl bg-popover border border-white/10">
                     <div className="px-3 pt-2 pb-1">
+                      <p className="text-[9px] text-muted-foreground/60 uppercase tracking-wider font-semibold">Attach Image</p>
+                    </div>
+                    <button onClick={() => { productRef.current?.click(); setPlusOpen(false); }}
+                      className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-foreground hover:bg-white/5 transition-colors">
+                      <Upload className="h-4 w-4 text-muted-foreground shrink-0" />
+                      <div className="text-left">
+                        <p className="text-sm">Product Image</p>
+                        <p className="text-[10px] text-muted-foreground/60">Main product to transform</p>
+                      </div>
+                    </button>
+                    <button onClick={() => { referenceRef.current?.click(); setPlusOpen(false); }}
+                      className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-foreground hover:bg-white/5 transition-colors">
+                      <Link2 className="h-4 w-4 text-muted-foreground shrink-0" />
+                      <div className="text-left">
+                        <p className="text-sm">Reference Image</p>
+                        <p className="text-[10px] text-muted-foreground/60">Style or inspiration</p>
+                      </div>
+                    </button>
+                    <div className="h-px bg-white/8 my-1.5 mx-2" />
+                    <div className="px-3 pb-1">
                       <p className="text-[9px] text-muted-foreground/60 uppercase tracking-wider font-semibold">AI Tool</p>
                     </div>
                     {TOOL_DEFS.map((tool) => {
@@ -516,26 +587,6 @@ export default function WelcomeDashboard() {
                         </button>
                       );
                     })}
-                    <div className="h-px bg-white/8 my-1.5 mx-2" />
-                    <div className="px-3 pb-1">
-                      <p className="text-[9px] text-muted-foreground/60 uppercase tracking-wider font-semibold">Attach Image</p>
-                    </div>
-                    <button onClick={() => productRef.current?.click()}
-                      className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-foreground hover:bg-white/5 transition-colors">
-                      <Upload className="h-4 w-4 text-muted-foreground shrink-0" />
-                      <div className="text-left">
-                        <p className="text-sm">Product Image</p>
-                        <p className="text-[10px] text-muted-foreground/60">Main product to transform</p>
-                      </div>
-                    </button>
-                    <button onClick={() => referenceRef.current?.click()}
-                      className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-foreground hover:bg-white/5 transition-colors">
-                      <Link2 className="h-4 w-4 text-muted-foreground shrink-0" />
-                      <div className="text-left">
-                        <p className="text-sm">Reference Image</p>
-                        <p className="text-[10px] text-muted-foreground/60">Style or inspiration</p>
-                      </div>
-                    </button>
                   </PopoverContent>
                 </Popover>
 
