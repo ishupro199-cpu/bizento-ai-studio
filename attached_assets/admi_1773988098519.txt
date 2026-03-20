@@ -1,0 +1,385 @@
+You are a senior full-stack SaaS architect, backend engineer, and QA tester.
+
+Your task is to build and finalize a production-ready AI SaaS platform called Pixalera with a complete system including:
+
+• Main Website (User App)
+• Admin Panel
+• Backend API
+• Database
+• Storage
+• Real-time sync
+
+This must be a real working system — NOT a prototype.
+
+---
+
+================================
+🎯 CORE RULES (MANDATORY)
+
+• NO mock data
+• NO fake APIs
+• NO static JSON
+
+Everything must be:
+
+• real database connected
+• real backend logic
+• real API calls
+• real-time updates
+
+---
+
+================================
+1️⃣ PROJECT STRUCTURE (VERY IMPORTANT)
+
+Create system in a way that supports 2 separate GitHub repositories:
+
+---
+
+Repo 1 → pixalera-web (Main Website)
+
+Includes:
+
+• Landing page
+• User dashboard
+• AI tools
+• Prompt system
+• Rewards
+• Billing
+• Notifications UI
+
+---
+
+Repo 2 → pixalera-admin (Admin Panel)
+
+Includes:
+
+• Admin dashboard
+• Users management
+• Credits control
+• Notifications
+• Blogs
+• Analytics
+
+---
+
+IMPORTANT:
+
+Both repos must always remain connected via:
+
+• same backend APIs
+• same database
+• same storage
+
+---
+
+================================
+2️⃣ SYSTEM ARCHITECTURE
+
+Admin Panel ↔ Backend API ↔ Database ↔ Website
+
+Ensure:
+
+• both apps communicate through APIs
+• real-time updates
+• no data mismatch
+
+---
+
+================================
+3️⃣ DATABASE (REAL)
+
+Create and connect real database.
+
+Tables:
+
+Users
+Plans
+Credits
+Transactions
+Generations
+Notifications
+Blogs
+Referrals
+Rewards
+Payments
+
+---
+
+Ensure:
+
+• relationships properly defined
+• no redundant data
+• consistent updates
+
+---
+
+================================
+4️⃣ ADMIN PANEL (FULLSTACK)
+
+Build fully functional admin panel.
+
+---
+
+Sidebar:
+
+Dashboard
+Users
+Plans & Credits
+Transactions
+Generations
+Rewards
+Notifications
+Blogs
+Settings
+
+---
+
+RULE:
+
+Every button, tab, and action MUST work.
+
+NO dead UI elements.
+
+---
+
+FEATURES:
+
+• view users
+• update credits
+• change plans
+• block users
+• view transactions
+• track generations
+
+---
+
+================================
+5️⃣ NOTIFICATION SYSTEM
+
+Admin Panel:
+
+• create notification
+• title + description
+• upload image
+• send to all or selected users
+
+---
+
+Website:
+
+• bell icon
+• click → popup
+• show notifications (real data + images)
+
+---
+
+REAL-TIME:
+
+Admin send → instantly visible to user
+
+---
+
+================================
+6️⃣ BLOG SYSTEM
+
+Admin:
+
+• create blog
+• upload image
+• publish
+
+---
+
+Website:
+
+• blog listing
+• open full blog
+
+---
+
+================================
+7️⃣ REAL-TIME CONNECTION (CRITICAL)
+
+All actions must sync instantly:
+
+• credits update
+• notifications
+• blogs
+• plan changes
+
+---
+
+Example:
+
+Admin adds credits → user sees instantly
+
+---
+
+================================
+8️⃣ CREDIT SYSTEM
+
+Implement real credit system:
+
+• calculate before generation
+• deduct from DB
+• store transaction
+
+Refund if failed.
+
+---
+
+================================
+9️⃣ PAYMENT SYSTEM (RAZORPAY)
+
+Implement full Razorpay integration.
+
+---
+
+Checkout page must show:
+
+• plan
+• credits
+• bonus credits
+• GST (18%)
+• final amount
+
+---
+
+After success:
+
+• update user plan
+• add credits
+• store payment
+
+---
+
+================================
+🔟 REWARD SYSTEM
+
+Unique referral link:
+
+/ref/{user_id}
+
+---
+
+Rewards:
+
+• 5 credits per referral (both users)
+• 50% credits when referred user buys plan
+
+---
+
+Show in rewards page clearly.
+
+---
+
+================================
+1️⃣1️⃣ UI REQUIREMENTS
+
+• Chat scroll only (navbar + prompt fixed)
+• Prompt box:
+
+- single image upload
+- preview
+- remove option
+
+• show dynamic credits cost
+
+---
+
+================================
+1️⃣2️⃣ API STRUCTURE
+
+Create APIs:
+
+POST /admin/notify
+GET /notifications
+
+POST /admin/blog
+GET /blogs
+
+GET /users
+PATCH /credits
+
+POST /generate
+
+---
+
+================================
+1️⃣3️⃣ ERROR HANDLING
+
+Handle:
+
+• API failures
+• payment errors
+• low credits
+• upload issues
+
+---
+
+================================
+1️⃣4️⃣ BUG FIXING (MANDATORY)
+
+You MUST:
+
+• scan entire project
+• detect bugs
+• fix everything
+
+---
+
+================================
+1️⃣5️⃣ WORKFLOW TESTING (CRITICAL)
+
+Test:
+
+USER:
+
+Signup → Login → Generate → Credits deduct
+→ Payment → Credits update → Features unlock
+
+---
+
+ADMIN:
+
+Login → Send notification → user receives
+Add blog → visible
+Update credits → synced
+
+---
+
+Fix all issues.
+
+---
+
+================================
+1️⃣6️⃣ FINAL VERIFICATION
+
+Ensure:
+
+• no broken features
+• no dead buttons
+• database synced
+• APIs working
+• real-time system working
+
+---
+
+================================
+🎯 FINAL GOAL
+
+Deliver a complete real SaaS system:
+
+Pixalera
+
+• fully functional
+• fully connected
+• fully tested
+• ready to deploy
+
+---
+
+IMPORTANT:
+
+Do NOT stop until everything is working perfectly.
