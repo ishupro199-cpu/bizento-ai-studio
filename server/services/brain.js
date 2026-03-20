@@ -130,7 +130,7 @@ async function classifyWithGemini(prompt, hasImage, productInfo, conversationSta
 
   try {
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
     const instruction = `You are the AI Brain of Pixalera — a smart ecommerce creative platform.
 

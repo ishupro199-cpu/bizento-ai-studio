@@ -7,6 +7,15 @@ import { getAdminDb } from "../config/firebase.js";
 import { generateChatReply, augmentPromptWithGemini } from "../services/gemini.js";
 import { runBrain, getToolVariantPrompts } from "../services/brain.js";
 import { generateSEO, generateCatalogSEO, detectMissingAttributeInfo, mapAttributesToPlatforms } from "../services/seoGenerator.js";
+import {
+  analyzeProductForPhotography,
+  suggestPhotographyStyles,
+  buildPhotographyPrompt,
+  detectRefinementIntent,
+  PHOTOGRAPHY_STYLES,
+  STYLE_BACKGROUNDS,
+  LIGHTING_MOODS,
+} from "../services/photographyPipeline.js";
 
 const router = Router();
 

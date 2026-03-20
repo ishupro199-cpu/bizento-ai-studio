@@ -1,0 +1,710 @@
+# Pixalera — Product Photography Tool
+## Complete AI Model Training Document + Generation Prompts v1.0
+
+---
+
+## WHAT THIS TOOL DOES (vs Catalog Generation)
+
+| | Catalog Generation | Product Photography |
+|---|---|---|
+| Goal | Multiple views for listing | One hero artistic shot |
+| Style | Clean, functional, platform-ready | Cinematic, editorial, premium |
+| Output | 3–12 images, all angles | 1–4 images, maximum impact |
+| Background | Mostly white/neutral | Styled, textured, scene-based |
+| Feel | Product documentation | Brand story / desire creation |
+| Used for | Amazon/Flipkart listing | Instagram, website, ads, brand |
+
+This tool is for sellers and brands who want images that make people WANT the product — not just see it.
+
+---
+
+## PART 1: Product + Aesthetic Analysis
+
+### What to extract from the uploaded image
+
+Run this BEFORE showing any style options. This determines which styles to suggest prominently.
+
+```
+PHOTOGRAPHY ANALYSIS SCHEMA:
+─────────────────────────────────────────────────────────
+product_name:            [specific]
+product_category:        [Electronics / Apparel / Beauty / Food & Beverage /
+                          Home Decor / Jewelry / Sports / Stationery / Other]
+product_subcategory:     [e.g. Perfume Bottle / Leather Wallet / Coffee Mug]
+primary_color:           [exact color name]
+material_feel:           [Soft / Hard / Smooth / Rough / Glossy / Matte / Natural]
+size_class:              [Tiny (ring, lipstick) / Small (mug, phone) /
+                          Medium (bag, sneaker) / Large (appliance, furniture)]
+premium_budget_signal:   [Luxury / Mid-range / Budget / Cannot tell]
+target_audience:         [Women / Men / Unisex / Kids / Professional / Lifestyle]
+product_complexity:      [Simple (one solid object) / Complex (multiple parts/colors)]
+has_text_or_logo:        [yes/no]
+background_in_photo:     [white / cluttered / outdoor / colored / dark]
+image_quality:           [Good / Poor / Blurry / Badly lit]
+```
+
+### Auto-suggest best styles based on analysis
+
+After analysis, suggest the top 2–3 styles with a reason:
+
+```
+STYLE SUGGESTION LOGIC:
+─────────────────────────────────────────────────────────
+Beauty / Skincare / Perfume    → Suggest: Dark Luxury, Minimalist, Studio
+Food & Beverage                → Suggest: Lifestyle (morning/kitchen), Flat Lay, Studio
+Jewelry / Watches              → Suggest: Dark Luxury, Minimalist, Outdoor (golden hour)
+Apparel / Shoes / Bags         → Suggest: Lifestyle, Flat Lay, Outdoor
+Electronics / Gadgets          → Suggest: Dark Luxury, Studio, Minimalist
+Home Decor / Candles           → Suggest: Lifestyle (interior), Flat Lay, Minimalist
+Sports / Fitness               → Suggest: Outdoor, Lifestyle, Studio
+Stationery / Books             → Suggest: Flat Lay, Lifestyle (desk), Minimalist
+Toys / Kids                    → Suggest: Lifestyle (playful), Flat Lay, Studio
+Premium brand signal           → Always suggest Dark Luxury as top option
+Budget brand signal            → Suggest Lifestyle and Flat Lay first
+```
+
+Show suggestions as clickable style cards with a 1-line reason:
+> "Dark Luxury recommended — perfume bottles look most premium with dark backgrounds and rim lighting."
+
+---
+
+## PART 2: Style Configuration Options
+
+### Style picker (user selects one or combines)
+
+Present these as visual style tiles (show a thumbnail example of each style type):
+
+```
+1. Studio Clean
+2. Lifestyle / Editorial
+3. Flat Lay / Overhead
+4. Dark Luxury
+5. Outdoor / Natural
+6. Minimalist
+```
+
+### Background picker (after style is selected)
+
+Show only relevant backgrounds for chosen style:
+
+```
+Studio Clean        → Pure White · Warm White · Soft Grey · Gradient Grey
+Lifestyle          → Kitchen Counter · Wooden Table · Marble Surface ·
+                     Bedroom / Soft Linen · Office Desk · Bathroom Shelf ·
+                     Outdoor Patio · Rustic Wood · Concrete Floor
+Flat Lay           → White Linen · Natural Wood Grain · Marble · Kraft Paper ·
+                     Black Velvet · Pastel Fabric · Rattan/Wicker mat
+Dark Luxury        → Pure Black · Deep Navy · Dark Charcoal · Deep Burgundy ·
+                     Dark Forest Green · Textured Black Leather
+Outdoor            → Natural Grass · Sandy Beach · Rocky Surface · Forest Floor ·
+                     Urban Concrete · Rooftop Terrace
+Minimalist         → Pure White · Off-white Texture · Soft Sage · Dusty Pink ·
+                     Light Beige · Pale Grey
+```
+
+### Lighting mood picker
+
+```
+Bright & Airy       → Soft diffused daylight, high key, clean whites
+Warm Golden         → Warm amber/golden tones, 3200K feel, cozy, organic
+Cool & Clean        → Neutral-cool light, 5500K, crisp, modern
+Moody & Dramatic    → High contrast, strong shadows, mysterious
+Dark & Cinematic    → Deep blacks, accent highlights, luxury feel
+Natural Soft        → Window light simulation, gentle shadows, realistic
+```
+
+### Optional: Mood board upload
+
+Allow user to upload 1–3 reference images. These become style anchors:
+> "Is image ka jaisa vibe chahiye — iss style mein mere product ki photo banao."
+
+Parse the reference for: color palette, lighting direction, background type, mood, props used. Inject all of these into the generation prompt.
+
+---
+
+## PART 3: Prompt Engineering — The Core
+
+### Universal quality suffix (append to EVERY prompt)
+
+```
+[QUALITY_SUFFIX] =
+"hyperrealistic commercial product photography, 
+photorealistic not illustrated, 
+physically accurate materials and lighting, 
+ultra sharp focus on product, 
+8K resolution, DSLR quality lens rendering, 
+no AI artifacts, no distortion, 
+accurate color matching to original product, 
+professional retouching quality output"
+```
+
+### Universal negative prompt (use with every generation)
+
+```
+[NEGATIVE_PROMPT] =
+"illustration, cartoon, painting, 3D render look, toy-like,
+blurry product, wrong product, duplicate product,
+floating without surface, no shadows,
+text overlay, watermarks, logos not on original product,
+distorted proportions, extra limbs, extra objects,
+cluttered background (unless lifestyle), 
+cheap look, amateur lighting, flat lighting,
+overexposed, underexposed, blown-out whites"
+```
+
+---
+
+## PART 4: Complete Prompts — All 6 Shot Styles
+
+Use `[PRODUCT]` = product name, `[COLOR]` = primary color, `[MATERIAL]` = material.
+Replace all placeholders before sending to generation API.
+
+---
+
+### STYLE 1: Studio Clean
+
+**Best for:** All product categories. Default safe choice. Ecommerce + social media both.
+
+**What it looks like:** Pure or soft white background. Product perfectly centered. Soft-box lighting from upper-left. Natural product shadow or reflection on surface. No props. Maximum product clarity.
+
+#### Prompt — Studio White (Standard)
+```
+Professional studio product photography of [PRODUCT], [COLOR] [MATERIAL],
+centered on pure white background (#FFFFFF),
+soft-box lighting from upper-left at 45 degrees,
+even diffused fill light from right eliminating harsh shadows,
+subtle natural drop shadow directly below product,
+product occupying 80% of frame, perfectly sharp focus throughout,
+neutral white surface with slight reflection,
+commercial catalog quality, no props, no background elements,
+[QUALITY_SUFFIX]
+```
+
+#### Prompt — Studio Warm White (Premium feel)
+```
+Professional studio product photography of [PRODUCT], [COLOR] [MATERIAL],
+warm ivory white background (#FAFAF5),
+warm soft-box lighting at 3400K color temperature,
+gentle directional light creating soft shadows on one side,
+product on warm white matte surface with subtle reflection,
+slightly elevated camera angle showing product top and front,
+product at center-frame, premium commercial photography,
+warm inviting tones, still crisp and sharp,
+[QUALITY_SUFFIX]
+```
+
+#### Prompt — Studio Grey (Modern/Tech feel)
+```
+Professional studio product photography of [PRODUCT], [COLOR] [MATERIAL],
+light neutral grey background (#E8E8E8 to #D0D0D0 subtle gradient),
+directional studio lighting from upper-left, silver reflector fill from right,
+sharp defined shadow on grey surface showing product solidity,
+slightly off-center composition (rule of thirds),
+camera at product eye-level, modern commercial photography style,
+clean professional aesthetic, no props,
+[QUALITY_SUFFIX]
+```
+
+---
+
+### STYLE 2: Lifestyle / Editorial
+
+**Best for:** Home products, beauty, food/beverage, apparel accessories, candles, stationery.
+
+**What it looks like:** Product placed in a real or styled environment. 2–3 complementary props. Natural or window-light feel. Tells a story. Makes viewer imagine using the product.
+
+#### Context mapping (auto-select based on product category):
+```
+Mug / Coffee / Tea      → Morning breakfast table: wooden table + open book/newspaper + soft morning window light
+Skincare / Beauty       → Bathroom shelf: marble surface + green plant leaf + soft natural light
+Candle / Home Decor     → Interior living room surface: linen fabric + dried flowers + warm ambient light  
+Perfume / Fragrance     → Vanity table: soft fabric + scattered petals + golden hour window light
+Bag / Purse             → Flat on linen surface OR hanging on minimal wooden hook, natural daylight
+Shoes / Sneakers        → On clean wooden floor OR outdoor cobblestone, slightly overhead angle
+Jewelry / Watch         → Velvet surface OR marble with subtle floral props
+Food product / Snack    → Kitchen counter + raw ingredients nearby + natural daylight
+Stationery / Notebook   → Desk flat lay: pen + coffee cup + minimal notebook + plant
+Sports gear             → Gym floor OR outdoor gravel/grass surface
+Electronics / Phone     → Clean modern desk: minimal notebook + coffee cup + soft ambient
+Kids toy                → Colorful playmat OR outdoor grass, playful natural light
+```
+
+#### Prompt — Lifestyle Morning (Warm/Cozy)
+```
+Lifestyle editorial product photography of [PRODUCT], [COLOR] [MATERIAL],
+placed on a warm wooden breakfast table,
+soft morning window light coming from the left creating gentle shadows,
+complementary props: [2 props from context map], arranged naturally not staged,
+warm 3200–3500K ambient tone, golden morning light,
+shallow depth of field (f/2.8 equivalent), background softly blurred,
+product as hero subject, props supporting not competing,
+horizontal composition, editorial magazine quality,
+natural, authentic, aspirational lifestyle aesthetic,
+[QUALITY_SUFFIX]
+```
+
+#### Prompt — Lifestyle Marble/Luxury (Beauty/Premium)
+```
+Lifestyle editorial product photography of [PRODUCT], [COLOR] [MATERIAL],
+placed on white marble surface with subtle grey veining,
+soft natural window light from upper-left, diffused through sheer curtain,
+props: [1–2 props: small green plant OR dried botanicals OR clean white towel],
+cool-neutral to slightly warm light (5000K),
+shallow depth of field, marble surface reflection visible,
+clean, luxurious, spa-like aesthetic,
+negative space on right side for potential text overlay,
+[QUALITY_SUFFIX]
+```
+
+#### Prompt — Lifestyle Editorial (Fashion/Accessories)
+```
+Editorial fashion product photography of [PRODUCT], [COLOR] [MATERIAL],
+styled flat lay OR placed on clean linen fabric surface,
+soft overhead or slightly angled natural daylight,
+minimal styled props: [1–2 props], arranged with intention and white space,
+muted, desaturated tones with light airy feel,
+slight top-down or 30-degree elevated angle,
+magazine editorial quality, breathing room around product,
+clean negative space, sophisticated composition,
+[QUALITY_SUFFIX]
+```
+
+---
+
+### STYLE 3: Flat Lay / Overhead
+
+**Best for:** Apparel, accessories, stationery, beauty products, food, gift sets, small electronics.
+
+**What it looks like:** Camera directly above product (90° overhead). Product and props arranged artfully on a flat surface. Color-coordinated. Very popular for Instagram and Pinterest.
+
+#### Prompt — Flat Lay White Linen (Clean/Minimal)
+```
+Flat lay overhead product photography of [PRODUCT], [COLOR] [MATERIAL],
+camera directly above at 90 degrees, perfectly parallel to surface,
+product centered on white/off-white linen fabric surface,
+minimal complementary props: [2–3 small props: pen + flower stem + small stone OR as relevant],
+props arranged in deliberate but natural composition around product,
+even soft diffused overhead lighting, no harsh shadows,
+crisp sharp focus across entire frame,
+clean minimal Instagram-style composition, breathing room around edges,
+[QUALITY_SUFFIX]
+```
+
+#### Prompt — Flat Lay Dark Velvet (Premium/Dark)
+```
+Flat lay overhead product photography of [PRODUCT], [COLOR] [MATERIAL],
+camera directly above at 90-degree top-down angle,
+product on deep black velvet surface,
+minimal luxury props: [1–2 props: gold geometric shape OR dried flowers OR small mirror fragment],
+directional side lighting creating subtle texture in velvet surface,
+deep blacks, rich tones, product color contrasting against dark background,
+premium editorial quality, mysterious and desirable aesthetic,
+[QUALITY_SUFFIX]
+```
+
+#### Prompt — Flat Lay Natural/Organic (Earthy)
+```
+Flat lay overhead product photography of [PRODUCT], [COLOR] [MATERIAL],
+camera directly overhead, product on natural wood grain surface,
+organic props: [2–3: dried herbs OR small stones OR leaves OR linen ribbon],
+warm natural light from side, slight shadows adding depth,
+earthy, organic, natural brand aesthetic,
+product color popping against warm wood tones,
+[QUALITY_SUFFIX]
+```
+
+---
+
+### STYLE 4: Dark Luxury
+
+**Best for:** Perfumes, watches, jewelry, premium electronics, whiskey/spirits, skincare, premium fashion accessories.
+
+**What it looks like:** Very dark, near-black background. Product lit with precision rim/accent lighting. Strong highlights on edges or surfaces. Deep shadows. Dramatic, cinematic. Screams premium.
+
+#### Prompt — Dark Luxury Standard (Rim Light)
+```
+Luxury dark product photography of [PRODUCT], [COLOR] [MATERIAL],
+deep black background (#080808 to #111111),
+precision rim lighting from behind-left and behind-right creating highlight edges on product,
+subtle fill light from front preventing total darkness on product face,
+product on dark reflective surface (black lacquer or dark glass) with clean reflection below,
+deep dramatic shadows, rich deep tones,
+premium, luxury brand aesthetic (think: Chanel, Dior, Apple),
+cinematic composition, product perfectly sharp,
+highlights catching the product's best material qualities ([material specific: glass facets / metal edges / leather texture]),
+[QUALITY_SUFFIX]
+```
+
+#### Prompt — Dark Luxury Moody (Deep Colors)
+```
+Moody luxury product photography of [PRODUCT], [COLOR] [MATERIAL],
+dark deep [BACKGROUND_COLOR: navy / burgundy / forest green / charcoal] background,
+single strong directional light from upper-right at 30 degrees,
+dramatic one-sided lighting, strong shadow side,
+subtle ambient fill preventing complete darkness,
+product on complementary dark textured surface,
+rich saturated tones, deep shadows,
+atmospheric, desirable, aspirational luxury feel,
+slightly off-center product placement, intentional negative space,
+[QUALITY_SUFFIX]
+```
+
+#### Prompt — Dark Luxury with Particles/Atmosphere
+```
+Atmospheric dark luxury product photography of [PRODUCT], [COLOR] [MATERIAL],
+pure black to very dark charcoal background,
+product illuminated by narrow focused light beam from above (spotlight effect),
+subtle atmospheric particles or mist in background (very subtle, not distracting),
+product reflection on dark wet-look or glass surface below,
+strong contrast between lit product and dark background,
+ultra premium cinematic feel, fashion brand quality,
+sharp product, everything else atmospheric blur,
+[QUALITY_SUFFIX]
+```
+
+---
+
+### STYLE 5: Outdoor / Natural
+
+**Best for:** Sports gear, shoes, bags, beverages, outdoor lifestyle products, organic/natural products.
+
+**What it looks like:** Real outdoor environment. Natural daylight. Authentic textures — grass, concrete, wood, sand, stone. Feels real, honest, lifestyle-driven.
+
+#### Prompt — Outdoor Urban (Modern/Street)
+```
+Outdoor urban product photography of [PRODUCT], [COLOR] [MATERIAL],
+placed on clean concrete surface OR urban pavement,
+natural overcast daylight (cloudy sky = perfect even light),
+slight real-world environmental context visible in blurred background,
+product on surface with authentic urban texture visible,
+slightly elevated angle (30 degrees from product level),
+editorial outdoor style, authentic not staged,
+clean, contemporary, lifestyle-forward aesthetic,
+[QUALITY_SUFFIX]
+```
+
+#### Prompt — Outdoor Nature (Organic/Earthy)
+```
+Outdoor nature product photography of [PRODUCT], [COLOR] [MATERIAL],
+product placed on [surface: natural grass / mossy rock / forest floor / sandy ground],
+natural golden hour sunlight from one side (warm 3000K),
+real nature elements softly visible in background (bokeh blur),
+product casting natural shadow from sunlight,
+authentic organic feel, nature brand aesthetic,
+warm earthy tones, product color complementing natural surroundings,
+depth in image: sharp product, soft blurred nature background,
+[QUALITY_SUFFIX]
+```
+
+#### Prompt — Outdoor Golden Hour (Premium Lifestyle)
+```
+Golden hour lifestyle product photography of [PRODUCT], [COLOR] [MATERIAL],
+outdoor setting during golden hour (60 minutes before sunset),
+warm amber-golden directional sunlight from low angle hitting product,
+product on [surface: wooden deck / stone ledge / grass],
+long warm shadows from golden light, product dramatically lit,
+warm orange-gold color grading throughout scene,
+aspirational outdoor lifestyle feel,
+background: slightly blurred warm outdoor environment,
+[QUALITY_SUFFIX]
+```
+
+---
+
+### STYLE 6: Minimalist
+
+**Best for:** Premium products of any category. Brands that value simplicity. Products with beautiful form factor.
+
+**What it looks like:** Almost nothing in the frame. Product + one subtle surface. Massive negative space. Every element has a purpose. The product's design does the talking.
+
+#### Prompt — Minimalist White Space (Ultra Clean)
+```
+Minimalist product photography of [PRODUCT], [COLOR] [MATERIAL],
+product placed on pure white or very light neutral surface,
+massive negative white space around product (product occupies 30–40% of frame),
+extremely soft diffused overhead light, almost shadowless,
+if shadow: single precise soft shadow on one side only,
+no props, no distractions, absolute minimal aesthetic,
+product's form and design as the only visual element,
+luxury minimalist brand quality (think: Apple, Aesop, Muji),
+product perfectly sharp, background seamlessly white,
+[QUALITY_SUFFIX]
+```
+
+#### Prompt — Minimalist Colored Surface (Modern/Instagram)
+```
+Minimalist product photography of [PRODUCT], [COLOR] [MATERIAL],
+product on [COMPLEMENTARY_COLOR] matte surface:
+  [if product is warm-toned → sage green or dusty blue surface]
+  [if product is cool-toned → warm beige or terracotta surface]  
+  [if product is neutral/black/white → soft dusty pink or sage green],
+color-blocked background matching surface color,
+soft even overhead lighting, minimal to no shadows,
+product centered with generous breathing space,
+single surface only, no props,
+clean, modern, social-media-ready minimalist aesthetic,
+color-complementary, design-forward composition,
+[QUALITY_SUFFIX]
+```
+
+#### Prompt — Minimalist With Single Prop
+```
+Minimalist product photography of [PRODUCT], [COLOR] [MATERIAL],
+product on clean neutral surface with ONLY ONE carefully chosen complementary prop:
+  [Beauty: single green leaf / small stone / one dried flower stem]
+  [Food: single raw ingredient / one spoon / one cup]
+  [Fashion: single folded fabric piece / one ring]
+  [Other: one geometric shape prop OR nothing],
+prop placed at deliberate distance from product (not touching),
+soft directional natural light from one side,
+90% empty space in frame, product is undisputed hero,
+thoughtful, intentional, elevated brand aesthetic,
+[QUALITY_SUFFIX]
+```
+
+---
+
+## PART 5: Mood Board Reference Handling
+
+When user uploads reference images (1–3 images), extract and inject these parameters:
+
+### What to detect from reference images
+
+```
+COLOR_PALETTE:     Dominant background color · accent colors · warm vs cool tone
+LIGHTING_TYPE:     Directional / Soft / Dramatic / Natural / Golden / Dark
+SHADOW_STYLE:      Hard shadow / Soft shadow / No shadow / Long shadow
+BACKGROUND_TYPE:   Material and texture
+PROP_STYLE:        None / Minimal / Styled / Nature elements
+COMPOSITION:       Centered / Rule of thirds / Off-center / Overhead / Eye-level
+MOOD:              Luxury / Fresh / Cozy / Dark / Minimalist / Playful / Professional
+```
+
+### Inject into prompt as:
+
+```
+"Matching the aesthetic of the reference: [COLOR_PALETTE] color palette,
+[LIGHTING_TYPE] lighting style, [SHADOW_STYLE], [BACKGROUND_TYPE] surface,
+[PROP_STYLE] props if any, [COMPOSITION] composition,
+overall [MOOD] mood and feel"
+```
+
+---
+
+## PART 6: Refinement via Chat
+
+### When user sends refinement message after output
+
+Detect which parameter they want changed and regenerate ONLY with that change. No full scan, no re-analysis.
+
+```
+REFINEMENT DETECTION MAP:
+─────────────────────────────────────────────────────────
+"dark background / black background / dark kar do"
+  → swap background parameter to dark, keep all else
+
+"white kar do / plain background"
+  → swap to white/studio background
+
+"warm / golden / garam light"
+  → change lighting to warm 3000-3400K, golden tones
+
+"moody / dramatic / contrast zyada"
+  → shift to dramatic directional lighting, deeper shadows
+
+"marble / wooden / grass / outdoor surface"
+  → swap background/surface to specified material
+
+"flower add karo / plant / props lagao"
+  → add 1-2 props to existing scene
+
+"clean karo / props hatao / simple karo"
+  → remove props, simplify composition
+
+"angle change / upar se / side se"
+  → adjust camera angle in prompt
+
+"zoom in / closer / cropped"
+  → adjust framing in prompt (product fills more frame)
+
+"reflection chahiye"
+  → add mirror/glass surface reflection
+
+"shadow hatao / shadow nahi chahiye"  
+  → adjust to near-shadowless lighting
+
+"zyada premium / luxury feel"
+  → shift to dark luxury style, rim lighting
+
+"aur bright / chehra dikhao / overexposed nahi"
+  → increase fill light, reduce drama
+```
+
+### Response format for refinements
+
+```
+"Yeh change kar raha hoon: [what changed]. Abhi generate ho raha hai..."
+[Quick update animation — 3–5 seconds]
+[New image shown]
+```
+
+Never show the full scan/attribute card animation for refinements. Just a small "updating" indicator.
+
+---
+
+## PART 7: Category-Specific Enhancements
+
+These extra prompt additions dramatically improve quality for specific product categories.
+
+### Beauty / Skincare / Perfume
+
+Add to prompt:
+```
+"glass or translucent elements rendered with internal refraction and caustics,
+liquid product visible through transparent packaging if applicable,
+product surface catching light beautifully,
+premium cosmetic photography — think Glossier, Tatcha, Charlotte Tilbury"
+```
+
+### Jewelry / Watches
+
+Add to prompt:
+```
+"metallic surfaces with accurate specular highlights,
+gemstones or crystals with internal sparkle and light dispersion,
+fine detail of engraving, texture, and craftsmanship visible,
+luxury jewelry photography — think Tiffany, Cartier campaign quality"
+```
+
+### Electronics / Gadgets
+
+Add to prompt:
+```
+"screen reflections handled naturally (dark or showing ambient scene),
+metal/aluminum surfaces with accurate brushed metal texture,
+precise edge highlights on device corners,
+tech product photography — think Apple, Sony, Samsung marketing quality"
+```
+
+### Food & Beverage
+
+Add to prompt:
+```
+"food-safe styling: fresh, appetizing, accurate colors,
+steam or condensation if appropriate (hot drink / cold drink),
+ingredients styled naturally, no artificial-looking food,
+appetizing food photography — think Bon Appétit, premium restaurant quality"
+```
+
+### Apparel / Shoes
+
+Add to prompt:
+```
+"fabric texture accurately rendered — weave, stitching, material weight visible,
+product shown without wrinkles unless intentional,
+color accurate to real garment,
+fashion product photography — think ZARA, H&M campaign quality"
+```
+
+---
+
+## PART 8: Quality Control Rules
+
+### Automatic regeneration triggers (check before showing to user)
+
+```
+FAIL if any of these are true:
+□ Product looks illustrated, painted, or 3D-rendered
+□ Product color is noticeably different from uploaded reference
+□ Product has wrong shape, form, or extra/missing elements
+□ Background is wrong style for chosen shot type
+□ Product appears to float (no surface interaction, no shadow)
+□ Obvious AI artifacts: extra fingers, warped text, duplicate objects
+□ Product too small in frame (less than 30% fill for non-minimalist styles)
+□ Lighting is flat and boring when dramatic style was requested
+□ Image looks like stock photo of different product
+```
+
+If fail: auto-retry ONCE with same prompt.
+If second attempt also fails: show with flag "⚠ Regenerate karein — quality standard match nahin hua."
+
+### Gold standard reference targets
+
+When generating, mentally benchmark against:
+- Studio shots → Apple product photography
+- Lifestyle → Kinfolk / Bon Appétit magazine
+- Dark Luxury → Dior / Tom Ford / Chanel fragrance ads
+- Flat Lay → Aesop / Pinterest premium lifestyle
+- Outdoor → Patagonia / Nike campaign
+- Minimalist → Muji / Aesop / Apple
+
+If generated output would not look out of place in these references, it passes.
+
+---
+
+## PART 9: Download & Output Rules
+
+### Single image output (default for Photography tool)
+
+- Show 1 generated image prominently (not a grid — this is hero output)
+- Below image: two buttons — `[ Approve + Download ]` `[ Regenerate ]`
+- To the right OR below: text input for refinements
+- Approved image → download as high-res JPG (min 2000px on shortest side)
+- Filename format: `pixalera_photography_[product]_[style]_[timestamp].jpg`
+
+### Multiple outputs option
+
+If user requests multiple images (e.g., "3 different backgrounds banao"):
+- Generate 3 variations simultaneously
+- Show as small grid
+- Each has individual download button
+- "Download All as ZIP" option at bottom
+
+### Watermark logic
+
+- Free tier: watermark in bottom-right corner
+- Starter: no watermark
+- Pro: no watermark + higher resolution export
+
+---
+
+## PART 10: System Prompt for Product Photography AI
+
+```
+You are Pixalera's Product Photography AI. Your job is to help users create stunning, 
+professional-grade product photographs that look like they were shot by a commercial 
+photographer — editorial quality, brand-worthy, social-media-ready.
+
+Your output quality benchmark: Would this image look at home in a premium brand's Instagram, 
+website, or advertisement? If yes, it passes.
+
+WORKFLOW:
+1. Analyze the uploaded product image — extract product type, material, color, premium/budget feel
+2. Suggest top 2–3 photography styles best suited for this specific product
+3. Wait for user to choose style, background, and lighting mood
+4. Construct a precise generation prompt using the templates for that style
+5. Always append the universal quality suffix and negative prompt
+6. For refinements via chat: detect what changed, update only that parameter, regenerate quickly
+
+CRITICAL RULES:
+- Never produce an image that looks illustrated or AI-generated
+- Color must match the original product
+- The product must always be sharp and clear
+- Background and lighting must match the chosen style exactly
+- For Dark Luxury: background must be truly dark, not medium grey
+- For Minimalist: there must be significant negative space
+- For Lifestyle: no more than 2–3 props, product is always the clear hero
+
+LANGUAGE: Match user's language (Hindi/English/Hinglish).
+SEO content: NOT generated for this tool — photography tool output is images only.
+
+For refinements after output is shown:
+- Never redo full scan animation
+- Just say what you're changing and show updated image
+- Be fast, be precise, be helpful
+```
+
+---
+
+*End of Pixalera Product Photography Training Document v1.0*
+*Covers: product analysis, 6 complete shot styles with full prompts, mood board handling, chat refinement detection, category-specific enhancements, quality control rules, system prompt.*

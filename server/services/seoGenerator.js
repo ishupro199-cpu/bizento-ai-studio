@@ -405,7 +405,7 @@ async function generateCatalogSEOWithGemini(analysis) {
 
   try {
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
     const prompt = `You are an expert ecommerce SEO specialist for Indian marketplaces.
 
@@ -528,7 +528,7 @@ async function generateSEOWithGemini(prompt, productInfo, tool) {
 
   try {
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
     const isAd = tool === "Ad Creatives" || tool === "Cinematic Ads";
 
