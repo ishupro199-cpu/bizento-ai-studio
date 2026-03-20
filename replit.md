@@ -37,7 +37,9 @@ server/
   middleware/auth.js          # Credit guard: pre-deduct, suspend check, plan expiry, feature gating
   routes/generate.js          # POST /api/generate
   routes/payment.js           # POST /api/payment/create-order + /verify
-  routes/admin.js             # Admin CRUD: suspend, credits adjust, plan change, delete
+  routes/admin.js             # Admin CRUD: suspend, credits adjust, plan change, delete, logs, users, stats, generations, transactions, blog, notify
+  routes/notifications.js     # GET /api/notifications + POST/DELETE
+  routes/blogs.js             # GET /api/blogs + POST/PATCH/DELETE
   config/firebase.js          # Firebase Admin SDK init
   services/pipeline.js        # Replicate API (flux-schnell, bg-removal, llava-13b)
 ```

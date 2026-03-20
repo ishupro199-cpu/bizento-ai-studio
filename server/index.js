@@ -5,6 +5,8 @@ import { paymentRouter } from "./routes/payment.js";
 import { adminRouter } from "./routes/admin.js";
 import { aiTestRouter } from "./routes/aiTest.js";
 import { referralRouter } from "./routes/referral.js";
+import { notificationsRouter } from "./routes/notifications.js";
+import { blogsRouter } from "./routes/blogs.js";
 import { initFirebaseAdmin } from "./config/firebase.js";
 
 const app = express();
@@ -31,6 +33,8 @@ app.use("/api/payment", paymentRouter);
 app.use("/api/admin", adminRouter);
 app.use("/api/ai-test", aiTestRouter);
 app.use("/api/referral", referralRouter);
+app.use("/api/notifications", notificationsRouter);
+app.use("/api/blogs", blogsRouter);
 
 app.use((err, _req, res, _next) => {
   console.error(err.stack);

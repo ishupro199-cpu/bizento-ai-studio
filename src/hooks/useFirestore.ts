@@ -130,11 +130,15 @@ export function useGenerations() {
   const addGeneration = useCallback(
     async (record: Omit<FirestoreGeneration, "id" | "userId">) => {
       if (!user) return;
-      await addDoc(collection(db, "generations"), {
+      const data: Record<string, any> = {
         ...record,
         userId: user.uid,
         createdAt: Timestamp.fromDate(record.createdAt),
+      };
+      Object.keys(data).forEach((k) => {
+        if (data[k] === undefined) delete data[k];
       });
+      await addDoc(collection(db, "generations"), data);
     },
     [user]
   );

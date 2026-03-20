@@ -364,16 +364,17 @@ export default function WelcomeDashboard() {
 
   const runThinkingAnimation = useCallback((): Promise<void> => {
     return new Promise((resolve) => {
+      const steps = THINKING_STEPS_BY_TOOL[activeToolName] || THINKING_STEPS_BY_TOOL.default;
       let step = 0;
       const durations = [700, 800, 900, 1100, 900, 700];
       const next = () => {
-        if (step >= THINKING_STEPS.length) { setThinkingDone(true); resolve(); return; }
+        if (step >= steps.length) { setThinkingDone(true); resolve(); return; }
         setThinkingStep(step);
         timerRef.current = window.setTimeout(() => { step++; next(); }, durations[step] ?? 800);
       };
       timerRef.current = window.setTimeout(next, 200);
     });
-  }, []);
+  }, [activeToolName]);
 
   const handleSend = async () => {
     if (!inputPrompt.trim() || isGenerating) return;

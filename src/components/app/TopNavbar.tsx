@@ -1,13 +1,13 @@
 import {
   BoltIcon,
   SparklesIcon,
-  BellIcon,
   ChevronDownIcon,
   Bars3Icon,
 } from "@heroicons/react/24/outline";
 import { BoltIcon as BoltSolid } from "@heroicons/react/24/solid";
-import { ConfigProvider, Dropdown, Badge, theme } from "antd";
+import { ConfigProvider, Dropdown, theme } from "antd";
 import { useAppContext } from "@/contexts/AppContext";
+import { NotificationBell } from "@/components/app/NotificationBell";
 
 const models = [
   { id: "flash" as const, name: "Pixa Flash", desc: "Fast generation · 1 credit", icon: BoltIcon },
@@ -44,10 +44,7 @@ export function TopNavbar({ onMenuToggle }: TopNavbarProps) {
     }}>
       <header
         className="h-14 flex items-center justify-between px-3 sm:px-4 sticky top-0 z-20"
-        style={{
-          background: "transparent",
-          border: "none",
-        }}
+        style={{ background: "transparent", border: "none" }}
       >
         <div className="flex items-center gap-2 sm:gap-3">
           {onMenuToggle && (
@@ -84,9 +81,7 @@ export function TopNavbar({ onMenuToggle }: TopNavbarProps) {
             trigger={["click"]}
             placement="bottomLeft"
           >
-            <button
-              className="flex items-center gap-2 h-9 px-3 rounded-lg hover:bg-white/5 transition-colors outline-none"
-            >
+            <button className="flex items-center gap-2 h-9 px-3 rounded-lg hover:bg-white/5 transition-colors outline-none">
               <currentModel.icon className="h-3.5 w-3.5 shrink-0" style={{ color: "#89E900" }} />
               <span className="text-[13px] font-semibold" style={{ color: "rgba(255,255,255,0.85)" }}>
                 {currentModel.name}
@@ -100,10 +95,7 @@ export function TopNavbar({ onMenuToggle }: TopNavbarProps) {
           {/* Credits chip */}
           <div
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm"
-            style={{
-              background: "rgba(137,233,0,0.08)",
-              border: "1px solid rgba(137,233,0,0.15)",
-            }}
+            style={{ background: "rgba(137,233,0,0.08)", border: "1px solid rgba(137,233,0,0.15)" }}
           >
             <BoltSolid className="h-3.5 w-3.5" style={{ color: "#89E900" }} />
             <span className="font-semibold" style={{ color: "#89E900" }}>{user.creditsRemaining}</span>
@@ -121,15 +113,8 @@ export function TopNavbar({ onMenuToggle }: TopNavbarProps) {
             </button>
           )}
 
-          {/* Bell */}
-          <Badge dot style={{ background: "#89E900" }}>
-            <button
-              className="h-8 w-8 flex items-center justify-center rounded-lg hover:bg-white/5 transition-colors"
-              style={{ color: "rgba(255,255,255,0.45)" }}
-            >
-              <BellIcon className="h-4 w-4" />
-            </button>
-          </Badge>
+          {/* Real Notification Bell */}
+          <NotificationBell />
         </div>
       </header>
     </ConfigProvider>
