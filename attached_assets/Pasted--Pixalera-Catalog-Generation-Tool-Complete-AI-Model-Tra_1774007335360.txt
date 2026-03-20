@@ -1,0 +1,832 @@
+# Pixalera — Catalog Generation Tool
+## Complete AI Model Training Document v1.0
+
+---
+
+## OVERVIEW: What this tool must do
+
+The Catalog Generation tool takes a single product image uploaded by a user (usually a mobile phone photo, sometimes blurry or badly lit) and must:
+
+1. **Deeply analyze** the product using vision AI
+2. **Generate N hyperrealistic, professional ecommerce catalog images** in the correct shot types
+3. **Generate platform-specific SEO content** — title, description, keywords, attributes
+4. **Show platform tabs** below the images; clicking a tab switches the attributes panel to that platform's exact format
+5. **Recover missing attributes** when the user provides them via chat message — without re-generating images
+
+The output must look like it was shot in a professional photography studio. Not AI-generated. Not illustrated. Photorealistic.
+
+---
+
+## PART 1: Product Analysis (Vision AI Step)
+
+### What to extract from every uploaded image
+
+Run this analysis BEFORE any generation. Extract ALL of the following. If something cannot be determined with confidence, mark it as `[INFER]` — the generation prompt will infer it from context.
+
+```
+PRODUCT ANALYSIS SCHEMA:
+─────────────────────────────────────────────
+product_name:        [specific name, not generic]
+product_category:    [top-level: Electronics / Apparel / Home & Kitchen / 
+                      Beauty / Sports / Books / Toys / Footwear / Bags / 
+                      Jewelry / Food / Other]
+product_subcategory: [specific: Ceramic Mug / Running Shoes / Face Serum / etc.]
+brand_name:          [visible text on product, or "unbranded"]
+primary_color:       [exact: Matte Black / Ivory White / Forest Green / etc.]
+secondary_colors:    [list any accent colors]
+material:            [Ceramic / Stainless Steel / Cotton / Leather / Plastic / etc.]
+finish:              [Matte / Glossy / Textured / Brushed / Natural / etc.]
+size_visible:        [if visible: dimensions or S/M/L/XL or capacity]
+key_features:        [max 5: visible features like handle, lid, logo placement]
+condition:           [New / Used — always New unless obviously used]
+target_use:          [daily use / gifting / professional / sports / decor]
+image_quality:       [Good / Poor lighting / Blurry / Cluttered background]
+background_in_photo: [white / colored / cluttered / outdoor / lifestyle]
+multiple_items:      [yes/no — if yes, ask user which one to focus on]
+```
+
+### Confidence check before proceeding
+
+After analysis, if ANY of these are missing or very low confidence:
+- `product_category`
+- `product_subcategory`
+- `primary_color`
+
+→ Show the analysis cards to the user with a note:
+> "Mujhe yeh product [X] lag raha hai. Kya yeh sahi hai? Agar alag hai toh batao."
+
+Do NOT ask this if confidence is reasonable. Only when truly unclear.
+
+---
+
+## PART 2: Image Generation — Shot Types
+
+### The 6 standard shot types
+
+Every shot type must produce a **hyperrealistic, studio-quality** result. The user's original photo is the reference — the AI must reproduce the SAME product in a new professional setting.
+
+---
+
+### Shot 1: Hero Shot (Main Listing Image)
+
+**Purpose:** Primary image shown in search results. Must be clean, professional, instantly recognizable.
+
+**Rules:**
+- Pure white background (#FFFFFF) — mandatory for Amazon, Flipkart
+- Product occupies 85%+ of frame
+- Perfect front-facing view, slightly elevated angle
+- Soft, even studio lighting — no harsh shadows
+- Subtle natural shadow or reflection directly below product
+- No props, no text overlays, no lifestyle elements
+- Product must appear 3-dimensional, not flat
+- If product has a logo/brand text: clearly visible and sharp
+
+**Prompt template:**
+```
+Professional ecommerce product photography of [PRODUCT_NAME], [PRIMARY_COLOR] [MATERIAL], 
+front-facing hero shot, pure white studio background, soft diffused studio lighting, 
+even illumination with no harsh shadows, subtle natural drop shadow, 
+product filling 85% of frame, hyperrealistic, ultra sharp focus, 
+8K resolution, commercial catalog photography style, 
+[BRAND_NAME visible and sharp if applicable], 
+no props, no text overlays, photorealistic not illustrated
+```
+
+---
+
+### Shot 2: Back / Secondary View
+
+**Purpose:** Show reverse side, additional labels, back panel, ingredients list visibility.
+
+**Rules:**
+- Same white/light background as hero
+- Rotate product 180° or show rear panel
+- If apparel: show back of garment flat or on invisible mannequin
+- If bottle/container: show nutrition facts / ingredient label clearly
+- Same lighting as hero shot
+
+**Prompt template:**
+```
+Professional ecommerce product photography of [PRODUCT_NAME], [PRIMARY_COLOR] [MATERIAL],
+rear/back view showing [back panel/label/reverse side], 
+pure white studio background, soft even studio lighting, 
+same commercial photography style, ultra sharp focus, hyperrealistic,
+[specific back feature: label text readable / back pocket visible / etc.]
+```
+
+---
+
+### Shot 3: 45-Degree Angle Shot
+
+**Purpose:** Shows product depth, 3D form, and build quality. Conveys premium feel.
+
+**Rules:**
+- Product at 45° angle from front-right or front-left
+- Shows both front face and one side panel
+- Dramatic but controlled studio lighting — slight directional light from upper left
+- Long soft shadow to the right
+- White or very light neutral grey background
+- Product looks premium, solid, well-made
+
+**Prompt template:**
+```
+Professional ecommerce product photography of [PRODUCT_NAME], [PRIMARY_COLOR] [MATERIAL],
+three-quarter 45-degree angle view, white studio background with subtle light grey gradient,
+directional soft-box lighting from upper-left, elegant long shadow,
+depth of field with sharp product, hyperrealistic, commercial catalog quality,
+showing product form and depth, premium feel, 8K detail
+```
+
+---
+
+### Shot 4: Detail / Close-Up Shot
+
+**Purpose:** Show material quality, texture, craftsmanship, logo, stitching, finish.
+
+**Rules:**
+- Extreme close-up or macro shot of most interesting/premium detail
+- For apparel: stitching, fabric texture, zipper, embroidery
+- For electronics: button detail, port, display corner
+- For beauty: lid/cap mechanism, dropper, texture
+- For ceramics/home: glaze texture, handle join, rim detail
+- Shallow depth of field — background very blurry
+- Very sharp focus on the detail area
+- Warm, slightly dramatic lighting
+
+**Prompt template:**
+```
+Extreme close-up macro photography of [PRODUCT_NAME] [SPECIFIC_DETAIL],
+[PRIMARY_COLOR] [MATERIAL] texture visible in sharp detail,
+very shallow depth of field, blurred background, 
+warm studio lighting highlighting [texture/stitching/finish/logo],
+hyperrealistic, DSLR macro lens quality, showing material quality and craftsmanship,
+commercial product photography, ultra sharp on focus point
+```
+
+---
+
+### Shot 5: Lifestyle / In-Context Shot
+
+**Purpose:** Show product being used in its natural environment. Drives emotional connection. Critical for Meesho, Instagram, Facebook.
+
+**Rules:**
+- Product shown in realistic, aspirational setting that matches target_use
+- Natural, editorial-style lighting (not pure studio)
+- Props allowed but minimal — 2-3 complementary items max
+- Human hand or partial lifestyle elements allowed (no full faces unless clearly needed)
+- Background: relevant but not distracting (wooden table, marble counter, office desk, outdoor)
+- Product still clearly dominant in the frame
+
+**Context mapping by product category:**
+```
+Mug/cup         → wooden breakfast table, morning light, newspaper/book nearby
+Electronics     → clean modern desk, minimal setup, ambient room light
+Clothing        → clothing flat-lay on neutral fabric background OR folded neatly
+Shoes           → on clean floor, slight overhead angle, minimal background
+Beauty/skincare → marble surface, minimal botanical props, soft natural light
+Kitchen item    → kitchen counter, ingredients if applicable, natural daylight
+Kids toy        → clean playful background, colourful but not cluttered
+Sports product  → outdoor surface OR gym environment
+Bag/purse       → flat lay on neutral linen OR hanging on minimal hook
+Books           → wooden table, reading glasses, coffee cup nearby
+Jewelry         → velvet/linen surface, soft natural light, elegant minimal
+```
+
+**Prompt template:**
+```
+Lifestyle product photography of [PRODUCT_NAME] in [CONTEXT_SETTING],
+[PRODUCT] as main subject, complementary props: [2-3 props],
+[LIGHTING TYPE: warm morning light / soft natural window light / ambient room light],
+editorial photography style, hyperrealistic, aspirational and relatable,
+shallow depth of field, product in sharp focus, 
+commercial lifestyle photography, not cluttered, clean composition
+```
+
+---
+
+### Shot 6: Infographic / Feature Callout Shot
+
+**Purpose:** Show product features with visual callouts. Used inside Amazon/Flipkart listing. Drives conversion.
+
+**Rules:**
+- Product on clean white or very light background
+- 3-5 callout arrows or lines pointing to key features
+- Short bold text labels (2-4 words max per callout)
+- Clean, minimal sans-serif font (the frontend renders this as an overlay — prompt just generates clean product shot)
+- The AI generates the BASE clean product image; frontend overlays the text callouts
+- Therefore: generate a clean hero/angle shot with NO text — text overlay is done by the UI layer
+
+**Prompt template:**
+```
+Clean professional product photography of [PRODUCT_NAME] at slight angle,
+white background, all key features clearly visible,
+[list features to show: handle, lid, spout, ports, buttons],
+even lighting, hyperrealistic, sharp detail on all sides,
+no text overlays (text will be added programmatically),
+commercial product photography for ecommerce infographic use
+```
+
+---
+
+## PART 3: Generation Quality Rules
+
+### NEVER produce these — automatic regeneration triggers
+
+1. Product looks illustrated, cartoon-like, or painted — NOT photorealistic
+2. Wrong product shown (AI hallucinated a different object)
+3. Background not clean/white when required (hero/back shots)
+4. Product is floating with no shadow or surface
+5. Product proportions are distorted
+6. Logo/text on product is blurry, warped, or hallucinated differently
+7. Two copies of the product appear
+8. Product is too small in frame (less than 60% fill on hero shots)
+9. Weird artifacts, extra objects, or partial objects in frame
+10. Color is significantly different from the uploaded reference
+
+### Quality enhancer terms — inject these into EVERY prompt
+
+```
+Always append to every generation prompt:
+"hyperrealistic, photorealistic not illustrated, ultra sharp focus, 
+8K commercial product photography, studio quality, 
+consistent with original product color and form, 
+no AI artifacts, physically accurate materials and surfaces"
+```
+
+### Background rules by shot type
+
+| Shot | Background |
+|------|-----------|
+| Hero | Pure white #FFFFFF |
+| Back view | Pure white #FFFFFF |
+| 45° angle | White or light neutral grey |
+| Close-up | Blurred version of relevant material/texture |
+| Lifestyle | Scene-appropriate (table, counter, floor, outdoor) |
+| Infographic | White or very light grey |
+
+---
+
+## PART 4: SEO Content Generation
+
+### Title formula by platform
+
+After images are approved, generate SEO content. Each platform has a specific title formula. Follow EXACTLY.
+
+---
+
+#### Amazon Title Formula
+```
+[Brand Name] [Product Type] [Key Feature 1] [Key Feature 2] | [Material] | [Color] | [Size/Capacity if applicable] | [Pack if applicable]
+
+Max length: 200 characters
+Must include: brand, product type, 2 features, material, color
+No special characters except | and &
+No promotional language ("best", "amazing", "sale")
+No all-caps words
+```
+
+**Example:**
+```
+Unbranded Ceramic Coffee Mug with Lid and Handle | Dishwasher Safe | Matte Black | 350ml | Gift Box
+```
+
+---
+
+#### Flipkart Title Formula
+```
+[Brand] [Product Type] [Primary Feature] [Color/Pattern] [Size] [Pack]
+
+Max length: 255 characters
+Use "(Pack of N)" format at end if multiple
+Include color in title
+More descriptive, can include use case
+```
+
+**Example:**
+```
+Handcrafted Ceramic Coffee Mug with Lid Matte Black 350 ml (Pack of 1)
+```
+
+---
+
+#### Meesho Title Formula
+```
+[Product Type] [Style/Design Feature] [Color] [Material] [for Target Audience if relevant]
+
+Max length: 150 characters  
+Conversational, slightly casual tone allowed
+Include who it's for if clear (women/men/kids/home)
+Emphasize design and aesthetic
+```
+
+**Example:**
+```
+Ceramic Coffee Mug with Lid Matte Black for Daily Use - Gift Ready
+```
+
+---
+
+#### Myntra Title Formula (Apparel/Fashion focus)
+```
+[Brand] [Product Type] [Design Feature] [Fabric/Material] [Color] [for Men/Women/Boys/Girls]
+
+Max length: 120 characters
+Always end with gender/age group
+Include fabric type prominently
+Style-forward language
+```
+
+**Example:**
+```
+Regular Fit Crew Neck Cotton T-Shirt Solid White for Men
+```
+
+---
+
+#### Instagram Caption Formula
+```
+Line 1: Hook — one punchy line about the product benefit (not salesy)
+Line 2-3: 2 sentences about what makes it special
+Line 4: Call to action
+Line 5: Hashtags (15-20, mix of broad + niche)
+
+Tone: Aspirational, warm, not corporate
+No pricing in caption
+```
+
+**Example:**
+```
+Your morning deserves better. ☁️
+Meet the matte black ceramic mug that makes every sip feel intentional — 350ml, dishwasher safe, and gift-ready.
+Tap the link in bio to get yours. ✨
+
+#morningcoffee #ceramicmug #coffeelover #homedecor #minimaliststyle #giftsforher #kitchenaesthetic #coffeeaddict #blackkitchen #morningugroutine #muglife #handmadeceramic #coffeetime #dailyroutine #gifting #matteblack #kitchendecor #cozyhome #coffeeculture #homegifts
+```
+
+---
+
+### Description formula (all platforms)
+
+```
+Structure:
+Paragraph 1 (2-3 sentences): What is it + who is it for + main benefit
+Paragraph 2 (2-3 sentences): Key features explained naturally (not a list)
+Paragraph 3 (1-2 sentences): Quality/material highlight
+Paragraph 4 (1 sentence): Use case / gifting angle
+
+SEO rules:
+- Primary keyword in first 20 words
+- Include 3-4 secondary keywords naturally
+- No keyword stuffing
+- Active voice throughout
+- No superlatives ("best ever", "world-class")
+- Max 1000 characters total
+```
+
+---
+
+### Keyword generation (5 keywords per product)
+
+```
+Always generate:
+1. Primary keyword: [product type] (exact, high volume)
+2. Long-tail keyword 1: [color/material] + [product type]
+3. Long-tail keyword 2: [use case] + [product type]  
+4. Competitor keyword: [category] + [feature]
+5. Gifting keyword: [product type] + for gift / gift for [occasion]
+
+Format: simple lowercase phrases, no quotes, no commas within keyword
+```
+
+**Example for ceramic mug:**
+```
+1. ceramic coffee mug
+2. matte black ceramic mug with lid
+3. coffee mug for daily use
+4. dishwasher safe ceramic cup 350ml
+5. coffee mug as gift for coffee lover
+```
+
+---
+
+## PART 5: Platform-Specific Attributes (EXACT FIELDS)
+
+These are the exact attribute fields each platform displays. When user clicks a platform tab, show ONLY that platform's attributes. Generate values for EVERY field. Never leave a field blank — if unknown, write the most logical inference.
+
+---
+
+### AMAZON ATTRIBUTES
+
+```
+MANDATORY FIELDS (always show):
+─────────────────────────────────────────────────────────
+Brand                    → [brand name or "Generic"]
+Manufacturer             → [brand or "See product description"]  
+Model Name               → [specific model/variant name]
+Part Number              → [SKU if available, else "NA"]
+Item Form                → [Solid / Liquid / Powder / Capsule / Spray / etc.]
+Item Weight              → [in grams or kg, e.g. "320 g"]
+Product Dimensions       → [LxWxH in cm, e.g. "10 x 8 x 12 cm"]
+Color                    → [exact color name]
+Style                    → [Classic / Modern / Traditional / Contemporary / etc.]
+Material                 → [primary material]
+Finish Type              → [Matte / Glossy / Brushed / Polished / etc.]
+Special Feature          → [top 3 features as comma-separated, e.g. "Dishwasher Safe, Microwave Safe, With Lid"]
+About This Item          → [5 bullet points, each 15-25 words, starting with capital letter]
+Included Components      → [what's in the box]
+Number of Items          → [1 or pack quantity]
+Country of Origin        → [India / China / etc., default "India" if unknown]
+ASIN                     → [Leave blank — filled by Amazon]
+Date First Available     → [Leave blank — filled by Amazon]
+
+CATEGORY-SPECIFIC FIELDS (add if product matches):
+─────────────────────────────────────────────────────────
+[Kitchen/Home]:
+  Capacity               → [in ml or L or cups]
+  Is Dishwasher Safe     → [Yes / No]
+  Is Microwave Safe      → [Yes / No]
+  Is Oven Safe           → [Yes / No]
+  Occasion               → [Everyday Use / Gifting / Corporate Gift / etc.]
+
+[Apparel]:
+  Department             → [Men / Women / Boys / Girls / Unisex]
+  Size                   → [S/M/L/XL/XXL or numeric]
+  Fabric                 → [100% Cotton / Polyester / etc.]
+  Care Instructions      → [Machine Wash / Hand Wash / Dry Clean]
+  Fit Type               → [Regular / Slim / Oversized / Relaxed]
+  Pattern                → [Solid / Striped / Printed / etc.]
+  Collar Style           → [for shirts/tops]
+
+[Electronics]:
+  Connectivity Technology → [Bluetooth / WiFi / USB / Wired / etc.]
+  Compatible Devices     → [list]
+  Batteries Required     → [Yes/No, type if yes]
+  Wattage                → [if applicable]
+  Voltage                → [if applicable]
+
+[Beauty/Skincare]:
+  Skin Type              → [All / Oily / Dry / Combination / Sensitive]
+  Item Volume            → [in ml]
+  Active Ingredient      → [top 2-3]
+  Age Range              → [Adult / Teen / etc.]
+  Scent                  → [if applicable]
+```
+
+---
+
+### FLIPKART ATTRIBUTES
+
+```
+MANDATORY FIELDS:
+─────────────────────────────────────────────────────────
+Brand                    → [brand name]
+Type                     → [specific product type]
+Color                    → [color name]
+Material                 → [material]
+Sales Package            → [what's included: "1 Mug, 1 Lid"]
+Model Name               → [model/variant]
+Capacity                 → [if applicable: volume/size]
+Set Of                   → [quantity in set]
+Design                   → [Plain / Printed / Embossed / etc.]
+Shape                    → [Round / Square / Rectangular / etc.]
+Pattern                  → [Solid / Geometric / Floral / etc.]
+Primary Material         → [same as material but more specific]
+Features                 → [bullet point list of 4-6 features]
+Ideal For                → [Men / Women / Boys / Girls / Unisex / Home]
+In The Box               → [list all items in packaging]
+Net Quantity             → [1 Unit / Set of 2 / etc.]
+Country of Origin        → [India default]
+Warranty Summary         → [Seller warranty 7 days / No warranty / etc.]
+Seller                   → [Leave blank — filled by seller]
+
+CATEGORY-SPECIFIC:
+[Kitchen]:
+  Microwave Safe         → [Yes/No]
+  Dishwasher Safe        → [Yes/No]
+  BPA Free               → [Yes/No]
+  Occasion               → [Daily Use / Gifting / Corporate]
+  
+[Apparel]:
+  Fabric                 → [fabric composition]
+  Fit                    → [Regular Fit / Slim Fit / etc.]
+  Sleeve Length          → [Full / Half / Sleeveless]
+  Neck                   → [Round / V-Neck / Collar / etc.]
+  
+[Footwear]:
+  Sole Material          → [Rubber / EVA / etc.]
+  Outer Material         → [Leather / Mesh / Canvas / etc.]
+  Closure                → [Lace-Up / Slip-On / Velcro / etc.]
+  Occasion               → [Casual / Formal / Sports / etc.]
+```
+
+---
+
+### MEESHO ATTRIBUTES
+
+```
+MANDATORY FIELDS (simpler than Amazon/Flipkart):
+─────────────────────────────────────────────────────────
+Product Type             → [exact type]
+Color                    → [color]
+Material                 → [material]
+Size                     → [size or capacity]
+Pack Of                  → [quantity]
+Brand                    → [or "No Brand"]
+Style                    → [style descriptor]
+Pattern                  → [Solid / Printed / etc.]
+Occasion                 → [Casual / Festive / Party / Office / Daily]
+Ideal For                → [Women / Men / Girls / Boys / Kids / Home]
+Country of Origin        → [India]
+Product Description      → [short, max 300 characters, conversational]
+
+NOTE FOR MEESHO: 
+Attributes are simpler and fewer. The listing description and images 
+do most of the selling work. Keep descriptions conversational and 
+mention affordability/value angle if appropriate.
+Meesho buyers search in Hindi also — add Hinglish-friendly terms where relevant.
+```
+
+---
+
+### MYNTRA ATTRIBUTES (Fashion/Apparel heavy)
+
+```
+MANDATORY FIELDS:
+─────────────────────────────────────────────────────────
+Brand                    → [brand name]
+Product Type             → [T-Shirt / Kurta / Sneaker / Handbag / etc.]
+Gender                   → [Men / Women / Boys / Girls / Unisex]
+Color                    → [color]
+Fabric                   → [fabric composition, e.g. "100% Cotton"]
+Care                     → [Machine wash / Hand wash / Dry clean only]
+Pattern                  → [Solid / Striped / Checked / Printed / etc.]
+Fit                      → [Regular / Slim / Oversized / Relaxed]
+Sleeve Length            → [Full / Half / Three-Quarter / Sleeveless]
+Neck                     → [Round Neck / V-Neck / Polo / etc.]
+Occasion                 → [Casual / Formal / Sport / Party / Ethnic]
+Sustainable              → [Yes / No — if organic/recycled material]
+Hemline                  → [for dresses/kurtas: Regular / High-Low / A-Line]
+Number of Pockets        → [if applicable]
+Reversible               → [Yes / No]
+Country of Origin        → [India]
+
+NOTE FOR MYNTRA:
+Myntra is fashion-forward. Use aesthetic/style language.
+Always mention the styling occasion.
+Size chart note: always add "Refer to size guide for best fit"
+```
+
+---
+
+### INSTAGRAM/SOCIAL ATTRIBUTES (for Ads Creation crossover)
+
+```
+NOT traditional attributes — use these fields:
+─────────────────────────────────────────────────────────
+Caption (full)           → [see caption formula above]
+Hashtags                 → [15-20 relevant hashtags]
+Story Text               → [2-line punchy version for stories, max 60 chars]
+Product Tag Text         → [15 words max: "Matte Black Ceramic Mug | ₹299 | Link in bio"]
+Alt Text                 → [for accessibility: "Matte black ceramic mug with lid on white background"]
+```
+
+---
+
+## PART 6: Missing Attribute Recovery System
+
+### How it works
+
+After the results page is shown, some attributes may be missing or marked `[Ask user]`. These typically are:
+- Size / dimensions (not visible in image)
+- Weight (not visible in image)
+- Material composition % (e.g., "60% cotton 40% polyester")
+- Capacity in specific units
+- Specific model number or SKU
+- Country of origin (if unknown)
+- Care instructions
+
+### When user sends a message after results
+
+**Step 1: Detect if the message is providing missing attribute information**
+
+Signals:
+- Contains numbers + units: "350 ml", "42 size", "1.2 kg", "28cm x 15cm"
+- Contains material %: "60% cotton", "pure cotton", "stainless steel 304 grade"
+- Contains model numbers: "Model XR-200", "SKU 8834"
+- Contains origin: "Made in India", "imported from China"
+- Contains care info: "hand wash only", "dry clean"
+- Contains short factual phrases without question marks
+
+**Step 2: Parse and map to attribute fields**
+
+Map the user's input to the correct attribute fields across ALL platforms:
+
+```
+"350 ml"     → Amazon: Capacity="350 ml", Flipkart: Capacity="350 ml"
+"42 size"    → Amazon: Size="42 (EU)", Flipkart: Size="42", Myntra: Size="42"
+"pure cotton"→ Amazon: Material="100% Cotton", Flipkart: Fabric="100% Cotton", Myntra: Fabric="100% Cotton"
+"1.2 kg"     → Amazon: Item Weight="1200 g", Flipkart: [add to product specs]
+"BPA free"   → Amazon: Special Feature adds "BPA Free", Flipkart: BPA Free="Yes"
+```
+
+**Step 3: Update ONLY the attributes panel — do NOT regenerate images**
+
+Show a brief confirmation:
+> "Shukriya! Maine [field names] update kar diye hain — Amazon, Flipkart, aur Meesho ke liye."
+
+Then show the updated attributes panel immediately. No loading animation needed for this — it's an instant update.
+
+**Step 4: If user provides info that improves the title or description**
+
+If the new info is significant enough (like size, key material, or model), offer to update:
+> "Main title bhi update kar sakta hoon is information ke saath — karna chahenge?"
+
+Only update if user confirms.
+
+---
+
+### Missing attribute prompts (what the AI shows proactively)
+
+After results are shown, if certain high-value fields are empty, show ONE message (not multiple):
+
+**For physical products (kitchen/electronics/sports):**
+> "Better results ke liye: product ka weight aur dimensions bata do (jaise '320g, 12cm height'). Optional hai, but Amazon ranking ke liye helpful hai."
+
+**For apparel:**
+> "Size chart ke liye: fabric composition (jaise '100% cotton') aur available sizes bata do."
+
+**For beauty/personal care:**
+> "Skin type aur key ingredients mention karo — flipkart listing mein yeh bahut important hai."
+
+Show this as a subtle suggestion card, not a blocking modal. User can ignore it and download anyway.
+
+---
+
+## PART 7: Output Layout Rules
+
+### Image section (left/top area)
+
+- Images displayed in a clean grid: 2 columns on mobile, 3 on desktop
+- Each image card has:
+  - The generated image (full bleed)
+  - Hover: shows a download icon
+  - Click: opens full-screen preview with download button
+- Below the image grid: **platform name pills in one line**
+
+```
+[Amazon] [Flipkart] [Meesho] [Myntra] [Instagram] [Other]
+```
+
+- Default selected: whichever platform was selected in Phase 4
+- Clicking a different platform pill: **instantly switches the attributes panel** (no reload, no regeneration)
+- Active platform pill: filled style
+- Inactive: outlined style
+- Free user: only 1 pill clickable (the one selected), others show lock icon
+- Starter: any 3 clickable
+- Pro: all clickable + "All platforms" option
+
+### SEO Content section (right/below area)
+
+Layout per platform (shown when that platform pill is active):
+
+```
+┌─────────────────────────────────────────┐
+│  TITLE                          [Copy]  │
+│  [generated title text]                 │
+├─────────────────────────────────────────┤
+│  DESCRIPTION                    [Copy]  │
+│  [generated description text]           │
+├─────────────────────────────────────────┤
+│  KEYWORDS (5)                   [Copy]  │
+│  1. ceramic coffee mug                  │
+│  2. matte black ceramic mug with lid    │
+│  3. ...                                 │
+├─────────────────────────────────────────┤
+│  ATTRIBUTES                     [Copy]  │
+│  Brand: Unbranded                       │
+│  Material: Ceramic                      │
+│  Color: Matte Black                     │
+│  Capacity: [Ask user ⚠]                │
+│  ...                                    │
+└─────────────────────────────────────────┘
+```
+
+- Fields marked `[Ask user ⚠]` are highlighted in amber
+- Copy button copies just that section's text to clipboard
+- Fields with `[Ask user ⚠]` show tooltip: "User ko yeh batana hoga"
+
+### Download section
+
+```
+[ Download selected image ]   [ Download all images ]   [ Download ZIP ]
+```
+
+ZIP contents:
+```
+pixalera_[product]_[platform]/
+  ├── image_01_hero.jpg
+  ├── image_02_back.jpg
+  ├── image_03_angle.jpg
+  ├── image_04_detail.jpg
+  ├── image_05_lifestyle.jpg
+  ├── image_06_infographic.jpg
+  └── seo_content_[platform].txt
+      (contains: title, description, keywords, attributes — plain text)
+```
+
+---
+
+## PART 8: Tone & Response Language
+
+### When to use Hindi vs English vs Hinglish
+
+- If user wrote in Hindi → respond in Hindi
+- If user wrote in English → respond in English  
+- If user wrote in Hinglish → respond in Hinglish
+- SEO content: ALWAYS in English (platform requirement)
+- Attribute values: ALWAYS in English
+- System messages (generating, updating, etc.): match user's language
+
+### During generation (what to say)
+
+```
+[After image upload + command received]
+"Theek hai! Aapke [product] ka professional catalog bana raha hoon..."
+[Scan animation starts]
+
+[When attribute cards appear]
+"Yeh product detect hua: [product name]"
+"Color: [color], Material: [material], Category: [category]"
+
+[During image generation]
+"[N] professional catalog images generate ho rahi hain..."
+[Progress shimmer on output cards]
+
+[When done]
+"Ready hai! Neechey platform select karke SEO content dekho."
+```
+
+### After approve (what to say)
+
+```
+"Images approve ho gayi hain. Ab platform select karo — 
+uske according title, description, keywords aur attributes generate ho jaenge."
+```
+
+### When user sends missing attribute info
+
+```
+[User]: "size 42 hai aur cotton hai"
+[System]: "Update kar diya! Size: 42, Fabric: 100% Cotton — yeh sab platforms pe reflect ho gaya hai."
+```
+
+---
+
+## PART 9: Error Handling
+
+### Image upload errors
+
+| Error | Message to show |
+|-------|----------------|
+| File too large (>20MB) | "Image thodi compress karo — 20MB se kam honi chahiye." |
+| Wrong file type | "JPG, PNG ya WEBP format mein upload karo." |
+| Image too blurry to analyze | "Image thodi blur hai. Better result ke liye thoda clearer photo try karo, ya hum proceed kar sakte hain current photo se." |
+| Multiple products visible | "Is photo mein multiple products dikh rahe hain. Kaunse product ke liye catalog banana hai?" |
+
+### Generation errors
+
+| Error | Action |
+|-------|--------|
+| Generation failed (API error) | "Ek second... dobara try kar raha hoon." — auto-retry once |
+| Wrong product generated | "Galat product generate hua — dobara try karta hoon." — auto-retry with stricter prompt |
+| After 2 retries still wrong | Show regenerate button with message: "Product detect karne mein dikkat ho rahi hai. Aap product ka naam bhi type karo prompt mein." |
+| Timeout | "Thoda time lag raha hai — network slow lag raha hai. Wait karo ya refresh karo." |
+
+### SEO generation errors
+
+Never block the user from downloading images if SEO content fails to generate. Show images first, then a retry button for SEO content separately.
+
+---
+
+## PART 10: Quality Checklist (Run Before Showing Output to User)
+
+Before displaying any generated image to the user, the system should run this check:
+
+```
+□ Is the product the same as uploaded? (color, shape, form match)
+□ Is the background correct for this shot type?
+□ Is the product sharp and in focus?
+□ Does the product occupy enough frame space?
+□ Are there any weird artifacts or duplicate objects?
+□ Is the product's color accurate to the original upload?
+□ For hero/back shots: is the background pure white?
+□ Is the image photorealistic (not illustrated or AI-stylized)?
+```
+
+If 2 or more checks fail: auto-regenerate that specific shot once before showing.
+If regeneration also fails the check: show it with a subtle flag "⚠ Quality check failed — tap to regenerate this shot"
+
+---
+
+*End of Pixalera Catalog Generation Training Document v1.0*
+*Covers: product analysis, 6 shot types, prompt engineering, platform attributes (Amazon/Flipkart/Meesho/Myntra/Instagram), SEO formulas, missing attribute recovery, output layout, error handling, quality checks.*

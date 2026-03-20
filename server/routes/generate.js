@@ -1,12 +1,12 @@
 import { Router } from "express";
 import { FieldValue } from "firebase-admin/firestore";
 import OpenAI from "openai";
-import { generateImages, removeBackground, analyzeProduct } from "../services/pipeline.js";
+import { generateImages, removeBackground, analyzeProduct, buildCatalogShotPrompts } from "../services/pipeline.js";
 import { verifyFirebaseToken, checkCreditAndSuspend, refundCredits } from "../middleware/auth.js";
 import { getAdminDb } from "../config/firebase.js";
 import { generateChatReply, augmentPromptWithGemini } from "../services/gemini.js";
 import { runBrain, getToolVariantPrompts } from "../services/brain.js";
-import { generateSEO } from "../services/seoGenerator.js";
+import { generateSEO, generateCatalogSEO, detectMissingAttributeInfo, mapAttributesToPlatforms } from "../services/seoGenerator.js";
 
 const router = Router();
 
@@ -214,6 +214,31 @@ router.post(
         openaiClient: getOpenAI(),
       });
 
+      // ── ATTRIBUTE UPDATE: user is providing missing product info after output ─────
+      if (brainResult.intentType === "attribute_update") {
+        const attrDetect = detectMissingAttributeInfo(prompt);
+        if (attrDetect.isAttributeUpdate) {
+          const updates = mapAttributesToPlatforms(prompt);
+          const lang = brainResult.replyLanguage || "hinglish";
+          const fieldNames = Object.keys(updates).join(", ");
+          const confirmMsg = lang === "english"
+            ? `Updated! I've applied ${fieldNames} across all platform attributes.`
+            : `Update kar diya! ${fieldNames} — yeh sab platforms pe reflect ho gaya hai. Neechey attributes panel mein dekho.`;
+          return res.json({
+            success: true,
+            intent: "attribute_update",
+            aiReply: confirmMsg,
+            attributeUpdates: updates,
+            images: [],
+            hasRealImages: false,
+            creditsConsumed: 0,
+            creditsRemaining: req.balanceAfter,
+            brainInsights: brainResult,
+          });
+        }
+      }
+
+      // ── CHAT ONLY (greeting / question / unclear) ─────────────────────────────
       if (brainResult.intent === "chat" && !imageUrl && !autoDetect && !requestedTool) {
         const reply = await generateAIReply(prompt, brainResult.replyLanguage);
         return res.json({
@@ -231,6 +256,71 @@ router.post(
       const effectiveTool = requestedTool || brainResult.toolName;
       const effectiveStyle = style || brainResult.styleRecommendation || "luxury";
 
+      // ── CATALOG GENERATION: 6 shot types ─────────────────────────────────────
+      if (effectiveTool === "Generate Catalog" && imageUrl && imageAnalysis) {
+        const shotPrompts = buildCatalogShotPrompts(imageAnalysis);
+
+        let catalogShots = [];
+        if (hasToken) {
+          const shotResults = await Promise.allSettled(
+            shotPrompts.map(shot =>
+              generateImages(shot.prompt, "", 1).catch(() => null)
+            )
+          );
+          catalogShots = shotPrompts.map((shot, i) => {
+            const result = shotResults[i];
+            const urls = result.status === "fulfilled" ? result.value : null;
+            return {
+              type: shot.type,
+              label: shot.label,
+              description: shot.description,
+              prompt: shot.prompt,
+              imageUrl: urls?.[0] || null,
+            };
+          });
+        } else {
+          catalogShots = shotPrompts.map(shot => ({
+            type: shot.type,
+            label: shot.label,
+            description: shot.description,
+            prompt: shot.prompt,
+            imageUrl: null,
+          }));
+        }
+
+        const catalogSEO = await generateCatalogSEO(imageAnalysis);
+        const generationTime = Math.round((Date.now() - startTime) / 1000);
+        const allUrls = catalogShots.map(s => s.imageUrl).filter(Boolean);
+        const hasRealImages = allUrls.length > 0;
+
+        const adminDb = getAdminDb();
+        if (adminDb) {
+          await adminDb.collection("admin").doc("stats").set(
+            { totalGenerations: FieldValue.increment(1), totalCreditsUsed: FieldValue.increment(req.creditCost || 6) },
+            { merge: true }
+          ).catch(() => {});
+        }
+
+        return res.json({
+          success: true,
+          intent: "generate",
+          images: allUrls,
+          catalogShots,
+          bgRemovedUrl: bgRemovedUrl || imageUrl || null,
+          productInfo: imageAnalysis,
+          augmentedPrompt: shotPrompts[0]?.prompt || prompt,
+          hasRealImages,
+          requiresApiKey: !hasToken,
+          creditsConsumed: req.creditCost || 6,
+          creditsRemaining: req.balanceAfter,
+          seoData: catalogSEO,
+          catalogSEO,
+          brainInsights: brainResult,
+          generationTime,
+        });
+      }
+
+      // ── STANDARD GENERATION (Photo / Ad Creatives / Cinematic) ───────────────
       const variantPrompts = getToolVariantPrompts(prompt, brainResult.tool, effectiveStyle);
       const finalPrompt = await buildSmartPrompt({
         prompt,
@@ -242,7 +332,6 @@ router.post(
       });
 
       let generatedUrls = null;
-      let generatedVariantUrls = {};
 
       if (hasToken) {
         const outputs = Math.max(1, Math.min(3, numOutputs || 3));

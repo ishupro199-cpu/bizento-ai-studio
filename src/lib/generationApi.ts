@@ -34,7 +34,7 @@ export interface SEOData {
   keywords?: string[];
   metaDescription?: string;
   category?: string;
-  attributes?: Record<string, string | null>;
+  attributes?: Record<string, string | null | string[]>;
   headline?: string;
   subheadline?: string;
   cta?: string;
@@ -44,13 +44,58 @@ export interface SEOData {
   platforms?: Record<string, string>;
 }
 
+export interface CatalogShot {
+  type: "hero" | "back" | "angle" | "detail" | "lifestyle" | "infographic";
+  label: string;
+  description: string;
+  prompt: string;
+  imageUrl: string | null;
+}
+
+export interface PlatformSEO {
+  title: string;
+  description: string;
+  keywords: string[];
+  bulletPoints?: string[];
+  attributes: Record<string, string | string[]>;
+  caption?: string;
+  storyText?: string;
+  productTag?: string;
+}
+
+export interface CatalogSEO {
+  platforms: {
+    amazon: PlatformSEO;
+    flipkart: PlatformSEO;
+    meesho: PlatformSEO;
+    myntra: PlatformSEO;
+    instagram: PlatformSEO & { caption: string; storyText: string; productTag: string; hashtags: string };
+  };
+  seoTitle: string;
+  description: string;
+  keywords: string[];
+  bulletPoints: string[];
+  attributes: Record<string, string | string[]>;
+  category: string;
+}
+
 export interface GenerationResponse {
   success: boolean;
-  intent?: "generate" | "chat";
+  intent?: "generate" | "chat" | "attribute_update";
   aiReply?: string;
   images: string[];
   bgRemovedUrl?: string;
-  productInfo?: { type?: string; category?: string; description?: string; colors?: string[] };
+  productInfo?: {
+    type?: string;
+    category?: string;
+    description?: string;
+    colors?: string[];
+    product_name?: string;
+    product_category?: string;
+    primary_color?: string;
+    material?: string;
+    key_features?: string[];
+  };
   augmentedPrompt?: string;
   hasRealImages: boolean;
   requiresApiKey?: boolean;
@@ -62,6 +107,9 @@ export interface GenerationResponse {
   refunded?: boolean;
   requiredPlan?: string;
   catalogAttributes?: Record<string, unknown>;
+  catalogShots?: CatalogShot[];
+  catalogSEO?: CatalogSEO;
+  attributeUpdates?: Record<string, string | boolean>;
   seoData?: SEOData;
   brainInsights?: BrainInsightsData;
   variantPrompts?: string[];

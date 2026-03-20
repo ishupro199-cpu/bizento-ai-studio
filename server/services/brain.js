@@ -89,6 +89,23 @@ function detectIntentTypeFromKeywords(prompt) {
     if (lower.startsWith(q + " ") || lower.startsWith(q + " ")) return "question";
   }
 
+  // ATTRIBUTE UPDATE detection (user is providing missing product info after results shown)
+  const attributeSignals = [
+    /\b\d+\.?\d*\s*(ml|l|liter|litre|oz|fl\s?oz)\b/i,
+    /\b\d+\.?\d*\s*(kg|g|gram|grams|pound|lb|lbs)\b/i,
+    /\bsize\s*\d+\b/i,
+    /\b(xs|sm|xl|xxl|xxxl)\b/i,
+    /\b\d+%\s*\w+/i,
+    /\bpure\s+\w+\b/i,
+    /\b100%\s*\w+/i,
+    /\b(made in|manufactured in|imported from)\s+\w+/i,
+    /\b(hand wash|machine wash|dry clean|tumble dry|air dry)\b/i,
+    /\bbpa[\s-]?free\b/i,
+    /\b(model|sku|ref)\s*[:#]?\s*[a-z0-9\-]+/i,
+    /\b\d+\s*(x|×)\s*\d+(\s*(x|×)\s*\d+)?\s*(cm|mm|inch|inches)?\b/i,
+  ];
+  if (attributeSignals.some(r => r.test(lower))) return "attribute_update";
+
   // REFINE detection
   const refineWords = ["change karo", "thoda alag", "dobara", "regenerate", "aur bright", "nahi yaar", "ek aur banao", "phir se", "same but", "background white", "background change", "color change", "alag background"];
   if (refineWords.some(r => lower.includes(r))) return "refine";
@@ -117,11 +134,12 @@ async function classifyWithGemini(prompt, hasImage, productInfo, conversationSta
 
     const instruction = `You are the AI Brain of Pixalera — a smart ecommerce creative platform.
 
-BEFORE DOING ANYTHING, classify the user's message into EXACTLY ONE of these 5 intent types:
+BEFORE DOING ANYTHING, classify the user's message into EXACTLY ONE of these 6 intent types:
 - greeting: casual chat, hi/hello, asking what Pixalera does, small talk
 - question: asking for information, how-to, pricing, features, explanations
 - generate: wants to create/generate a product image (check image presence)
 - refine: wants to change/edit an existing output (only if conversationState is OUTPUT_SHOWN)
+- attribute_update: user is providing missing product info — numbers+units (350ml, 1.2kg), material%, size, dimensions, model number, care instructions, country of origin
 - unclear: not enough info to determine what they want
 
 Available tools (only relevant for generate intent):
@@ -217,7 +235,7 @@ export async function runBrain({ prompt, hasImage, imageAnalysis = null, openaiC
   }
 
   // Determine legacy intent field (chat vs generate) from intentType
-  const chatIntents = ["greeting", "question", "unclear"];
+  const chatIntents = ["greeting", "question", "unclear", "attribute_update"];
   const legacyIntent = (chatIntents.includes(intentType) && !hasImage) ? "chat" : "generate";
 
   const finalIntentType = intentType;

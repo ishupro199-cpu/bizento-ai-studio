@@ -42,7 +42,7 @@ import { storage } from "@/lib/firebase";
 import { PlatformOptimization } from "@/components/app/PlatformOptimization";
 import { BrainInsights } from "@/components/app/BrainInsights";
 import { SEOPanel } from "@/components/app/SEOPanel";
-import type { BrainInsightsData, SEOData } from "@/lib/generationApi";
+import type { BrainInsightsData, SEOData, CatalogShot, CatalogSEO } from "@/lib/generationApi";
 
 const TOOL_DEFS: Array<{
   id: ToolId;
@@ -169,7 +169,8 @@ const PRO_PROMPTS = [
 
 type ChatPhase = "idle" | "chat-thinking" | "thinking" | "show-styles" | "generating" | "results" | "approved" | "ai-chat" | "image-only" | "clarifying" | "refine-thinking";
 type ConversationState = "FRESH" | "OUTPUT_SHOWN" | "CLARIFYING";
-type IntentType = "greeting" | "question" | "generate" | "refine" | "unclear";
+type IntentType = "greeting" | "question" | "generate" | "refine" | "unclear" | "attribute_update";
+type PlatformId = "amazon" | "flipkart" | "meesho" | "myntra" | "instagram";
 
 function detectClientIntentType(prompt: string, hasImage: boolean, conversationState: ConversationState): IntentType {
   const lower = prompt.toLowerCase().trim();
@@ -185,6 +186,21 @@ function detectClientIntentType(prompt: string, hasImage: boolean, conversationS
   const questionStarters = ["kya ", "kaise ", "kyun ", "what ", "how ", "why ", "when ", "where ", "which ", "explain ", "samjhao ", "batao ", "difference ", "tell me ", "bata "];
   if (lower.endsWith("?")) return "question";
   if (questionStarters.some(q => lower.startsWith(q))) return "question";
+
+  // ATTRIBUTE UPDATE (user sending missing product data after output shown)
+  if (conversationState === "OUTPUT_SHOWN") {
+    const attrPatterns = [
+      /\b\d+\.?\d*\s*(ml|l|liter|litre|oz)\b/i,
+      /\b\d+\.?\d*\s*(kg|g|gram)\b/i,
+      /\bsize\s*\d+\b/i,
+      /\b\d+%\s*\w+/i,
+      /\bpure\s+\w+\b/i,
+      /\b100%\s*\w+/i,
+      /\b(hand wash|machine wash|dry clean)\b/i,
+      /\bbpa[\s-]?free\b/i,
+    ];
+    if (attrPatterns.some(p => p.test(lower))) return "attribute_update";
+  }
 
   // REFINE (only meaningful after output is shown)
   if (conversationState === "OUTPUT_SHOWN") {
@@ -317,6 +333,9 @@ export default function WelcomeDashboard() {
   const [clarifyingQuestion, setClarifyingQuestion] = useState<string | null>(null);
   const [brainInsights, setBrainInsights] = useState<BrainInsightsData | null>(null);
   const [seoData, setSeoData] = useState<SEOData | null>(null);
+  const [catalogShots, setCatalogShots] = useState<CatalogShot[]>([]);
+  const [catalogSEO, setCatalogSEO] = useState<CatalogSEO | null>(null);
+  const [activePlatform, setActivePlatform] = useState<PlatformId>("amazon");
   const [activeToolName, setActiveToolName] = useState<string>("");
 
   // Inspiration prompts
@@ -457,6 +476,61 @@ export default function WelcomeDashboard() {
       return;
     }
 
+    // ── ATTRIBUTE UPDATE: user provides missing product info after output shown ──
+    if (intentType === "attribute_update" && conversationState === "OUTPUT_SHOWN") {
+      setPhase("chat-thinking");
+      try {
+        const apiResp = await callGenerationApi({
+          prompt,
+          tool: activeToolName || "Generate Catalog",
+          style: "minimal",
+          model: selectedModel,
+          quality: genSettings.quality,
+          aspectRatio: genSettings.aspectRatio,
+          numOutputs: 1,
+          userId: authUser?.uid,
+        });
+        if (apiResp.intent === "attribute_update" && apiResp.attributeUpdates && catalogSEO) {
+          // Merge the attribute updates into the existing catalog SEO
+          const updates = apiResp.attributeUpdates;
+          const platforms = ["amazon", "flipkart", "meesho", "myntra", "instagram"] as const;
+          const fieldMap: Record<string, string[]> = {
+            capacity: ["Capacity", "Item Volume", "Size"],
+            weight: ["Item Weight"],
+            dimensions: ["Product Dimensions"],
+            size_visible: ["Size", "Capacity"],
+            material: ["Material", "Fabric", "Primary Material"],
+            country_of_origin: ["Country of Origin"],
+            care: ["Care Instructions", "Care"],
+            bpa_free: ["BPA Free"],
+          };
+          const updated = { ...catalogSEO };
+          for (const platform of platforms) {
+            const plat = updated.platforms[platform];
+            if (!plat) continue;
+            const newAttrs = { ...plat.attributes };
+            for (const [updateKey, updateVal] of Object.entries(updates)) {
+              const targetFields = fieldMap[updateKey] || [];
+              for (const field of targetFields) {
+                if (field in newAttrs || Object.keys(newAttrs).some(k => k.toLowerCase() === field.toLowerCase())) {
+                  newAttrs[field] = String(updateVal);
+                }
+              }
+            }
+            (updated.platforms[platform] as any).attributes = newAttrs;
+          }
+          setCatalogSEO(updated);
+          setAiReply(apiResp.aiReply || "Update kar diya! Attributes panel mein dekho.");
+        } else {
+          setAiReply(apiResp.aiReply || "Update ho gaya!");
+        }
+      } catch {
+        setAiReply("Attribute update mein kuch issue aa gaya. Phir se try karo.");
+      }
+      setPhase("ai-chat");
+      return;
+    }
+
     // ── REFINE: quick update spinner, no full scan ──
     if (intentType === "refine" && conversationState === "OUTPUT_SHOWN") {
       setPhase("refine-thinking");
@@ -510,6 +584,9 @@ export default function WelcomeDashboard() {
     setThinkingDone(false);
     setBrainInsights(null);
     setSeoData(null);
+    setCatalogShots([]);
+    setCatalogSEO(null);
+    setActivePlatform("amazon");
 
     const effectiveToolId: ToolId = toolOverride || (selectedTool !== "default" ? selectedTool as ToolId : "catalog");
     const toolDef = TOOL_DEFS.find(t => t.id === effectiveToolId);
@@ -581,6 +658,13 @@ export default function WelcomeDashboard() {
 
     if (apiResp.brainInsights) setBrainInsights(apiResp.brainInsights);
     if (apiResp.seoData) setSeoData(apiResp.seoData);
+    if (apiResp.catalogShots && apiResp.catalogShots.length > 0) {
+      setCatalogShots(apiResp.catalogShots);
+    }
+    if (apiResp.catalogSEO) {
+      setCatalogSEO(apiResp.catalogSEO);
+      setActivePlatform("amazon");
+    }
 
     const serverHandledCredits = typeof apiResp.creditsRemaining === "number";
     addGeneration({
@@ -1181,38 +1265,194 @@ export default function WelcomeDashboard() {
         )}
 
         {/* Results */}
-        {(phase === "results" || phase === "approved") && generatedImages.length > 0 && (
+        {(phase === "results" || phase === "approved") && (generatedImages.length > 0 || catalogShots.length > 0) && (
           <div className="flex justify-end animate-fade-in">
-            <div className="max-w-[85%] space-y-3">
-              <div className="grid grid-cols-3 gap-2">
-                {generatedImages.map((img, idx) => (
-                  <div key={img.id} className="aspect-square rounded-xl overflow-hidden border border-white/10 relative"
-                    style={{ background: img.gradient }}>
-                    {img.isReal && img.imageUrl ? (
-                      <img src={img.imageUrl} alt={`Variant ${idx + 1}`} className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="flex items-center justify-center h-full">
-                        <ImageIcon className="h-6 w-6 text-white/20" />
+            <div className="max-w-[92%] w-full space-y-3">
+
+              {/* ── CATALOG SHOTS: 6 labeled shot types ── */}
+              {catalogShots.length > 0 ? (
+                <div className="space-y-2">
+                  <div className="grid grid-cols-3 gap-2">
+                    {catalogShots.map((shot) => (
+                      <div key={shot.type} className="rounded-xl overflow-hidden border border-white/10 relative bg-white/3 group">
+                        <div className="aspect-square relative">
+                          {shot.imageUrl ? (
+                            <img src={shot.imageUrl} alt={shot.label} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="flex items-center justify-center h-full">
+                              <ImageIcon className="h-5 w-5 text-white/20" />
+                            </div>
+                          )}
+                          {shot.imageUrl && (
+                            <a href={shot.imageUrl} download={`pixalera_${shot.type}.webp`} target="_blank" rel="noreferrer"
+                              className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                              <Upload className="h-5 w-5 text-white" />
+                            </a>
+                          )}
+                        </div>
+                        <div className="px-2 py-1.5 bg-black/30 backdrop-blur-sm">
+                          <p className="text-[9px] font-semibold text-white/80 truncate">{shot.label}</p>
+                          <p className="text-[8px] text-white/40 truncate">{shot.description}</p>
+                        </div>
                       </div>
-                    )}
-                    <span className="absolute top-1.5 left-1.5 text-[8px] bg-black/50 rounded-full px-1.5 py-0.5 text-white/70">
-                      {["A", "B", "C"][idx]}
-                    </span>
-                    {!isPro && !isStarter && img.isReal && img.imageUrl && (
-                      <div className="absolute bottom-1.5 right-1.5 flex items-center gap-1 bg-black/60 backdrop-blur-sm rounded-full px-1.5 py-0.5">
-                        <BoltIcon className="h-2.5 w-2.5 text-primary" />
-                        <span className="text-[7px] text-primary font-bold tracking-wide">PIXALERA</span>
-                      </div>
-                    )}
+                    ))}
                   </div>
-                ))}
-              </div>
-              {!generatedImages[0]?.isReal && (
-                <p className="text-[10px] text-amber-400/70 text-right">Preview mode — add REPLICATE_API_TOKEN for real images</p>
+                  {catalogShots.every(s => !s.imageUrl) && (
+                    <p className="text-[10px] text-amber-400/70 text-right">Preview mode — add REPLICATE_API_TOKEN for real images</p>
+                  )}
+                </div>
+              ) : (
+                /* ── STANDARD IMAGE GRID ── */
+                <div className="space-y-2">
+                  <div className="grid grid-cols-3 gap-2">
+                    {generatedImages.map((img, idx) => (
+                      <div key={img.id} className="aspect-square rounded-xl overflow-hidden border border-white/10 relative"
+                        style={{ background: img.gradient }}>
+                        {img.isReal && img.imageUrl ? (
+                          <img src={img.imageUrl} alt={`Variant ${idx + 1}`} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="flex items-center justify-center h-full">
+                            <ImageIcon className="h-6 w-6 text-white/20" />
+                          </div>
+                        )}
+                        <span className="absolute top-1.5 left-1.5 text-[8px] bg-black/50 rounded-full px-1.5 py-0.5 text-white/70">
+                          {["A", "B", "C"][idx]}
+                        </span>
+                        {!isPro && !isStarter && img.isReal && img.imageUrl && (
+                          <div className="absolute bottom-1.5 right-1.5 flex items-center gap-1 bg-black/60 backdrop-blur-sm rounded-full px-1.5 py-0.5">
+                            <BoltIcon className="h-2.5 w-2.5 text-primary" />
+                            <span className="text-[7px] text-primary font-bold tracking-wide">PIXALERA</span>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  {!generatedImages[0]?.isReal && (
+                    <p className="text-[10px] text-amber-400/70 text-right">Preview mode — add REPLICATE_API_TOKEN for real images</p>
+                  )}
+                </div>
               )}
 
-              {/* SEO / Ad copy panel */}
-              {seoData && (phase === "results" || phase === "approved") && (
+              {/* ── CATALOG SEO: Platform tabs + SEO content ── */}
+              {catalogSEO && (phase === "results" || phase === "approved") && (
+                <div className="space-y-2 mt-1">
+                  {/* Platform tabs */}
+                  <div className="flex gap-1.5 flex-wrap">
+                    {(["amazon", "flipkart", "meesho", "myntra", "instagram"] as PlatformId[]).map(pid => {
+                      const PLATFORM_LABELS: Record<PlatformId, string> = {
+                        amazon: "Amazon",
+                        flipkart: "Flipkart",
+                        meesho: "Meesho",
+                        myntra: "Myntra",
+                        instagram: "Instagram",
+                      };
+                      const isActive = activePlatform === pid;
+                      const isLocked = !isPro && !isStarter && pid !== "amazon";
+                      return (
+                        <button key={pid} onClick={() => !isLocked && setActivePlatform(pid)}
+                          className={`px-2.5 py-1 rounded-lg text-[10px] font-semibold border transition-all ${isActive ? "bg-primary/15 border-primary/40 text-primary" : isLocked ? "border-white/8 text-white/25 cursor-not-allowed" : "border-white/12 text-muted-foreground hover:border-white/25 hover:text-foreground"}`}>
+                          {PLATFORM_LABELS[pid]}{isLocked ? " 🔒" : ""}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Active platform SEO content */}
+                  {catalogSEO.platforms[activePlatform] && (
+                    <div className="bg-white/3 border border-white/8 rounded-xl overflow-hidden">
+                      <div className="px-4 py-3 space-y-3">
+                        {/* Title */}
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-between">
+                            <p className="text-[9px] font-semibold text-muted-foreground/60 uppercase tracking-wider">Title</p>
+                            <button onClick={() => { navigator.clipboard.writeText(catalogSEO.platforms[activePlatform].title); toast.success("Copied!"); }}
+                              className="text-[9px] text-muted-foreground hover:text-foreground">Copy</button>
+                          </div>
+                          <p className="text-xs text-foreground leading-relaxed bg-white/4 border border-white/8 rounded-lg px-2.5 py-2">
+                            {catalogSEO.platforms[activePlatform].title}
+                          </p>
+                          <p className="text-[9px] text-muted-foreground/40">{catalogSEO.platforms[activePlatform].title.length} chars</p>
+                        </div>
+
+                        {/* Description */}
+                        {catalogSEO.platforms[activePlatform].description && activePlatform !== "instagram" && (
+                          <div className="space-y-1">
+                            <div className="flex items-center justify-between">
+                              <p className="text-[9px] font-semibold text-muted-foreground/60 uppercase tracking-wider">Description</p>
+                              <button onClick={() => { navigator.clipboard.writeText(catalogSEO.platforms[activePlatform].description); toast.success("Copied!"); }}
+                                className="text-[9px] text-muted-foreground hover:text-foreground">Copy</button>
+                            </div>
+                            <p className="text-xs text-foreground/80 leading-relaxed bg-white/4 border border-white/8 rounded-lg px-2.5 py-2">
+                              {catalogSEO.platforms[activePlatform].description}
+                            </p>
+                          </div>
+                        )}
+
+                        {/* Instagram caption */}
+                        {activePlatform === "instagram" && (catalogSEO.platforms.instagram as any).caption && (
+                          <div className="space-y-1">
+                            <div className="flex items-center justify-between">
+                              <p className="text-[9px] font-semibold text-muted-foreground/60 uppercase tracking-wider">Caption</p>
+                              <button onClick={() => { navigator.clipboard.writeText((catalogSEO.platforms.instagram as any).caption); toast.success("Copied!"); }}
+                                className="text-[9px] text-muted-foreground hover:text-foreground">Copy</button>
+                            </div>
+                            <pre className="text-xs text-foreground/80 leading-relaxed bg-white/4 border border-white/8 rounded-lg px-2.5 py-2 whitespace-pre-wrap font-sans">
+                              {(catalogSEO.platforms.instagram as any).caption}
+                            </pre>
+                          </div>
+                        )}
+
+                        {/* Keywords */}
+                        {catalogSEO.platforms[activePlatform].keywords?.length > 0 && (
+                          <div className="space-y-1">
+                            <p className="text-[9px] font-semibold text-muted-foreground/60 uppercase tracking-wider">Keywords ({catalogSEO.platforms[activePlatform].keywords.length})</p>
+                            <div className="flex gap-1.5 flex-wrap">
+                              {catalogSEO.platforms[activePlatform].keywords.map((kw: string, i: number) => (
+                                <span key={i} className="text-[10px] bg-white/5 border border-white/8 rounded-full px-2 py-0.5 text-muted-foreground">{kw}</span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Attributes */}
+                        {catalogSEO.platforms[activePlatform].attributes && Object.keys(catalogSEO.platforms[activePlatform].attributes).length > 0 && (
+                          <div className="space-y-1.5">
+                            <div className="flex items-center justify-between">
+                              <p className="text-[9px] font-semibold text-muted-foreground/60 uppercase tracking-wider">Attributes</p>
+                              <button onClick={() => {
+                                const text = Object.entries(catalogSEO.platforms[activePlatform].attributes).map(([k, v]) => `${k}: ${v}`).join("\n");
+                                navigator.clipboard.writeText(text); toast.success("Attributes copied!");
+                              }} className="text-[9px] text-muted-foreground hover:text-foreground">Copy All</button>
+                            </div>
+                            <div className="grid grid-cols-2 gap-1.5">
+                              {Object.entries(catalogSEO.platforms[activePlatform].attributes).map(([key, value]) => {
+                                const isAskUser = String(value).includes("Ask user");
+                                return (
+                                  <div key={key} className={`rounded-lg px-2.5 py-1.5 border ${isAskUser ? "bg-amber-400/5 border-amber-400/20" : "bg-white/3 border-white/8"}`}>
+                                    <p className="text-[8px] text-muted-foreground/60">{key}</p>
+                                    <p className={`text-[10px] mt-0.5 ${isAskUser ? "text-amber-400/80" : "text-foreground/80"}`}>
+                                      {isAskUser ? "⚠ Provide info" : String(value)}
+                                    </p>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                            {/* Missing attribute hint */}
+                            {Object.values(catalogSEO.platforms[activePlatform].attributes).some(v => String(v).includes("Ask user")) && (
+                              <p className="text-[9px] text-amber-400/60 bg-amber-400/5 border border-amber-400/15 rounded-lg px-2.5 py-1.5 leading-relaxed">
+                                Better results ke liye — product ka weight, dimensions, ya size type karein neeche (e.g. "350ml" ya "size 42")
+                              </p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* ── REGULAR SEO / Ad copy panel (non-catalog) ── */}
+              {!catalogSEO && seoData && (phase === "results" || phase === "approved") && (
                 <div className="mt-2">
                   <SEOPanel data={seoData} tool={activeToolName} />
                 </div>
