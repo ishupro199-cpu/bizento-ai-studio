@@ -10,6 +10,38 @@ export interface GenerationRequest {
   aspectRatio?: string;
   numOutputs?: number;
   userId?: string;
+  autoDetect?: boolean;
+}
+
+export interface BrainInsightsData {
+  tool: string;
+  toolName: string;
+  confidence: number;
+  reasoning: string;
+  suggestion: string;
+  productType?: string;
+  productCategory?: string;
+  styleRecommendation?: string;
+  hinglishDetected?: boolean;
+  source?: string;
+  imageAnalysis?: { description?: string; colors?: string[]; material?: string };
+}
+
+export interface SEOData {
+  seoTitle?: string;
+  description?: string;
+  bulletPoints?: string[];
+  keywords?: string[];
+  metaDescription?: string;
+  category?: string;
+  attributes?: Record<string, string | null>;
+  headline?: string;
+  subheadline?: string;
+  cta?: string;
+  offer?: string;
+  bodyText?: string;
+  hashtagSuggestions?: string[];
+  platforms?: Record<string, string>;
 }
 
 export interface GenerationResponse {
@@ -18,7 +50,7 @@ export interface GenerationResponse {
   aiReply?: string;
   images: string[];
   bgRemovedUrl?: string;
-  productInfo?: { category?: string; description?: string };
+  productInfo?: { type?: string; category?: string; description?: string; colors?: string[] };
   augmentedPrompt?: string;
   hasRealImages: boolean;
   requiresApiKey?: boolean;
@@ -30,6 +62,9 @@ export interface GenerationResponse {
   refunded?: boolean;
   requiredPlan?: string;
   catalogAttributes?: Record<string, unknown>;
+  seoData?: SEOData;
+  brainInsights?: BrainInsightsData;
+  variantPrompts?: string[];
   generationTime?: number;
 }
 
@@ -142,6 +177,7 @@ export async function checkApiHealth(): Promise<{
   available: boolean;
   hasReplicateToken: boolean;
   hasRazorpay?: boolean;
+  hasGemini?: boolean;
 }> {
   try {
     const res = await fetch("/api/health");
@@ -151,6 +187,7 @@ export async function checkApiHealth(): Promise<{
       available: true,
       hasReplicateToken: data.hasReplicateToken ?? false,
       hasRazorpay: data.hasRazorpay ?? false,
+      hasGemini: data.hasGemini ?? false,
     };
   } catch {
     return { available: false, hasReplicateToken: false };

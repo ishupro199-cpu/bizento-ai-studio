@@ -1,0 +1,323 @@
+You are a senior AI engineer and full-stack developer.
+
+Build a complete AI Engine System for an ecommerce creative SaaS platform called Pixalera.
+
+This system must intelligently understand user input (text + image), select the correct tool, and generate professional outputs.
+
+This is NOT basic API usage.
+
+This is a multi-tool intelligent AI pipeline.
+
+---
+
+================================
+🎯 CORE GOAL
+
+Input:
+
+• user prompt (text)
+• optional product image
+
+Output:
+
+• catalog images
+• product photography
+• ad creatives
+• cinematic CGI ads (image/video)
+• SEO listing (title, description, attributes)
+
+---
+
+================================
+1️⃣ MASTER AI CONTROLLER (BRAIN)
+
+Create a central AI controller.
+
+Responsibilities:
+
+• analyze user prompt
+• analyze uploaded image
+• detect intent
+• automatically select best tool
+
+---
+
+INTENT DETECTION:
+
+Classify user intent into:
+
+• catalog generation
+• product photography
+• ad creative
+• cinematic ads
+
+---
+
+EXAMPLES:
+
+"amazon listing banana hai" → catalog
+"instagram ad chahiye" → ad creative
+"luxury ad video" → cinematic
+
+---
+
+================================
+2️⃣ IMAGE ANALYSIS SYSTEM
+
+When user uploads image:
+
+Extract:
+
+• product type
+• category
+• color
+• material
+• shape
+
+---
+
+Also detect:
+
+• lighting style
+• background
+• camera angle
+• composition
+
+---
+
+Use this data to guide generation.
+
+---
+
+================================
+3️⃣ TOOL MODULES
+
+---
+
+A. CATALOG GENERATION MODULE
+
+Generate 3 professional ecommerce images:
+
+• white background (main image)
+• angled view
+• lifestyle image
+
+---
+
+Follow standards:
+
+• centered product
+• clean lighting
+• no noise
+
+---
+
+Also generate:
+
+• SEO title
+• product description
+• attributes
+• keywords
+
+---
+
+---
+
+B. PRODUCT PHOTOGRAPHY MODULE
+
+Generate studio-quality images:
+
+• splash effects
+• reflections
+• luxury lighting
+• gradient backgrounds
+
+---
+
+Ensure:
+
+• realistic shadows
+• depth
+• product focus
+
+---
+
+---
+
+C. AD CREATIVE MODULE
+
+Generate social media ads:
+
+• Instagram
+• Facebook
+• posters
+
+---
+
+Structure:
+
+• headline
+• product
+• offer (e.g. 50% OFF)
+• CTA
+• brand placeholder
+
+---
+
+Use:
+
+• bold typography
+• high contrast
+• clean layout
+
+---
+
+---
+
+D. CINEMATIC CGI MODULE
+
+Generate cinematic visuals:
+
+• 3D-like environment
+• dramatic lighting
+• particles (smoke, water, glow)
+
+---
+
+Also support:
+
+• short video ads (5–10 sec)
+• camera motion
+• product focus
+
+---
+
+================================
+4️⃣ SMART TOOL ROUTING
+
+If user doesn't select tool:
+
+AI must auto-select based on intent.
+
+Also suggest:
+
+"Best result: Cinematic Ad"
+
+---
+
+================================
+5️⃣ REFERENCE IMAGE LEARNING
+
+If user uploads reference image:
+
+Extract:
+
+• style
+• lighting
+• color tone
+• angle
+
+---
+
+Apply same style to output.
+
+---
+
+================================
+6️⃣ RESPONSE SYSTEM (IMPORTANT)
+
+AI must respond intelligently.
+
+Example:
+
+User: "thoda aur premium bana do"
+
+AI:
+
+"I will enhance lighting, add darker background and increase reflections."
+
+---
+
+================================
+7️⃣ GENERATION PIPELINE
+
+Flow:
+
+Input → Analysis → Tool selection → Generation → Optimization → Output
+
+---
+
+================================
+8️⃣ REAL API INTEGRATION
+
+Use real APIs:
+
+• image generation
+• video generation
+• text generation
+
+---
+
+Ensure:
+
+• real outputs
+• no placeholders
+
+---
+
+================================
+9️⃣ ERROR HANDLING
+
+Handle:
+
+• invalid prompt
+• failed generation
+• missing image
+
+---
+
+================================
+🔟 PERFORMANCE
+
+• fast response
+• optimized calls
+• retry logic
+
+---
+
+================================
+1️⃣1️⃣ FINAL VERIFICATION
+
+Test all scenarios:
+
+• catalog generation
+• photography
+• ads
+• cinematic
+
+Ensure:
+
+• correct tool selection
+• correct output
+• no wrong routing
+
+---
+
+================================
+🎯 FINAL GOAL
+
+Build a smart AI system that:
+
+• understands user intent
+• generates professional outputs
+• behaves like an intelligent assistant
+
+---
+
+IMPORTANT:
+
+This must feel like:
+
+"AI that understands ecommerce creatives"
+
+Not just a generator.

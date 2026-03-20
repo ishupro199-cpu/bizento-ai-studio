@@ -104,15 +104,50 @@ GST (18%) is applied at checkout. Plan expiry auto-downgrades to Free.
 - `admin/stats` doc is writable by any authenticated user (client updates admin stats)
 - Marketing banners are publicly readable (used on landing page)
 
-## AI Pipeline
-- **Tools**: Product Catalog, Product Photography, Ad Creatives, Cinematic Ads (Pro)
+## AI Pipeline — Brain System
+
+### Master AI Brain Controller (`server/services/brain.js`)
+- **Intent Classification**: Gemini AI → keyword fallback → detects intent (chat vs generate)
+- **Tool Auto-Selection**: Classifies into catalog / photo / creative / cinematic with confidence score
+- **Multi-language**: Detects Hindi/Hinglish naturally, routes replies appropriately
+- **Product Detection**: 14 product type patterns (perfume, watch, shoes, jewelry, food, etc.)
+- **Response includes**: `brainInsights` object with tool, confidence, reasoning, suggestion, productType, styleRecommendation
+
+### Tool Modules
+- **Catalog Generator**: 3 variants — main white-bg, 45° angled, lifestyle scene + SEO listing data
+- **Product Photography**: Studio hero, splash/reflection, editorial bokeh variants
+- **Ad Creatives**: Instagram, Facebook, poster variants + headline/CTA/hashtag ad copy
+- **Cinematic Ads**: CGI environment, particle effects (smoke/water/glow), film color grading (Pro only)
+
+### SEO & Ad Copy Generator (`server/services/seoGenerator.js`)
+- **For Catalog/Photography**: SEO title, product description (150-200 words), 5 bullet points, 8 keywords, meta description, attributes
+- **For Ads**: Headline, subheadline, CTA, offer hook, body copy, platform-specific copy (Instagram/Facebook), 5 hashtags
+- Primary via Gemini → OpenAI fallback → static fallback
+
+### Smart Prompt System
+- `getToolVariantPrompts()` — generates 3 distinct prompt variants per tool (main, variant B, variant C)
+- Per-tool system prompts for OpenAI prompt augmentation
+- Style-scene map for 6 presets (luxury, marble, floral, minimal, neon, beach)
+- Quality suffix + model suffix applied to all prompts
+
+### Pipeline Service (`server/services/pipeline.js`)
+- **Retry logic**: 2 retries with 1.5x exponential backoff for all Replicate calls
+- **Aspect ratio**: Passed through to Flux Schnell model
+- **Image analysis**: Extracts colors, material, description via LLaVA-13B
+
+### Frontend Components
+- **`BrainInsights.tsx`**: Shows AI tool selection, confidence bar, reasoning, product type, suggestion
+- **`SEOPanel.tsx`**: Displays SEO/ad copy with copy buttons, per-field, organized by tool type
+- **`GenerationLoading.tsx`**: Tool-specific loading steps (6 steps per tool)
+- **`WelcomeDashboard.tsx`**: Dynamic thinking steps per tool, shows BrainInsights + SEOPanel after results
+
+### General Settings
 - **Models**: Flash (base cost), Pro (higher cost)
 - **Quality**: 720p/1K (Free), 2K (Starter+, +4 credits), 4K (Pro only, +8 credits)
 - **Style Presets**: Luxury, Marble, Floral, Minimal, Neon, Beach
-- **Gemini AI** (primary chat): `gemini-2.0-flash` via `GEMINI_API_KEY` — handles all conversational chat, context-aware replies, Hindi/Hinglish support
-- **Replit AI** (fallback): gpt-4o-mini via `AI_INTEGRATIONS_OPENAI_API_KEY` — fallback if Gemini fails, also builds tool-specific prompts and extracts catalog attributes
-- **Aspect Ratios**: 1:1, 4:5, 16:9, 9:16, 3:2 — passed to AI for optimal prompt building
-- **Contextual Chat**: If user sends a text message (no generation keywords), AI replies conversationally in Hindi/Hinglish or English
+- **Gemini AI** (primary): `gemini-2.0-flash` for chat + brain + SEO
+- **Replit AI** (fallback): via `AI_INTEGRATIONS_OPENAI_API_KEY`
+- **Aspect Ratios**: 1:1, 4:5, 16:9, 9:16, 3:2
 
 ## Catalog Attributes
 When generating catalog images, Replit AI extracts product attributes from the user's prompt:

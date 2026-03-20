@@ -40,6 +40,9 @@ import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { storage } from "@/lib/firebase";
 import { PlatformOptimization } from "@/components/app/PlatformOptimization";
+import { BrainInsights } from "@/components/app/BrainInsights";
+import { SEOPanel } from "@/components/app/SEOPanel";
+import type { BrainInsightsData, SEOData } from "@/lib/generationApi";
 
 const TOOL_DEFS: Array<{
   id: ToolId;
@@ -77,14 +80,48 @@ const TOOL_DEFS: Array<{
   },
 ];
 
-const THINKING_STEPS = [
-  "Analyzing your product...",
-  "Understanding product details...",
-  "Identifying category, colors, materials...",
-  "Matching high-performing ecommerce styles...",
-  "Creating high-quality scene...",
-  "Applying lighting and composition...",
-];
+const THINKING_STEPS_BY_TOOL: Record<string, string[]> = {
+  "Generate Catalog": [
+    "Reading your product description...",
+    "Detecting product category & type...",
+    "Selecting marketplace-ready composition...",
+    "Building catalog prompt variants...",
+    "Generating main, angled & lifestyle images...",
+    "Applying clean studio lighting...",
+  ],
+  "Product Photography": [
+    "Analyzing product for photography...",
+    "Selecting premium studio environment...",
+    "Building lighting & composition...",
+    "Generating splash & reflection variants...",
+    "Rendering editorial-quality photography...",
+    "Applying depth of field & bokeh...",
+  ],
+  "Ad Creatives": [
+    "Understanding product for ads...",
+    "Detecting target platform (Instagram, Facebook)...",
+    "Building scroll-stopping composition...",
+    "Adding typography & headline space...",
+    "Generating ad creative variants...",
+    "Optimizing for marketing impact...",
+  ],
+  "Cinematic Ads": [
+    "Analyzing product for cinematic treatment...",
+    "Building 3D CGI environment...",
+    "Setting up dramatic volumetric lighting...",
+    "Adding particles (smoke, water, glow)...",
+    "Rendering blockbuster-quality frame...",
+    "Applying film color grading...",
+  ],
+  default: [
+    "Analyzing your product...",
+    "Understanding product details...",
+    "Identifying category, colors, materials...",
+    "Matching high-performing ecommerce styles...",
+    "Creating high-quality scene...",
+    "Applying lighting and composition...",
+  ],
+};
 
 const STYLE_CARDS = [
   { id: "luxury",   label: "Luxury Studio",   sublabel: "Premium brand style",  gradient: "linear-gradient(135deg,#1a1400 0%,#7a5500 100%)" },
@@ -253,6 +290,9 @@ export default function WelcomeDashboard() {
   const [generatedImages, setGeneratedImages] = useState<GeneratedImage[]>([]);
   const [showApprovedPlatform, setShowApprovedPlatform] = useState(false);
   const [aiReply, setAiReply] = useState<string | null>(null);
+  const [brainInsights, setBrainInsights] = useState<BrainInsightsData | null>(null);
+  const [seoData, setSeoData] = useState<SEOData | null>(null);
+  const [activeToolName, setActiveToolName] = useState<string>("");
 
   // Inspiration prompts
   const [promptSeed, setPromptSeed] = useState(() => Math.floor(Math.random() * ALL_INSPIRATION_PROMPTS.length));
@@ -392,10 +432,13 @@ export default function WelcomeDashboard() {
     setPhase("generating");
     setThinkingStep(0);
     setThinkingDone(false);
+    setBrainInsights(null);
+    setSeoData(null);
 
     const effectiveToolId: ToolId = toolOverride || (selectedTool !== "default" ? selectedTool as ToolId : "catalog");
     const toolDef = TOOL_DEFS.find(t => t.id === effectiveToolId);
     const toolName = toolDef?.name || "Catalog Generator";
+    setActiveToolName(toolName);
     const augmented = augmentPrompt(prompt, style, toolName);
 
     const animPromise = runThinkingAnimation();
@@ -459,6 +502,9 @@ export default function WelcomeDashboard() {
     setGeneratedImages(imgs);
     setPhase("results");
 
+    if (apiResp.brainInsights) setBrainInsights(apiResp.brainInsights);
+    if (apiResp.seoData) setSeoData(apiResp.seoData);
+
     const serverHandledCredits = typeof apiResp.creditsRemaining === "number";
     addGeneration({
       prompt,
@@ -504,6 +550,9 @@ export default function WelcomeDashboard() {
     setAiReply(null);
     setDefaultSuggestion(null);
     setAutoDetectedTool(null);
+    setBrainInsights(null);
+    setSeoData(null);
+    setActiveToolName("");
     clearProduct();
     setReferencePreview(null);
     startNewChat();
@@ -866,7 +915,7 @@ export default function WelcomeDashboard() {
                 <span className="text-xs text-muted-foreground font-medium">Pixalera AI</span>
               </div>
               <div className="bg-white/4 border border-white/10 rounded-2xl rounded-tl-sm px-4 py-3.5 space-y-2">
-                {THINKING_STEPS.map((step, i) => {
+                {(THINKING_STEPS_BY_TOOL[activeToolName] || THINKING_STEPS_BY_TOOL.default).map((step, i) => {
                   const done = i < thinkingStep || thinkingDone;
                   const active = i === thinkingStep && !thinkingDone && (phase === "thinking" || phase === "generating");
                   return (
@@ -912,8 +961,23 @@ export default function WelcomeDashboard() {
           </div>
         )}
 
-        {/* Default tool AI suggestion */}
-        {defaultSuggestion && (phase === "generating" || phase === "results" || phase === "approved") && (
+        {/* Brain Insights — shown after generation starts */}
+        {brainInsights && (phase === "results" || phase === "approved") && (
+          <div className="flex justify-start animate-fade-in">
+            <div className="max-w-[90%] w-full space-y-1.5">
+              <div className="flex items-center gap-2 mb-1">
+                <div className="h-6 w-6 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
+                  <BoltIcon className="h-3 w-3 text-primary" />
+                </div>
+                <span className="text-xs text-muted-foreground font-medium">Pixalera AI · Brain Analysis</span>
+              </div>
+              <BrainInsights data={brainInsights} />
+            </div>
+          </div>
+        )}
+
+        {/* Default tool AI suggestion (fallback when no brain insights yet) */}
+        {defaultSuggestion && !brainInsights && (phase === "generating" || phase === "results" || phase === "approved") && (
           <div className="flex justify-start animate-fade-in">
             <div className="max-w-[80%] space-y-1.5">
               <div className="flex items-center gap-2 mb-1">
@@ -988,6 +1052,14 @@ export default function WelcomeDashboard() {
               {!generatedImages[0]?.isReal && (
                 <p className="text-[10px] text-amber-400/70 text-right">Preview mode — add REPLICATE_API_TOKEN for real images</p>
               )}
+
+              {/* SEO / Ad copy panel */}
+              {seoData && (phase === "results" || phase === "approved") && (
+                <div className="mt-2">
+                  <SEOPanel data={seoData} tool={activeToolName} />
+                </div>
+              )}
+
               {phase === "results" && (
                 <div className="flex gap-2 justify-end">
                   <button onClick={handleRegenerate}

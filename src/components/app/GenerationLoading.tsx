@@ -2,7 +2,42 @@ import { useState, useEffect } from "react";
 import { Check, Loader2 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 
-const THINKING_STEPS = [
+const TOOL_STEPS: Record<string, string[]> = {
+  "Generate Catalog": [
+    "Reading your product description...",
+    "Detecting product category & type...",
+    "Selecting marketplace-ready composition...",
+    "Building white-background catalog prompt...",
+    "Generating 3 catalog variants (main, angled, lifestyle)...",
+    "Applying clean studio lighting & shadows...",
+  ],
+  "Product Photography": [
+    "Analyzing your product for photography...",
+    "Selecting premium studio environment...",
+    "Building lighting & composition setup...",
+    "Generating splash & reflection variants...",
+    "Rendering editorial-quality photography...",
+    "Applying depth of field & bokeh...",
+  ],
+  "Ad Creatives": [
+    "Understanding your product for ads...",
+    "Detecting target platform (Instagram, Facebook, Poster)...",
+    "Building scroll-stopping composition...",
+    "Adding typography & headline space...",
+    "Generating ad creative variants...",
+    "Optimizing for marketing impact...",
+  ],
+  "Cinematic Ads": [
+    "Analyzing product for cinematic treatment...",
+    "Building 3D CGI environment...",
+    "Setting up dramatic volumetric lighting...",
+    "Adding particles (smoke, water, glow)...",
+    "Rendering blockbuster-quality cinematic frame...",
+    "Applying film color grading...",
+  ],
+};
+
+const DEFAULT_STEPS = [
   "Analyzing your product...",
   "Understanding product details...",
   "Identifying category, colors, materials...",
@@ -14,6 +49,7 @@ const THINKING_STEPS = [
 interface GenerationLoadingProps {
   currentStep: number;
   progress: number;
+  tool?: string;
 }
 
 function TypingText({ text, active }: { text: string; active: boolean }) {
@@ -36,7 +72,7 @@ function TypingText({ text, active }: { text: string; active: boolean }) {
     const timeout = setTimeout(() => {
       setDisplayed((prev) => prev + text[charIdx]);
       setCharIdx((i) => i + 1);
-    }, 28);
+    }, 26);
     return () => clearTimeout(timeout);
   }, [charIdx, text, active]);
 
@@ -50,11 +86,13 @@ function TypingText({ text, active }: { text: string; active: boolean }) {
   );
 }
 
-export function GenerationLoading({ currentStep, progress }: GenerationLoadingProps) {
+export function GenerationLoading({ currentStep, progress, tool }: GenerationLoadingProps) {
+  const steps = (tool && TOOL_STEPS[tool]) ? TOOL_STEPS[tool] : DEFAULT_STEPS;
+  const activeLabel = steps[currentStep] ?? "Finalizing your visuals...";
+
   return (
     <div className="flex flex-col items-center justify-center py-16 sm:py-20 animate-fade-in px-4">
       <div className="bg-white/4 border border-white/10 rounded-2xl p-6 sm:p-8 max-w-md w-full space-y-6 shadow-2xl">
-        {/* Header */}
         <div className="text-center space-y-2">
           <div className="flex items-center justify-center mb-3">
             <div className="relative h-12 w-12 flex items-center justify-center">
@@ -65,21 +103,19 @@ export function GenerationLoading({ currentStep, progress }: GenerationLoadingPr
             </div>
           </div>
           <h2 className="text-base sm:text-lg font-bold text-foreground">
-            {currentStep < THINKING_STEPS.length
-              ? THINKING_STEPS[currentStep]
-              : "Finalizing your visuals..."}
+            <TypingText text={activeLabel} active={true} />
           </h2>
           <p className="text-xs sm:text-sm text-muted-foreground">
-            Optimizing using high-performing ecommerce design patterns
+            {tool
+              ? `Running ${tool} pipeline with AI optimization`
+              : "Optimizing using high-performing ecommerce design patterns"}
           </p>
         </div>
 
-        {/* Progress bar */}
         <Progress value={progress} className="h-1.5 bg-white/8" />
 
-        {/* Steps */}
         <div className="space-y-2.5">
-          {THINKING_STEPS.map((step, i) => {
+          {steps.map((step, i) => {
             const isDone = i < currentStep;
             const isActive = i === currentStep;
             return (
@@ -122,7 +158,6 @@ export function GenerationLoading({ currentStep, progress }: GenerationLoadingPr
           })}
         </div>
 
-        {/* Progress percentage */}
         <div className="flex items-center justify-between text-xs text-muted-foreground/50">
           <span>Processing...</span>
           <span>{progress}%</span>

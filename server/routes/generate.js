@@ -5,6 +5,8 @@ import { generateImages, removeBackground, analyzeProduct } from "../services/pi
 import { verifyFirebaseToken, checkCreditAndSuspend, refundCredits } from "../middleware/auth.js";
 import { getAdminDb } from "../config/firebase.js";
 import { generateChatReply, augmentPromptWithGemini } from "../services/gemini.js";
+import { runBrain, getToolVariantPrompts } from "../services/brain.js";
+import { generateSEO } from "../services/seoGenerator.js";
 
 const router = Router();
 
@@ -32,8 +34,8 @@ Rules:
 Your job: given a user's product description and style, build a single powerful image generation prompt.
 Rules:
 - Output ONLY the final image generation prompt string, nothing else
-- Focus on studio-quality, editorial, lifestyle photography
-- Add appropriate lighting, composition, depth-of-field keywords
+- Focus on studio-quality, editorial, lifestyle photography with dramatic lighting and composition
+- Add splash effects, reflections, bokeh, luxury environments
 - Keep it under 200 words`,
 
   "Cinematic Ads": `You are an expert CGI cinematic advertisement prompt engineer for PixaLera AI.
@@ -41,7 +43,7 @@ Your job: given a user's product description, build a single powerful cinematic 
 Rules:
 - Output ONLY the final image generation prompt string, nothing else
 - Focus on dramatic lighting, volumetric fog, cinematic color grading, blockbuster production quality
-- Include camera angle, lens specification, post-production style keywords
+- Include camera angle, lens specification, 3D environment, particles (smoke/water/glow)
 - Keep it under 200 words`,
 
   "Ad Creatives": `You are an expert social media ad creative prompt engineer for PixaLera AI.
@@ -49,7 +51,7 @@ Your job: given a user's product description, build a single powerful advertisin
 Rules:
 - Output ONLY the final image generation prompt string, nothing else
 - Focus on bold visuals, marketing impact, scroll-stopping composition
-- Include brand feel, typography space, platform optimization keywords
+- Include brand feel, typography space, headline area, platform optimization
 - Keep it under 200 words`,
 };
 
@@ -118,7 +120,7 @@ Build the perfect image generation prompt for this product.`;
         { role: "system", content: systemPrompt },
         { role: "user", content: userMsg },
       ],
-      max_completion_tokens: 8192,
+      max_completion_tokens: 512,
     });
     return resp.choices[0]?.message?.content?.trim() || `${prompt}, ${scenePrompt}, ${qualitySuffix}, ${modelSuffix}, photorealistic`;
   } catch (err) {
@@ -127,102 +129,40 @@ Build the perfect image generation prompt for this product.`;
   }
 }
 
-async function extractCatalogAttributes(prompt, productInfo) {
+async function generateAIReply(prompt, replyLanguage = "english") {
   const hasAI = !!(process.env.AI_INTEGRATIONS_OPENAI_API_KEY && process.env.AI_INTEGRATIONS_OPENAI_BASE_URL);
-  if (!hasAI) return null;
 
-  try {
-    const resp = await getOpenAI().chat.completions.create({
-      model: "gpt-5-mini",
-      messages: [
-        {
-          role: "system",
-          content: `You are a product catalog data extractor for PixaLera AI.
-Extract product attributes from the user's description and return a JSON object.
-Always return valid JSON with these fields (use null if not mentioned):
-{
-  "productName": "string or null",
-  "category": "string",
-  "color": "string or null",
-  "material": "string or null",
-  "dimensions": "string or null",
-  "weight": "string or null",
-  "features": ["array of key features"],
-  "targetAudience": "string or null",
-  "mood": "string",
-  "style": "string"
-}
-Return ONLY the JSON object, no explanation.`,
-        },
-        {
-          role: "user",
-          content: `Product description: "${prompt}"
-Product category detected: ${productInfo?.category || "general product"}
-${productInfo?.description ? `Additional info: ${productInfo.description}` : ""}
-
-Extract catalog attributes:`,
-        },
-      ],
-      max_completion_tokens: 8192,
-    });
-
-    const text = resp.choices[0]?.message?.content?.trim() || "";
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (jsonMatch) return JSON.parse(jsonMatch[0]);
-    return null;
-  } catch (err) {
-    console.error("Attribute extraction failed:", err.message);
-    return null;
-  }
-}
-
-async function generateAIReply(prompt) {
-  const hasAI = !!(process.env.AI_INTEGRATIONS_OPENAI_API_KEY && process.env.AI_INTEGRATIONS_OPENAI_BASE_URL);
-  if (!hasAI) return null;
-
-  try {
-    const resp = await getOpenAI().chat.completions.create({
-      model: "gpt-5-mini",
-      messages: [
-        {
-          role: "system",
-          content: `You are PixaLera AI assistant — a helpful AI for professional product photography and marketing visual generation.
-You help users:
-- Generate stunning product catalog images
-- Create professional product photography
-- Design cinematic ads
-- Build social media ad creatives
-
-When users ask questions, give concise, helpful answers. 
+  const systemContent = `You are PixaLera AI assistant — a helpful, friendly AI for professional product photography and marketing visual generation.
+You help users generate stunning product catalog images, professional product photography, cinematic ads, and social media ad creatives.
+When users ask questions, give concise, helpful answers.
 When they describe a product, suggest the best tool and style for them.
 Keep replies short (2-4 sentences max). Be warm and professional.
-If the user writes in Hindi or Hinglish, reply in the same language.`,
-        },
-        { role: "user", content: prompt },
-      ],
-      max_completion_tokens: 8192,
-    });
-    return resp.choices[0]?.message?.content?.trim() || null;
-  } catch (err) {
-    console.error("AI reply failed:", err.message);
-    return null;
-  }
-}
+If the user writes in Hindi or Hinglish, reply in the same language naturally.`;
 
-function detectIntent(prompt, hasImage) {
-  if (hasImage) return "generate";
-  const lower = prompt.toLowerCase();
-  const generateKeywords = [
-    "generate", "create", "make", "show", "produce", "photograph", "design",
-    "photo", "image", "catalog", "ad", "cinematic", "background", "scene",
-    "luxury", "minimal", "neon", "studio", "lighting", "shoot", "render",
-    "bottle", "product", "sneaker", "watch", "bag", "perfume", "jewelry", "phone",
-    "food", "cosmetic", "skincare", "supplement", "clothing", "shoes",
-  ];
-  const hasGenerateKeyword = generateKeywords.some(k => lower.includes(k));
-  if (hasGenerateKeyword) return "generate";
-  if (prompt.trim().split(/\s+/).length > 8) return "generate";
-  return "chat";
+  try {
+    const { reply } = await generateChatReply(prompt, [], null);
+    if (reply && reply !== "I'm here to help you create stunning product visuals! Tell me what product you'd like to photograph.") {
+      return reply;
+    }
+  } catch {}
+
+  if (hasAI) {
+    try {
+      const resp = await getOpenAI().chat.completions.create({
+        model: "gpt-5-mini",
+        messages: [
+          { role: "system", content: systemContent },
+          { role: "user", content: prompt },
+        ],
+        max_completion_tokens: 256,
+      });
+      return resp.choices[0]?.message?.content?.trim() || null;
+    } catch (err) {
+      console.error("AI reply failed:", err.message);
+    }
+  }
+
+  return null;
 }
 
 router.post(
@@ -230,55 +170,107 @@ router.post(
   verifyFirebaseToken,
   checkCreditAndSuspend,
   async (req, res) => {
-    const { imageUrl, prompt, tool, style, model, quality = "1K", aspectRatio = "1:1", numOutputs = 3 } = req.body;
+    const {
+      imageUrl,
+      prompt,
+      tool: requestedTool,
+      style,
+      model,
+      quality = "1K",
+      aspectRatio = "1:1",
+      numOutputs = 3,
+      autoDetect = false,
+    } = req.body;
     const uid = req.uid;
 
     if (!prompt) {
       return res.status(400).json({ error: "prompt required" });
     }
 
-    const intent = detectIntent(prompt, !!imageUrl);
-
-    if (intent === "chat") {
-      const reply = await generateAIReply(prompt);
-      return res.json({
-        success: true,
-        intent: "chat",
-        aiReply: reply || "I'm here to help you create stunning product images! Describe your product and I'll generate professional photos for you.",
-        images: [],
-        hasRealImages: false,
-        creditsConsumed: 0,
-        creditsRemaining: req.balanceAfter,
-      });
-    }
-
     const hasToken = !!process.env.REPLICATE_API_TOKEN;
     const startTime = Date.now();
-    let generationId = null;
 
     try {
-      let productInfo = { category: "product" };
+      let productInfo = { type: "product", category: "General Product" };
       let bgRemovedUrl = imageUrl || null;
-      let generatedUrls = null;
-      let catalogAttributes = null;
+      let imageAnalysis = null;
 
       if (hasToken && imageUrl) {
-        [productInfo, bgRemovedUrl] = await Promise.all([
-          analyzeProduct(imageUrl).catch(() => ({ category: "product" })),
+        const [analysisResult, bgResult] = await Promise.all([
+          analyzeProduct(imageUrl).catch(() => ({ category: "product", description: "" })),
           removeBackground(imageUrl).catch(() => imageUrl),
         ]);
+        imageAnalysis = analysisResult;
+        bgRemovedUrl = bgResult;
+        if (analysisResult?.category) {
+          productInfo = { type: analysisResult.category, category: analysisResult.category, description: analysisResult.description };
+        }
       }
 
-      const finalPrompt = await buildSmartPrompt({ prompt, tool, style, model, quality, aspectRatio });
+      const brainResult = await runBrain({
+        prompt,
+        hasImage: !!imageUrl,
+        imageAnalysis,
+        openaiClient: getOpenAI(),
+      });
+
+      if (brainResult.intent === "chat" && !imageUrl && !autoDetect && !requestedTool) {
+        const reply = await generateAIReply(prompt, brainResult.replyLanguage);
+        return res.json({
+          success: true,
+          intent: "chat",
+          aiReply: reply || "I'm here to help you create stunning product images! Describe your product and I'll generate professional photos for you.",
+          images: [],
+          hasRealImages: false,
+          creditsConsumed: 0,
+          creditsRemaining: req.balanceAfter,
+          brainInsights: brainResult,
+        });
+      }
+
+      const effectiveTool = requestedTool || brainResult.toolName;
+      const effectiveStyle = style || brainResult.styleRecommendation || "luxury";
+
+      const variantPrompts = getToolVariantPrompts(prompt, brainResult.tool, effectiveStyle);
+      const finalPrompt = await buildSmartPrompt({
+        prompt,
+        tool: effectiveTool,
+        style: effectiveStyle,
+        model,
+        quality,
+        aspectRatio,
+      });
+
+      let generatedUrls = null;
+      let generatedVariantUrls = {};
 
       if (hasToken) {
         const outputs = Math.max(1, Math.min(3, numOutputs || 3));
         generatedUrls = await generateImages(finalPrompt, "", outputs);
+
+        if (generatedUrls && generatedUrls.length > 0 && outputs > 1) {
+          const extraNeeded = outputs - generatedUrls.length;
+          if (extraNeeded > 0 && variantPrompts.length > 1) {
+            const extras = await Promise.all(
+              variantPrompts.slice(1, 1 + extraNeeded).map(vp =>
+                generateImages(vp, "", 1).catch(() => null)
+              )
+            );
+            for (const extra of extras) {
+              if (extra && extra[0]) generatedUrls.push(extra[0]);
+            }
+          }
+        }
       }
 
-      if (tool === "Generate Catalog") {
-        catalogAttributes = await extractCatalogAttributes(prompt, productInfo);
-      }
+      const [seoData] = await Promise.all([
+        generateSEO({
+          prompt,
+          productInfo,
+          tool: effectiveTool,
+          openaiClient: getOpenAI(),
+        }),
+      ]);
 
       const generationTime = Math.round((Date.now() - startTime) / 1000);
       const hasRealImages = !!(generatedUrls && generatedUrls.length > 0);
@@ -303,10 +295,11 @@ router.post(
         augmentedPrompt: finalPrompt,
         hasRealImages,
         requiresApiKey: !hasToken,
-        generationId,
         creditsConsumed: req.creditCost || 3,
         creditsRemaining: req.balanceAfter,
-        catalogAttributes,
+        seoData,
+        brainInsights: brainResult,
+        variantPrompts,
         generationTime,
       });
     } catch (err) {
@@ -316,7 +309,7 @@ router.post(
         await refundCredits(
           uid,
           req.creditCost || 0,
-          tool,
+          requestedTool || "Generate Catalog",
           model || "flash",
           `Generation failed: ${err.message}`,
           getAdminDb()
@@ -346,6 +339,7 @@ router.get("/health", (_req, res) => {
     status: "ok",
     hasReplicateToken: !!process.env.REPLICATE_API_TOKEN,
     hasReplitAI: !!(process.env.AI_INTEGRATIONS_OPENAI_API_KEY && process.env.AI_INTEGRATIONS_OPENAI_BASE_URL),
+    hasGemini: !!process.env.GEMINI_API_KEY,
     timestamp: new Date().toISOString(),
   });
 });
