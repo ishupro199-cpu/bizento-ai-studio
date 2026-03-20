@@ -70,7 +70,44 @@ function detectToolFromKeywords(prompt) {
   };
 }
 
-async function classifyWithGemini(prompt, hasImage, productInfo) {
+function detectIntentTypeFromKeywords(prompt) {
+  const lower = prompt.toLowerCase().trim();
+  const words = lower.split(/\s+/);
+
+  // GREETING detection
+  const greetingWords = ["hi", "hello", "hey", "namaste", "hii", "helo", "sup", "yo", "greetings", "haan", "okay", "theek hai", "acha", "ok"];
+  const greetingPhrases = ["kya kar sakte", "what can you", "tell me about", "help chahiye", "what is pixalera", "what are you", "kya ho tum", "pixalera kya hai", "kya karta hai"];
+  if (words.length <= 3 && greetingWords.some(g => lower === g || lower.startsWith(g + " ") || lower.endsWith(" " + g))) {
+    return "greeting";
+  }
+  if (greetingPhrases.some(p => lower.includes(p))) return "greeting";
+
+  // QUESTION detection
+  const questionStarters = ["kya", "kaise", "kyun", "what", "how", "why", "when", "where", "which", "explain", "samjhao", "batao", "difference", "tell me", "bata"];
+  if (lower.endsWith("?")) return "question";
+  for (const q of questionStarters) {
+    if (lower.startsWith(q + " ") || lower.startsWith(q + " ")) return "question";
+  }
+
+  // REFINE detection
+  const refineWords = ["change karo", "thoda alag", "dobara", "regenerate", "aur bright", "nahi yaar", "ek aur banao", "phir se", "same but", "background white", "background change", "color change", "alag background"];
+  if (refineWords.some(r => lower.includes(r))) return "refine";
+
+  // UNCLEAR detection
+  const unclearPhrases = ["kuch banao", "image chahiye", "help karo", "kuch bhi", "jo bhi", "koi bhi", "koi image"];
+  if (unclearPhrases.some(u => lower.includes(u))) return "unclear";
+
+  // Very short with no generation keywords — unclear
+  const allGenerateKws = Object.values(TOOL_RULES).flatMap(r => [...r.keywords, ...r.hinglish]);
+  const hasGenerateKw = allGenerateKws.some(kw => lower.includes(kw));
+  const generateActionWords = ["banao","create","generate","bana do","chahiye","make","bana","bnao","taiyaar","design","render","produce"];
+  const hasActionWord = generateActionWords.some(a => lower.includes(a));
+  if (words.length <= 2 && !hasGenerateKw && !hasActionWord) return "unclear";
+
+  return "generate";
+}
+
+async function classifyWithGemini(prompt, hasImage, productInfo, conversationState) {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) return null;
 
@@ -79,24 +116,32 @@ async function classifyWithGemini(prompt, hasImage, productInfo) {
     const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
     const instruction = `You are the AI Brain of Pixalera — a smart ecommerce creative platform.
-Your job: analyze the user's request and return a JSON object with the classification.
 
-Available tools:
-- catalog: Product catalog images for marketplaces (white bg, Amazon/Flipkart listings, clean shots)
-- photo: Professional product photography (studio, lifestyle, scene, environment, luxury, artistic)
-- creative: Social media ad creatives (Instagram, Facebook, posters, banners, promotions)
-- cinematic: Cinematic CGI ads (dramatic, 3D-like, volumetric, blockbuster quality, premium)
+BEFORE DOING ANYTHING, classify the user's message into EXACTLY ONE of these 5 intent types:
+- greeting: casual chat, hi/hello, asking what Pixalera does, small talk
+- question: asking for information, how-to, pricing, features, explanations
+- generate: wants to create/generate a product image (check image presence)
+- refine: wants to change/edit an existing output (only if conversationState is OUTPUT_SHOWN)
+- unclear: not enough info to determine what they want
+
+Available tools (only relevant for generate intent):
+- catalog: marketplace listings, white background, Amazon/Flipkart
+- photo: studio/lifestyle photography, scenes, environments
+- creative: social media ads, Instagram, Facebook, posters
+- cinematic: CGI ads, dramatic, volumetric, blockbuster
 
 User request: "${prompt}"
 Has product image: ${hasImage}
 Detected product: ${productInfo.type} (${productInfo.category})
+Conversation state: ${conversationState || "FRESH"}
 
 Return ONLY this JSON (no markdown, no explanation):
 {
+  "intentType": "greeting" | "question" | "generate" | "refine" | "unclear",
   "intent": "generate" | "chat",
   "tool": "catalog" | "photo" | "creative" | "cinematic",
   "confidence": 0.0-1.0,
-  "reasoning": "one sentence why you picked this tool",
+  "reasoning": "one sentence why you picked this intent and tool",
   "suggestion": "Best result: [Tool Name] — [why]",
   "productType": "detected product type",
   "styleRecommendation": "luxury|minimal|neon|floral|beach",
@@ -118,7 +163,7 @@ Return ONLY this JSON (no markdown, no explanation):
   }
 }
 
-async function classifyWithOpenAI(prompt, hasImage, productInfo, openaiClient) {
+async function classifyWithOpenAI(prompt, hasImage, productInfo, openaiClient, conversationState) {
   if (!openaiClient) return null;
   try {
     const resp = await openaiClient.chat.completions.create({
@@ -126,13 +171,13 @@ async function classifyWithOpenAI(prompt, hasImage, productInfo, openaiClient) {
       messages: [
         {
           role: "system",
-          content: `You are the AI Brain of Pixalera. Analyze the user request and return a JSON object.
-Tools: catalog (marketplace/white bg), photo (studio/lifestyle), creative (ads/social media), cinematic (CGI/dramatic).
-Return ONLY JSON: {"intent":"generate|chat","tool":"catalog|photo|creative|cinematic","confidence":0.0-1.0,"reasoning":"one sentence","suggestion":"Best result: X — reason","productType":"string","styleRecommendation":"luxury|minimal|neon|floral|beach","hinglishDetected":true|false,"replyLanguage":"english|hindi|hinglish"}`,
+          content: `You are the AI Brain of Pixalera. Classify user intent into one of 5 types: greeting, question, generate, refine, unclear.
+Tools (for generate): catalog (marketplace/white bg), photo (studio/lifestyle), creative (ads/social), cinematic (CGI/dramatic).
+Return ONLY JSON: {"intentType":"greeting|question|generate|refine|unclear","intent":"generate|chat","tool":"catalog|photo|creative|cinematic","confidence":0.0-1.0,"reasoning":"one sentence","suggestion":"Best result: X — reason","productType":"string","styleRecommendation":"luxury|minimal|neon|floral|beach","hinglishDetected":true|false,"replyLanguage":"english|hindi|hinglish"}`,
         },
         {
           role: "user",
-          content: `User request: "${prompt}"\nHas image: ${hasImage}\nProduct: ${productInfo.type} (${productInfo.category})`,
+          content: `User request: "${prompt}"\nHas image: ${hasImage}\nProduct: ${productInfo.type} (${productInfo.category})\nConversation state: ${conversationState || "FRESH"}`,
         },
       ],
       max_completion_tokens: 512,
@@ -147,32 +192,48 @@ Return ONLY JSON: {"intent":"generate|chat","tool":"catalog|photo|creative|cinem
   }
 }
 
-export async function runBrain({ prompt, hasImage, imageAnalysis = null, openaiClient = null }) {
+export async function runBrain({ prompt, hasImage, imageAnalysis = null, openaiClient = null, conversationState = "FRESH" }) {
   const productInfo = detectProductInfo(prompt);
   const keywordResult = detectToolFromKeywords(prompt);
+  const keywordIntentType = detectIntentTypeFromKeywords(prompt);
 
   let aiResult = null;
   const hasAI = !!(process.env.AI_INTEGRATIONS_OPENAI_API_KEY && process.env.AI_INTEGRATIONS_OPENAI_BASE_URL);
 
-  aiResult = await classifyWithGemini(prompt, hasImage, productInfo);
+  aiResult = await classifyWithGemini(prompt, hasImage, productInfo, conversationState);
   if (!aiResult && hasAI && openaiClient) {
-    aiResult = await classifyWithOpenAI(prompt, hasImage, productInfo, openaiClient);
+    aiResult = await classifyWithOpenAI(prompt, hasImage, productInfo, openaiClient, conversationState);
   }
 
-  const isChatPrompt = !hasImage &&
-    prompt.trim().split(/\s+/).length <= 6 &&
-    !Object.values(TOOL_RULES).flatMap(r => [...r.keywords, ...r.hinglish]).some(kw => prompt.toLowerCase().includes(kw));
+  // Determine intentType: AI result takes priority, then keyword detection
+  let intentType = aiResult?.intentType || keywordIntentType;
+
+  // Override: if OUTPUT_SHOWN and no clear generate action, lean towards refine
+  if (conversationState === "OUTPUT_SHOWN" && intentType === "generate") {
+    const refineSignals = ["change", "alag", "different", "thoda", "again", "phir", "dobara", "nahi", "update", "modify"];
+    if (refineSignals.some(r => prompt.toLowerCase().includes(r))) {
+      intentType = "refine";
+    }
+  }
+
+  // Determine legacy intent field (chat vs generate) from intentType
+  const chatIntents = ["greeting", "question", "unclear"];
+  const legacyIntent = (chatIntents.includes(intentType) && !hasImage) ? "chat" : "generate";
+
+  const finalIntentType = intentType;
+  const finalTool = aiResult?.tool || keywordResult.tool;
 
   let finalResult;
 
   if (aiResult) {
     finalResult = {
-      intent: aiResult.intent || (isChatPrompt ? "chat" : "generate"),
-      tool: aiResult.tool || keywordResult.tool,
-      toolName: TOOL_RULES[aiResult.tool || keywordResult.tool]?.name || "Generate Catalog",
+      intentType: finalIntentType,
+      intent: legacyIntent,
+      tool: finalTool,
+      toolName: TOOL_RULES[finalTool]?.name || "Generate Catalog",
       confidence: aiResult.confidence || keywordResult.confidence,
       reasoning: aiResult.reasoning || "Based on your request",
-      suggestion: aiResult.suggestion || `Best result: ${TOOL_RULES[aiResult.tool || keywordResult.tool]?.name}`,
+      suggestion: aiResult.suggestion || `Best result: ${TOOL_RULES[finalTool]?.name}`,
       productType: aiResult.productType || productInfo.type,
       productCategory: productInfo.category,
       styleRecommendation: aiResult.styleRecommendation || "luxury",
@@ -182,7 +243,8 @@ export async function runBrain({ prompt, hasImage, imageAnalysis = null, openaiC
     };
   } else {
     finalResult = {
-      intent: isChatPrompt ? "chat" : "generate",
+      intentType: finalIntentType,
+      intent: legacyIntent,
       tool: keywordResult.tool,
       toolName: TOOL_RULES[keywordResult.tool]?.name || "Generate Catalog",
       confidence: keywordResult.confidence,
@@ -201,7 +263,7 @@ export async function runBrain({ prompt, hasImage, imageAnalysis = null, openaiC
     finalResult.imageAnalysis = imageAnalysis;
   }
 
-  console.log(`[Brain] Tool: ${finalResult.toolName} | Confidence: ${(finalResult.confidence * 100).toFixed(0)}% | Source: ${finalResult.source}`);
+  console.log(`[Brain] IntentType: ${finalResult.intentType} | Tool: ${finalResult.toolName} | Confidence: ${(finalResult.confidence * 100).toFixed(0)}% | Source: ${finalResult.source}`);
   return finalResult;
 }
 
