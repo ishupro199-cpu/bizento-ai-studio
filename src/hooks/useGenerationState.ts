@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from "react";
-import { useAppContext, ModelId, CREDIT_COSTS } from "@/contexts/AppContext";
+import { useAppContext, ModelId } from "@/contexts/AppContext";
 import { augmentPrompt } from "@/lib/promptAugmentation";
 import { callGenerationApi } from "@/lib/generationApi";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";

@@ -2,13 +2,14 @@ import { useState } from "react";
 import { Check, Loader2, Sparkles, Copy, ChevronDown, ChevronUp, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import type { CatalogSEO } from "@/lib/generationApi";
 
 const PLATFORMS = [
-  { id: "amazon", name: "Amazon", color: "#FF9900", textColor: "#000" },
-  { id: "flipkart", name: "Flipkart", color: "#2874F0", textColor: "#fff" },
-  { id: "meesho", name: "Meesho", color: "#F43397", textColor: "#fff" },
-  { id: "myntra", name: "Myntra", color: "#FF3F6C", textColor: "#fff" },
-  { id: "others", name: "Others", color: "#89E900", textColor: "#000" },
+  { id: "amazon",    name: "Amazon",    color: "#FF9900", textColor: "#000" },
+  { id: "flipkart",  name: "Flipkart",  color: "#2874F0", textColor: "#fff" },
+  { id: "meesho",    name: "Meesho",    color: "#F43397", textColor: "#fff" },
+  { id: "myntra",    name: "Myntra",    color: "#FF3F6C", textColor: "#fff" },
+  { id: "instagram", name: "Instagram", color: "#E1306C", textColor: "#fff" },
 ];
 
 type PlatformContent = {
@@ -17,8 +18,6 @@ type PlatformContent = {
   description: string;
   keywords: string[];
   attributes: Record<string, string>;
-  usps: string[];
-  emotionalHook: string;
 };
 
 function generatePlatformContent(prompt: string, platform: string): PlatformContent {
@@ -34,7 +33,7 @@ function generatePlatformContent(prompt: string, platform: string): PlatformCont
         "✅ HASSLE-FREE RETURNS: Shop with confidence — 30-day easy returns and replacement policy backed by Amazon A-to-Z guarantee",
         "✅ TRUSTED SELLER: Fulfilled by Amazon with 10,000+ verified 5-star reviews from satisfied customers across India",
       ],
-      description: `Introducing our ${productName} — where premium craftsmanship meets everyday functionality. Designed for discerning customers who refuse to compromise on quality, this product represents the perfect blend of aesthetics and performance.\n\nWhether you're purchasing for yourself or as a thoughtful gift, you'll appreciate the attention to detail in every aspect of this product. The superior materials used in construction ensure this isn't just a purchase — it's an investment that pays dividends every day.\n\nJoin thousands of satisfied Amazon customers who have already elevated their lifestyle. Order now and experience the difference that quality makes.`,
+      description: `Introducing our ${productName} — where premium craftsmanship meets everyday functionality. Designed for discerning customers who refuse to compromise on quality.`,
       keywords: ["premium quality", "fast delivery", "best seller", "top rated", "value for money"],
       attributes: {
         "Brand": "Pixalera Premium",
@@ -44,13 +43,6 @@ function generatePlatformContent(prompt: string, platform: string): PlatformCont
         "Weight": "Lightweight",
         "Package Contents": "1 Unit + Accessories",
       },
-      usps: [
-        "Amazon's Choice in its category",
-        "10,000+ verified reviews",
-        "30-day easy returns",
-        "Fast Prime delivery",
-      ],
-      emotionalHook: "Stop settling for less. You deserve premium quality that matches your lifestyle. Every great day starts with the right products — and this is yours.",
     },
     flipkart: {
       title: `${productName} | SuperCoin Eligible | Flipkart Smart Buy | EMI Available`,
@@ -61,7 +53,7 @@ function generatePlatformContent(prompt: string, platform: string): PlatformCont
         "⚡ INSTANT DELIVERY: Available for same-day delivery in select cities — get it when you need it",
         "⚡ SUPERCOIN REWARDS: Earn SuperCoins on this purchase and redeem for future discounts",
       ],
-      description: `Get the best deal on ${productName} exclusively on Flipkart! This Flipkart Smart Buy certified product has been rigorously tested to meet the highest quality standards.\n\nWith easy EMI options starting from ₹0 interest, there's no reason to wait. This product is Flipkart Assured — which means it has been quality-checked, properly packaged, and comes with a hassle-free 7-day replacement policy.\n\nThousands of happy customers have rated this product 4.5★ and above. Add to cart now and use SuperCoins for additional discounts!`,
+      description: `Get the best deal on ${productName} exclusively on Flipkart! This Flipkart Smart Buy certified product has been rigorously tested to meet the highest quality standards.`,
       keywords: ["flipkart assured", "best deal india", "emi available", "top rated", "supercoin eligible"],
       attributes: {
         "Warranty": "1 Year Manufacturer",
@@ -71,13 +63,6 @@ function generatePlatformContent(prompt: string, platform: string): PlatformCont
         "Brand": "Pixalera",
         "Rating": "4.5★ & Above",
       },
-      usps: [
-        "Flipkart Assured quality",
-        "7-day replacement",
-        "EMI from ₹0 interest",
-        "SuperCoin rewards",
-      ],
-      emotionalHook: "Smart buyers choose Flipkart. Get the best price, fastest delivery, and a 7-day replacement guarantee. Add to cart before it's sold out!",
     },
     meesho: {
       title: `${productName} - Trendy | Affordable | Free Delivery | COD Available`,
@@ -88,7 +73,7 @@ function generatePlatformContent(prompt: string, platform: string): PlatformCont
         "🛍️ TRENDY DESIGN: Latest styles and designs that are trending on social media right now",
         "🛍️ EASY RETURNS: Simple 7-day returns process — your satisfaction is our top priority",
       ],
-      description: `Shop the trendiest ${productName} at the most affordable price on Meesho! We believe quality fashion and lifestyle shouldn't burn a hole in your pocket.\n\nThis product is loved by our community of 10 crore+ happy shoppers. With free delivery across India and Cash on Delivery available, shopping has never been easier or more accessible.\n\nShare with your friends and family — because everyone deserves great products at great prices. Order now and join the Meesho family!`,
+      description: `Shop the trendiest ${productName} at the most affordable price on Meesho! With free delivery across India and Cash on Delivery available, shopping has never been easier.`,
       keywords: ["affordable", "free delivery", "cod available", "trending", "best price"],
       attributes: {
         "Delivery": "Free Shipping",
@@ -98,13 +83,6 @@ function generatePlatformContent(prompt: string, platform: string): PlatformCont
         "Target": "All Ages",
         "Value": "Best Price",
       },
-      usps: [
-        "Free delivery PAN India",
-        "Cash on delivery",
-        "Unbeatable prices",
-        "Trending designs",
-      ],
-      emotionalHook: "Why pay more when Meesho has it for less? Free delivery, COD, easy returns — the complete package at an unbeatable price. Your community is loving it!",
     },
     myntra: {
       title: `${productName} | New Season | Style Statement | Fashion Forward`,
@@ -115,7 +93,7 @@ function generatePlatformContent(prompt: string, platform: string): PlatformCont
         "👗 MYNTRA ASSURED: Quality-verified with authentic product guarantee and easy exchange policy",
         "👗 STYLE INSPIRATION: Worn by top fashion influencers — be part of the style conversation",
       ],
-      description: `Make a statement with our ${productName} — the season's most-wanted style piece. Curated for the fashion-conscious Indian consumer who understands that style is a form of self-expression.\n\nCrafted with premium materials and attention to detail, this piece effortlessly elevates any outfit. Whether you're styling for a casual brunch, a work day, or a special evening, this product delivers.\n\nFeatured in Myntra's Most Loved collection. Style it your way — share your look and inspire the community. Limited stock available.`,
+      description: `Make a statement with our ${productName} — the season's most-wanted style piece. Curated for the fashion-conscious Indian consumer who understands that style is a form of self-expression.`,
       keywords: ["fashion forward", "trending style", "premium fabric", "myntra assured", "new season"],
       attributes: {
         "Season": "New Arrival",
@@ -125,65 +103,73 @@ function generatePlatformContent(prompt: string, platform: string): PlatformCont
         "Occasion": "Versatile",
         "Brand Trust": "Myntra Assured",
       },
-      usps: [
-        "Trending style pick",
-        "Myntra Assured quality",
-        "Easy exchange",
-        "Style community loved",
-      ],
-      emotionalHook: "Your style speaks before you do. This isn't just a product — it's a statement. Fashion-forward, quality-assured, and completely you. Limited pieces available.",
     },
-    others: {
-      title: `${productName} - Universal Listing | Multi-Platform Ready | SEO Optimized`,
+    instagram: {
+      title: `${productName} — Trending Now ✨ #ProductPhotography`,
       bulletPoints: [
-        "🌟 UNIVERSAL QUALITY: Meets and exceeds quality standards across all major ecommerce platforms",
-        "🌟 COMPLETE PACKAGE: Everything included — no hidden costs, no additional accessories needed",
-        "🌟 CUSTOMER FIRST: 24/7 customer support with dedicated resolution team for any queries",
-        "🌟 SECURE PACKAGING: Bubble-wrapped and double-boxed to ensure perfect delivery condition",
-        "🌟 AUTHENTIC PRODUCT: 100% genuine product with manufacturer warranty and authenticity certificate",
+        "📸 Scroll-stopping visuals designed for Instagram feed & Reels",
+        "✨ Premium lifestyle aesthetic that drives saves and shares",
+        "🛒 Link in bio — shop now via Instagram Shopping",
+        "💬 DM for custom orders and bulk pricing",
+        "🏷️ Use our hashtag and get featured on our page!",
       ],
-      description: `Our ${productName} is designed to exceed expectations regardless of where you're shopping. We believe every customer deserves the best — premium quality, fair pricing, and outstanding service.\n\nThis product comes with complete documentation, genuine warranty, and our personal quality guarantee. We're committed to delivering not just a product, but a complete experience.\n\nThank you for choosing quality. Your satisfaction is our mission.`,
-      keywords: ["genuine product", "warranty included", "premium quality", "secure delivery", "customer first"],
+      description: `${productName} is making waves on Instagram. Premium quality meets scroll-worthy aesthetics. Shop via the link in bio!`,
+      keywords: ["#productphotography", "#instashop", "#trending", "#aesthetic", "#shopnow"],
       attributes: {
-        "Warranty": "Manufacturer Included",
-        "Support": "24/7 Customer Care",
-        "Packaging": "Secure & Premium",
-        "Authenticity": "100% Genuine",
-        "After Sales": "Full Support",
-        "Certification": "Quality Tested",
+        "Format": "Feed Post + Story + Reel",
+        "CTA": "Link in Bio",
+        "Hashtags": "30 niche tags",
+        "Caption Style": "Conversational",
+        "Engagement": "Poll + Question sticker",
+        "Collab": "Influencer ready",
       },
-      usps: [
-        "Universal platform ready",
-        "Manufacturer warranty",
-        "24/7 support",
-        "Secure delivery",
-      ],
-      emotionalHook: "You deserve quality without compromise. This is more than a product — it's our commitment to your complete satisfaction. Order with confidence.",
     },
   };
 
-  return baseContent[platform] ?? baseContent.others;
+  return baseContent[platform] ?? baseContent.amazon;
+}
+
+function getRealPlatformContent(catalogSEO: CatalogSEO, platform: string): PlatformContent | null {
+  const plat = (catalogSEO.platforms as any)[platform];
+  if (!plat) return null;
+
+  const bulletPoints: string[] = Array.isArray(plat.bulletPoints) ? plat.bulletPoints : [];
+  const description = plat.caption || plat.description || "";
+  const keywords: string[] = Array.isArray(plat.keywords) ? plat.keywords : [];
+
+  return {
+    title: plat.title || "",
+    bulletPoints,
+    description,
+    keywords,
+    attributes: plat.attributes || {},
+  };
 }
 
 interface PlatformOptimizationProps {
   prompt: string;
   isPro: boolean;
   onClose: () => void;
+  catalogSEO?: CatalogSEO | null;
 }
 
-export function PlatformOptimization({ prompt, isPro, onClose }: PlatformOptimizationProps) {
+export function PlatformOptimization({ prompt, isPro, onClose, catalogSEO }: PlatformOptimizationProps) {
+  const hasRealData = !!catalogSEO;
+
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>(["amazon"]);
   const [activePlatform, setActivePlatform] = useState("amazon");
   const [generating, setGenerating] = useState(false);
-  const [generated, setGenerated] = useState(false);
+  const [generated, setGenerated] = useState(hasRealData);
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     bullets: true,
     description: false,
     keywords: false,
     attributes: false,
-    usps: false,
-    hook: false,
   });
+
+  const availablePlatforms = hasRealData
+    ? PLATFORMS
+    : PLATFORMS;
 
   const togglePlatform = (id: string) => {
     if (!isPro) {
@@ -199,12 +185,20 @@ export function PlatformOptimization({ prompt, isPro, onClose }: PlatformOptimiz
 
   const handleGenerate = async () => {
     setGenerating(true);
-    await new Promise((r) => setTimeout(r, 2200));
+    await new Promise((r) => setTimeout(r, 1800));
     setGenerating(false);
     setGenerated(true);
   };
 
-  const content = generatePlatformContent(prompt, activePlatform);
+  const getContent = (platform: string): PlatformContent => {
+    if (hasRealData) {
+      const real = getRealPlatformContent(catalogSEO!, platform);
+      if (real && real.title) return real;
+    }
+    return generatePlatformContent(prompt, platform);
+  };
+
+  const content = getContent(activePlatform);
 
   const toggleSection = (section: string) => {
     setExpandedSections((prev) => ({ ...prev, [section]: !prev[section] }));
@@ -225,7 +219,6 @@ export function PlatformOptimization({ prompt, isPro, onClose }: PlatformOptimiz
           </p>
         </div>
 
-        {/* Platform Selection */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Select Platforms</p>
@@ -237,7 +230,7 @@ export function PlatformOptimization({ prompt, isPro, onClose }: PlatformOptimiz
             )}
           </div>
           <div className="flex flex-wrap gap-2">
-            {PLATFORMS.map((platform) => {
+            {availablePlatforms.map((platform) => {
               const isSelected = selectedPlatforms.includes(platform.id);
               const isLocked = !isPro && !isSelected && selectedPlatforms.length >= 1;
               return (
@@ -253,10 +246,7 @@ export function PlatformOptimization({ prompt, isPro, onClose }: PlatformOptimiz
                       : "border-white/10 bg-white/4 hover:border-white/20 hover:bg-white/6"
                   }`}
                 >
-                  <div
-                    className="h-2.5 w-2.5 rounded-full"
-                    style={{ background: platform.color }}
-                  />
+                  <div className="h-2.5 w-2.5 rounded-full" style={{ background: platform.color }} />
                   {platform.name}
                   {isSelected && <Check className="h-3 w-3 text-primary" />}
                 </button>
@@ -291,47 +281,55 @@ export function PlatformOptimization({ prompt, isPro, onClose }: PlatformOptimiz
     );
   }
 
+  const shownPlatforms = hasRealData ? PLATFORMS : PLATFORMS.filter(p => selectedPlatforms.includes(p.id));
+
   return (
     <div className="space-y-4 animate-fade-in">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-base font-bold text-foreground">Platform Listings Ready</h3>
-          <p className="text-xs text-muted-foreground mt-0.5">AI-optimized for high conversion on each platform</p>
+          <h3 className="text-base font-bold text-foreground">
+            {hasRealData ? "Platform SEO Listings" : "Platform Listings Ready"}
+          </h3>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {hasRealData ? "AI-generated SEO copy from product analysis" : "AI-optimized for high conversion on each platform"}
+          </p>
         </div>
         <Button variant="ghost" size="sm" onClick={onClose} className="text-xs h-7 rounded-lg">
           Done
         </Button>
       </div>
 
-      {/* Platform Tabs */}
       <div className="flex gap-1.5 flex-wrap">
-        {selectedPlatforms.map((pid) => {
-          const platform = PLATFORMS.find((p) => p.id === pid)!;
+        {shownPlatforms.map((platform) => {
+          const isLocked = !isPro && platform.id !== "amazon";
           return (
             <button
-              key={pid}
-              onClick={() => setActivePlatform(pid)}
+              key={platform.id}
+              onClick={() => !isLocked && setActivePlatform(platform.id)}
+              disabled={isLocked}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 border ${
-                activePlatform === pid
+                activePlatform === platform.id
                   ? "border-white/30 bg-white/10"
+                  : isLocked
+                  ? "border-white/5 bg-white/2 opacity-35 cursor-not-allowed"
                   : "border-white/8 bg-white/3 hover:bg-white/6"
               }`}
             >
               <div className="h-2 w-2 rounded-full" style={{ background: platform.color }} />
               {platform.name}
+              {isLocked && <Lock className="h-2.5 w-2.5 text-amber-500/70" />}
             </button>
           );
         })}
       </div>
 
-      {/* Content Sections */}
       <div className="space-y-2">
-        {/* SEO Title */}
         <div className="bg-white/4 border border-white/8 rounded-xl p-3">
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1 min-w-0">
               <p className="text-[10px] text-primary font-semibold uppercase tracking-wider mb-1.5">SEO Title</p>
               <p className="text-sm text-foreground leading-snug">{content.title}</p>
+              <p className="text-[9px] text-muted-foreground/40 mt-1">{content.title.length} chars</p>
             </div>
             <button
               onClick={() => copyText(content.title, "Title")}
@@ -342,90 +340,78 @@ export function PlatformOptimization({ prompt, isPro, onClose }: PlatformOptimiz
           </div>
         </div>
 
-        {/* Bullet Points */}
-        <CollapsibleSection
-          title="Bullet Points"
-          expanded={expandedSections.bullets}
-          onToggle={() => toggleSection("bullets")}
-          onCopy={() => copyText(content.bulletPoints.join("\n"), "Bullet Points")}
-        >
-          <ul className="space-y-2">
-            {content.bulletPoints.map((b, i) => (
-              <li key={i} className="text-xs text-muted-foreground leading-relaxed">{b}</li>
-            ))}
-          </ul>
-        </CollapsibleSection>
+        {content.bulletPoints.length > 0 && (
+          <CollapsibleSection
+            title={`Bullet Points (${content.bulletPoints.length})`}
+            expanded={expandedSections.bullets}
+            onToggle={() => toggleSection("bullets")}
+            onCopy={() => copyText(content.bulletPoints.join("\n"), "Bullet Points")}
+          >
+            <ul className="space-y-2">
+              {content.bulletPoints.map((b, i) => (
+                <li key={i} className="text-xs text-muted-foreground leading-relaxed">{b}</li>
+              ))}
+            </ul>
+          </CollapsibleSection>
+        )}
 
-        {/* Description */}
-        <CollapsibleSection
-          title="Product Description"
-          expanded={expandedSections.description}
-          onToggle={() => toggleSection("description")}
-          onCopy={() => copyText(content.description, "Description")}
-        >
-          <p className="text-xs text-muted-foreground leading-relaxed whitespace-pre-line">{content.description}</p>
-        </CollapsibleSection>
+        {content.description && (
+          <CollapsibleSection
+            title="Product Description"
+            expanded={expandedSections.description}
+            onToggle={() => toggleSection("description")}
+            onCopy={() => copyText(content.description, "Description")}
+          >
+            <p className="text-xs text-muted-foreground leading-relaxed whitespace-pre-line">{content.description}</p>
+          </CollapsibleSection>
+        )}
 
-        {/* Keywords */}
-        <CollapsibleSection
-          title="5 Keywords"
-          expanded={expandedSections.keywords}
-          onToggle={() => toggleSection("keywords")}
-          onCopy={() => copyText(content.keywords.join(", "), "Keywords")}
-        >
-          <div className="flex flex-wrap gap-1.5">
-            {content.keywords.map((k, i) => (
-              <span key={i} className="text-[10px] px-2 py-1 rounded-lg bg-primary/10 text-primary border border-primary/20">
-                {k}
-              </span>
-            ))}
-          </div>
-        </CollapsibleSection>
+        {content.keywords.length > 0 && (
+          <CollapsibleSection
+            title={`Keywords (${content.keywords.length})`}
+            expanded={expandedSections.keywords}
+            onToggle={() => toggleSection("keywords")}
+            onCopy={() => copyText(content.keywords.join(", "), "Keywords")}
+          >
+            <div className="flex flex-wrap gap-1.5">
+              {content.keywords.map((k: string, i: number) => (
+                <span key={i} className="text-[10px] px-2 py-1 rounded-lg bg-primary/10 text-primary border border-primary/20">
+                  {k}
+                </span>
+              ))}
+            </div>
+          </CollapsibleSection>
+        )}
 
-        {/* Attributes */}
-        <CollapsibleSection
-          title="Product Attributes"
-          expanded={expandedSections.attributes}
-          onToggle={() => toggleSection("attributes")}
-          onCopy={() => copyText(Object.entries(content.attributes).map(([k, v]) => `${k}: ${v}`).join("\n"), "Attributes")}
-        >
-          <div className="grid grid-cols-2 gap-1.5">
-            {Object.entries(content.attributes).map(([key, val]) => (
-              <div key={key} className="flex flex-col rounded-lg bg-white/3 px-2.5 py-2">
-                <span className="text-[9px] text-muted-foreground/60 uppercase tracking-wide">{key}</span>
-                <span className="text-xs text-foreground font-medium mt-0.5">{val}</span>
-              </div>
-            ))}
-          </div>
-        </CollapsibleSection>
-
-        {/* USPs */}
-        <CollapsibleSection
-          title="Key Selling Points (USP)"
-          expanded={expandedSections.usps}
-          onToggle={() => toggleSection("usps")}
-          onCopy={() => copyText(content.usps.join("\n"), "USPs")}
-        >
-          <div className="grid grid-cols-2 gap-1.5">
-            {content.usps.map((usp, i) => (
-              <div key={i} className="flex items-center gap-2 rounded-lg bg-white/3 px-2.5 py-2">
-                <Check className="h-3 w-3 text-primary shrink-0" />
-                <span className="text-xs text-foreground">{usp}</span>
-              </div>
-            ))}
-          </div>
-        </CollapsibleSection>
-
-        {/* Emotional Hook */}
-        <CollapsibleSection
-          title="Emotional Hook (Conversion)"
-          expanded={expandedSections.hook}
-          onToggle={() => toggleSection("hook")}
-          onCopy={() => copyText(content.emotionalHook, "Emotional Hook")}
-        >
-          <p className="text-xs text-foreground/90 leading-relaxed italic border-l-2 border-primary/40 pl-3">{content.emotionalHook}</p>
-        </CollapsibleSection>
+        {Object.keys(content.attributes).length > 0 && (
+          <CollapsibleSection
+            title="Product Attributes"
+            expanded={expandedSections.attributes}
+            onToggle={() => toggleSection("attributes")}
+            onCopy={() => copyText(Object.entries(content.attributes).map(([k, v]) => `${k}: ${v}`).join("\n"), "Attributes")}
+          >
+            <div className="grid grid-cols-2 gap-1.5">
+              {Object.entries(content.attributes).map(([key, val]) => {
+                const isAskUser = String(val).includes("Ask user");
+                return (
+                  <div key={key} className={`flex flex-col rounded-lg px-2.5 py-2 ${isAskUser ? "bg-amber-400/5 border border-amber-400/20" : "bg-white/3"}`}>
+                    <span className="text-[9px] text-muted-foreground/60 uppercase tracking-wide">{key}</span>
+                    <span className={`text-xs font-medium mt-0.5 ${isAskUser ? "text-amber-400/80" : "text-foreground"}`}>
+                      {isAskUser ? "⚠ Provide info" : String(val)}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </CollapsibleSection>
+        )}
       </div>
+
+      {hasRealData && (
+        <p className="text-[9px] text-primary/50 text-center">
+          AI-generated from product analysis · Copy each section to use in your listing
+        </p>
+      )}
     </div>
   );
 }
@@ -446,10 +432,7 @@ function CollapsibleSection({
   return (
     <div className="bg-white/4 border border-white/8 rounded-xl overflow-hidden">
       <div className="flex items-center justify-between px-3 py-2.5">
-        <button
-          onClick={onToggle}
-          className="flex items-center gap-2 flex-1 text-left"
-        >
+        <button onClick={onToggle} className="flex items-center gap-2 flex-1 text-left">
           <p className="text-[10px] text-primary font-semibold uppercase tracking-wider">{title}</p>
           {expanded ? (
             <ChevronUp className="h-3 w-3 text-muted-foreground" />

@@ -43,6 +43,7 @@ import { PlatformOptimization } from "@/components/app/PlatformOptimization";
 import { BrainInsights } from "@/components/app/BrainInsights";
 import { SEOPanel } from "@/components/app/SEOPanel";
 import type { BrainInsightsData, SEOData, CatalogShot, CatalogSEO } from "@/lib/generationApi";
+import JSZip from "jszip";
 
 const TOOL_DEFS: Array<{
   id: ToolId;
@@ -697,6 +698,44 @@ export default function WelcomeDashboard() {
   const handleApprove = () => { setPhase("approved"); setShowApprovedPlatform(true); };
   const handleRegenerate = () => { const style = selectedStyle || "luxury"; startGeneration(style, sentPrompt); };
 
+  const downloadCatalogZip = useCallback(async () => {
+    const shots = catalogShots.filter(s => s.imageUrl);
+    if (shots.length === 0) { toast.error("No images to download yet."); return; }
+    const toastId = toast.loading("Preparing ZIP download...");
+    try {
+      const zip = new JSZip();
+      const folder = zip.folder("pixalera_catalog") as JSZip;
+      await Promise.all(shots.map(async (shot) => {
+        try {
+          const res = await fetch(shot.imageUrl!);
+          const blob = await res.blob();
+          folder.file(`${shot.type}_${shot.label.replace(/\s+/g, "_")}.webp`, blob);
+        } catch { /* skip individual failures */ }
+      }));
+      const content = await zip.generateAsync({ type: "blob" });
+      const url = URL.createObjectURL(content);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "pixalera_catalog.zip";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success("ZIP downloaded!", { id: toastId });
+    } catch {
+      toast.error("Download failed. Try again.", { id: toastId });
+    }
+  }, [catalogShots]);
+
+  const QUALITY_CRITERIA: Record<string, { label: string; checks: string[] }> = {
+    hero: { label: "Hero White BG", checks: ["Pure white background", "Product centered", "No shadows bleeding", "Clean edges"] },
+    back: { label: "Back / Flat Lay", checks: ["All sides visible", "Flat perspective", "Even lighting"] },
+    angle: { label: "Angle Shot", checks: ["45° angle visible", "Depth shown", "Natural shadow"] },
+    detail: { label: "Detail / Close-up", checks: ["Sharp focus on feature", "High contrast", "Text readable if any"] },
+    lifestyle: { label: "Lifestyle Shot", checks: ["Scene matches product", "Natural lighting", "No distracting elements"] },
+    infographic: { label: "Infographic", checks: ["Spec text readable", "Callout lines visible", "Clean layout"] },
+  };
+
   // Case C: image uploaded with no text — user taps a quick-action chip
   const handleImageOnlyChip = async (toolId: ToolId) => {
     if (!productPreview) return;
@@ -1297,8 +1336,15 @@ export default function WelcomeDashboard() {
                       </div>
                     ))}
                   </div>
-                  {catalogShots.every(s => !s.imageUrl) && (
+                  {catalogShots.every(s => !s.imageUrl) ? (
                     <p className="text-[10px] text-amber-400/70 text-right">Preview mode — add REPLICATE_API_TOKEN for real images</p>
+                  ) : (
+                    <div className="flex items-center justify-end gap-2">
+                      <button onClick={downloadCatalogZip}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold border border-primary/30 bg-primary/8 text-primary hover:bg-primary/15 transition-colors">
+                        <Upload className="h-3 w-3" /> Download All (ZIP)
+                      </button>
+                    </div>
                   )}
                 </div>
               ) : (
@@ -1458,6 +1504,45 @@ export default function WelcomeDashboard() {
                 </div>
               )}
 
+              {/* ── QUALITY CHECKLIST (Part 10) — shown when catalog shots are available ── */}
+              {catalogShots.length > 0 && phase === "results" && (
+                <div className="bg-white/2 border border-white/8 rounded-xl px-3 py-3 space-y-2 mt-1">
+                  <div className="flex items-center justify-between">
+                    <p className="text-[10px] font-semibold text-muted-foreground/60 uppercase tracking-wider">Quality Checklist</p>
+                    <span className="text-[9px] text-primary/60 bg-primary/8 border border-primary/15 rounded-full px-2 py-0.5">
+                      {catalogShots.length}/6 shots
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {catalogShots.map((shot) => {
+                      const criteria = QUALITY_CRITERIA[shot.type];
+                      if (!criteria) return null;
+                      const passed = !!shot.imageUrl;
+                      return (
+                        <div key={shot.type} className={`rounded-lg px-2.5 py-2 border ${passed ? "border-primary/20 bg-primary/5" : "border-white/8 bg-white/3"}`}>
+                          <div className="flex items-center gap-1.5 mb-1">
+                            <div className={`h-3.5 w-3.5 rounded-full flex items-center justify-center shrink-0 ${passed ? "bg-primary/20" : "bg-amber-400/15"}`}>
+                              {passed ? <Check className="h-2 w-2 text-primary" /> : <span className="text-[7px] text-amber-400 font-bold">!</span>}
+                            </div>
+                            <p className={`text-[9px] font-semibold truncate ${passed ? "text-primary" : "text-amber-400/80"}`}>{criteria.label}</p>
+                          </div>
+                          <div className="space-y-0.5">
+                            {criteria.checks.slice(0, 2).map((c, i) => (
+                              <p key={i} className="text-[8px] text-muted-foreground/50 leading-snug">{passed ? "✓" : "·"} {c}</p>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {catalogShots.some(s => !s.imageUrl) && (
+                    <p className="text-[9px] text-amber-400/60 bg-amber-400/5 border border-amber-400/15 rounded-lg px-2.5 py-1.5">
+                      Some shots are in preview mode. Add REPLICATE_API_TOKEN for full quality generation.
+                    </p>
+                  )}
+                </div>
+              )}
+
               {phase === "results" && (
                 <div className="flex gap-2 justify-end">
                   <button onClick={handleRegenerate}
@@ -1499,6 +1584,7 @@ export default function WelcomeDashboard() {
                   prompt={sentPrompt}
                   isPro={isPro || isStarter}
                   onClose={() => setShowApprovedPlatform(false)}
+                  catalogSEO={catalogSEO}
                 />
               </div>
             </div>
