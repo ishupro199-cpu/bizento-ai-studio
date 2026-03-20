@@ -355,16 +355,32 @@ export default function WelcomeDashboard() {
     setSelectedStyle(null);
     setShowApprovedPlatform(false);
     setAiReply(null);
+    setDefaultSuggestion(null);
 
     if (textareaRef.current) textareaRef.current.style.height = "auto";
 
-    const intent = detectClientIntent(prompt, !!productPreview);
+    const hasImage = !!productPreview;
+    const intent = detectClientIntent(prompt, hasImage);
 
-    if (intent === "chat") {
+    if (intent === "chat" && selectedTool !== "default") {
       setPhase("chat-thinking");
       const reply = await fetchAIReply(prompt);
       setAiReply(reply);
       setPhase("ai-chat");
+    } else if (selectedTool === "default") {
+      setPhase("thinking");
+      const [, detectedTool] = await Promise.all([
+        runThinkingAnimation(),
+        detectToolFromPrompt(prompt, hasImage),
+      ]);
+      const detectedName = TOOL_DEFS.find(t => t.id === detectedTool)?.name || "Catalog Generator";
+      setAutoDetectedTool(detectedTool);
+      setDefaultSuggestion(`Using **${detectedName}** — generating your images now.`);
+      await startGeneration("luxury", prompt, detectedTool);
+    } else if (hasImage) {
+      setPhase("thinking");
+      await runThinkingAnimation();
+      await startGeneration("luxury", prompt);
     } else {
       setPhase("thinking");
       await runThinkingAnimation();
@@ -372,12 +388,13 @@ export default function WelcomeDashboard() {
     }
   };
 
-  const startGeneration = useCallback(async (style: string, prompt: string) => {
+  const startGeneration = useCallback(async (style: string, prompt: string, toolOverride?: ToolId) => {
     setPhase("generating");
     setThinkingStep(0);
     setThinkingDone(false);
 
-    const toolDef = TOOL_DEFS.find(t => t.id === selectedTool);
+    const effectiveToolId: ToolId = toolOverride || (selectedTool !== "default" ? selectedTool as ToolId : "catalog");
+    const toolDef = TOOL_DEFS.find(t => t.id === effectiveToolId);
     const toolName = toolDef?.name || "Catalog Generator";
     const augmented = augmentPrompt(prompt, style, toolName);
 
@@ -485,6 +502,8 @@ export default function WelcomeDashboard() {
     setThinkingStep(0);
     setThinkingDone(false);
     setAiReply(null);
+    setDefaultSuggestion(null);
+    setAutoDetectedTool(null);
     clearProduct();
     setReferencePreview(null);
     startNewChat();
@@ -624,7 +643,7 @@ export default function WelcomeDashboard() {
                       <Plus className="h-3.5 w-3.5" />
                     </button>
                   </PopoverTrigger>
-                  <PopoverContent align="start" side="top" className="w-64 p-1.5 rounded-xl bg-popover border border-white/10">
+                  <PopoverContent align="start" side="top" className="w-52 p-1.5 rounded-xl bg-popover border border-white/10">
                     <div className="px-3 pt-2 pb-1">
                       <p className="text-[9px] text-muted-foreground/60 uppercase tracking-wider font-semibold">Attach Image</p>
                     </div>
@@ -644,41 +663,55 @@ export default function WelcomeDashboard() {
                         <p className="text-[10px] text-muted-foreground/60">Style or inspiration</p>
                       </div>
                     </button>
-                    <div className="h-px bg-white/8 my-1.5 mx-2" />
-                    <div className="px-3 pb-1">
-                      <p className="text-[9px] text-muted-foreground/60 uppercase tracking-wider font-semibold">AI Tool</p>
-                    </div>
-                    {TOOL_DEFS.map((tool) => {
-                      const Icon = tool.icon;
-                      const isActive = selectedTool === tool.id;
-                      const isLocked = tool.proOnly && !isPro;
-                      return (
-                        <button key={tool.id} onClick={() => handleToolSelect(tool.id)}
-                          className={`w-full flex items-center gap-3 rounded-lg px-3 py-2 transition-colors ${isActive ? "bg-primary/10" : "hover:bg-white/5"}`}>
-                          <Icon className={`h-4 w-4 shrink-0 ${isActive ? "text-primary" : "text-muted-foreground"}`} />
-                          <div className="flex-1 text-left">
-                            <p className={`text-sm font-medium ${isActive ? "text-primary" : "text-foreground"}`}>{tool.name}</p>
-                          </div>
-                          {isLocked && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "rgba(245,158,11,0.15)", color: "rgba(245,158,11,0.9)" }}>PRO</span>}
-                          {isActive && !isLocked && <div className="h-1.5 w-1.5 rounded-full bg-primary" />}
-                        </button>
-                      );
-                    })}
                   </PopoverContent>
                 </Popover>
 
                 {/* Settings button */}
                 <Popover open={settingsOpen} onOpenChange={setSettingsOpen}>
                   <PopoverTrigger asChild>
-                    <button title="Generation Settings"
+                    <button title="AI Tool & Generation Settings"
                       className="h-7 w-7 shrink-0 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors text-muted-foreground hover:text-foreground mb-0.5">
                       <Settings2 className="h-3.5 w-3.5" />
                     </button>
                   </PopoverTrigger>
-                  <PopoverContent align="start" side="top" className="w-72 p-4 rounded-2xl bg-popover border border-white/10 space-y-4">
-                    <p className="text-xs font-semibold text-foreground uppercase tracking-wider">Generation Settings</p>
+                  <PopoverContent align="start" side="top" className="w-80 p-3 rounded-2xl bg-popover border border-white/10 space-y-3 max-h-[80vh] overflow-y-auto sidebar-scroll">
+                    {/* Tool Selection */}
+                    <div className="space-y-2">
+                      <p className="text-[9px] font-semibold text-muted-foreground/60 uppercase tracking-wider">AI Tool</p>
+                      <div className="space-y-1">
+                        <button onClick={() => handleToolSelect("default")}
+                          className={`w-full flex items-center gap-2.5 rounded-xl px-3 py-2.5 border transition-all ${selectedTool === "default" ? "bg-primary/10 border-primary/30" : "bg-white/3 border-white/8 hover:bg-white/6"}`}>
+                          <div className={`h-7 w-7 rounded-lg flex items-center justify-center shrink-0 ${selectedTool === "default" ? "bg-primary/20" : "bg-white/8"}`}>
+                            <BoltIcon className={`h-3.5 w-3.5 ${selectedTool === "default" ? "text-primary" : "text-muted-foreground"}`} />
+                          </div>
+                          <div className="flex-1 text-left">
+                            <p className={`text-xs font-semibold ${selectedTool === "default" ? "text-primary" : "text-foreground"}`}>Default (Auto)</p>
+                            <p className="text-[10px] text-muted-foreground/50">AI picks best tool from prompt</p>
+                          </div>
+                          {selectedTool === "default" && <div className="h-2 w-2 rounded-full bg-primary shrink-0" />}
+                        </button>
+                        {TOOL_DEFS.map(tool => {
+                          const Icon = tool.icon;
+                          const isActive = selectedTool === tool.id;
+                          const isLocked = tool.proOnly && !isPro;
+                          return (
+                            <button key={tool.id} onClick={() => !isLocked && handleToolSelect(tool.id)}
+                              className={`w-full flex items-center gap-2.5 rounded-xl px-3 py-2 border transition-all ${isActive ? "bg-primary/10 border-primary/30" : isLocked ? "bg-white/2 border-white/5 opacity-40 cursor-not-allowed" : "bg-white/3 border-white/8 hover:bg-white/6"}`}>
+                              <div className={`h-6 w-6 rounded-md flex items-center justify-center shrink-0 ${isActive ? "bg-primary/20" : "bg-white/8"}`}>
+                                <Icon className={`h-3 w-3 ${isActive ? "text-primary" : "text-muted-foreground"}`} />
+                              </div>
+                              <p className={`flex-1 text-left text-xs font-medium ${isActive ? "text-primary" : "text-foreground"}`}>{tool.name}</p>
+                              {isLocked && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "rgba(245,158,11,0.15)", color: "rgba(245,158,11,0.9)" }}>PRO</span>}
+                              {isActive && !isLocked && <div className="h-1.5 w-1.5 rounded-full bg-primary shrink-0" />}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                    <div className="h-px bg-white/8" />
+                    {/* Aspect Ratio */}
                     <div className="space-y-1.5">
-                      <p className="text-xs text-muted-foreground">Aspect Ratio</p>
+                      <p className="text-[9px] font-semibold text-muted-foreground/60 uppercase tracking-wider">Aspect Ratio</p>
                       <div className="flex flex-wrap gap-1.5">
                         {ASPECT_RATIOS.map(ar => (
                           <button key={ar} onClick={() => setGenSettings(s => ({ ...s, aspectRatio: ar }))}
@@ -686,17 +719,19 @@ export default function WelcomeDashboard() {
                         ))}
                       </div>
                     </div>
+                    {/* Outputs */}
                     <div className="space-y-1.5">
-                      <p className="text-xs text-muted-foreground">Number of Outputs</p>
+                      <p className="text-[9px] font-semibold text-muted-foreground/60 uppercase tracking-wider">Outputs</p>
                       <div className="flex gap-1.5">
                         {[1, 2, 3].map(n => (
                           <button key={n} onClick={() => setGenSettings(s => ({ ...s, numOutputs: n }))}
-                            className={`flex-1 py-1.5 rounded-lg text-sm font-semibold border transition-all duration-150 ${genSettings.numOutputs === n ? "bg-primary/10 text-primary border-primary/30" : "bg-white/5 text-muted-foreground border-white/10 hover:bg-white/8"}`}>{n}</button>
+                            className={`flex-1 py-1.5 rounded-lg text-sm font-bold border transition-all duration-150 ${genSettings.numOutputs === n ? "bg-primary/10 text-primary border-primary/30" : "bg-white/5 text-muted-foreground border-white/10 hover:bg-white/8"}`}>{n}</button>
                         ))}
                       </div>
                     </div>
+                    {/* Quality */}
                     <div className="space-y-1.5">
-                      <p className="text-xs text-muted-foreground">Image Quality</p>
+                      <p className="text-[9px] font-semibold text-muted-foreground/60 uppercase tracking-wider">Image Quality</p>
                       <div className="grid grid-cols-2 gap-1.5">
                         {QUALITY_OPTIONS.map(q => {
                           const locked = PLAN_ORDER[q.minPlan] > planLevel;
@@ -712,11 +747,9 @@ export default function WelcomeDashboard() {
                           );
                         })}
                       </div>
-                      <div className="mt-1 pt-2 border-t border-white/8 flex items-center justify-between">
-                        <span className="text-[10px] text-muted-foreground">Cost for this quality</span>
-                        <span className="text-[10px] font-semibold" style={{ color: "#89E900" }}>
-                          {calculateCreditCost(selectedTool, selectedModel as ModelId, genSettings.quality as QualityId)} credits
-                        </span>
+                      <div className="pt-2 border-t border-white/8 flex items-center justify-between">
+                        <span className="text-[10px] text-muted-foreground">Estimated cost</span>
+                        <span className="text-[10px] font-semibold" style={{ color: "#89E900" }}>{currentCreditCost} credits</span>
                       </div>
                     </div>
                   </PopoverContent>
@@ -878,6 +911,52 @@ export default function WelcomeDashboard() {
           </div>
         )}
 
+        {/* Default tool AI suggestion */}
+        {defaultSuggestion && (phase === "generating" || phase === "results" || phase === "approved") && (
+          <div className="flex justify-start animate-fade-in">
+            <div className="max-w-[80%] space-y-1.5">
+              <div className="flex items-center gap-2 mb-1">
+                <div className="h-6 w-6 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
+                  <BoltIcon className="h-3 w-3 text-primary" />
+                </div>
+                <span className="text-xs text-muted-foreground font-medium">Pixalera AI</span>
+              </div>
+              <div className="bg-white/4 border border-white/10 rounded-2xl rounded-tl-sm px-4 py-2.5">
+                <p className="text-sm text-foreground leading-relaxed">
+                  {defaultSuggestion.replace(/\*\*(.*?)\*\*/g, "$1")}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Generation animation boxes */}
+        {phase === "generating" && (
+          <div className="flex justify-end animate-fade-in">
+            <div className="max-w-[85%] space-y-2">
+              <div className="grid grid-cols-3 gap-2">
+                {Array.from({ length: genSettings.numOutputs }).map((_, idx) => (
+                  <div key={idx} className="aspect-square rounded-xl border border-white/10 relative overflow-hidden"
+                    style={{ background: "rgba(137,233,0,0.03)" }}>
+                    <div className="absolute inset-0 animate-pulse" style={{ background: "rgba(255,255,255,0.02)" }} />
+                    <div className="absolute inset-0 overflow-hidden">
+                      <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_ease-in-out_infinite]"
+                        style={{ background: "linear-gradient(90deg,transparent,rgba(255,255,255,0.04),transparent)" }} />
+                    </div>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="h-6 w-6 rounded-full border-2 border-primary/15 border-t-primary/50 animate-spin" />
+                    </div>
+                    <span className="absolute top-1.5 left-1.5 text-[8px] bg-black/50 rounded-full px-1.5 py-0.5 text-white/35">
+                      {["A", "B", "C"][idx]}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              <p className="text-[10px] text-muted-foreground/45 text-right animate-pulse">Generating your images...</p>
+            </div>
+          </div>
+        )}
+
         {/* Results */}
         {(phase === "results" || phase === "approved") && generatedImages.length > 0 && (
           <div className="flex justify-end animate-fade-in">
@@ -1024,17 +1103,15 @@ export default function WelcomeDashboard() {
         {/* Input row */}
         <div className="flex items-end gap-2 bg-white/5 border border-white/12 rounded-2xl px-3 py-2.5 focus-within:border-white/22 transition-[border-color] duration-150">
 
-          {/* + button — opens popup with tools + image upload */}
+          {/* + button — image upload only */}
           <Popover open={plusOpen} onOpenChange={setPlusOpen}>
             <PopoverTrigger asChild>
-              <button disabled={isGenerating || uploadingProduct} title="Add / Select Tool"
+              <button disabled={isGenerating || uploadingProduct} title="Attach Image"
                 className="h-8 w-8 shrink-0 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors text-muted-foreground hover:text-foreground mb-0.5 disabled:opacity-40">
                 <Plus className="h-4.5 w-4.5" />
               </button>
             </PopoverTrigger>
-            <PopoverContent align="start" side="top" className="w-64 p-1.5 rounded-xl bg-popover border border-white/10">
-
-              {/* Attach Image section — top */}
+            <PopoverContent align="start" side="top" className="w-52 p-1.5 rounded-xl bg-popover border border-white/10">
               <div className="px-3 pt-2 pb-1">
                 <p className="text-[9px] text-muted-foreground/60 uppercase tracking-wider font-semibold">Attach Image</p>
               </div>
@@ -1054,82 +1131,75 @@ export default function WelcomeDashboard() {
                   <p className="text-[10px] text-muted-foreground/60">Style or inspiration</p>
                 </div>
               </button>
-
-              {/* Divider */}
-              <div className="h-px bg-white/8 my-1.5 mx-2" />
-
-              {/* Tool selection section — below */}
-              <div className="px-3 pb-1">
-                <p className="text-[9px] text-muted-foreground/60 uppercase tracking-wider font-semibold">AI Tool</p>
-              </div>
-              {TOOL_DEFS.map((tool) => {
-                const Icon = tool.icon;
-                const isActive = selectedTool === tool.id;
-                const isLocked = tool.proOnly && !isPro;
-                return (
-                  <button
-                    key={tool.id}
-                    onClick={() => handleToolSelect(tool.id)}
-                    className={`w-full flex items-center gap-3 rounded-lg px-3 py-2 transition-colors ${
-                      isActive ? "bg-primary/10" : "hover:bg-white/5"
-                    }`}
-                  >
-                    <Icon className={`h-4 w-4 shrink-0 ${isActive ? "text-primary" : "text-muted-foreground"}`} />
-                    <div className="flex-1 text-left">
-                      <p className={`text-sm font-medium ${isActive ? "text-primary" : "text-foreground"}`}>{tool.name}</p>
-                    </div>
-                    {isLocked && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "rgba(245,158,11,0.15)", color: "rgba(245,158,11,0.9)" }}>PRO</span>}
-                    {isActive && !isLocked && <div className="h-1.5 w-1.5 rounded-full bg-primary" />}
-                  </button>
-                );
-              })}
             </PopoverContent>
           </Popover>
 
-          {/* Settings button */}
+          {/* Settings button — AI Tool + generation settings */}
           <Popover open={settingsOpen} onOpenChange={setSettingsOpen}>
             <PopoverTrigger asChild>
-              <button title="Generation Settings" disabled={isGenerating}
+              <button title="AI Tool & Settings" disabled={isGenerating}
                 className="h-8 w-8 shrink-0 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors text-muted-foreground hover:text-foreground mb-0.5 disabled:opacity-40">
                 <Settings2 className="h-4 w-4" />
               </button>
             </PopoverTrigger>
-            <PopoverContent align="start" side="top" className="w-72 p-4 rounded-2xl bg-popover border border-white/10 space-y-4">
-              <p className="text-xs font-semibold text-foreground uppercase tracking-wider">Generation Settings</p>
-
+            <PopoverContent align="start" side="top" className="w-80 p-3 rounded-2xl bg-popover border border-white/10 space-y-3 max-h-[80vh] overflow-y-auto sidebar-scroll">
+              {/* Tool Selection */}
+              <div className="space-y-2">
+                <p className="text-[9px] font-semibold text-muted-foreground/60 uppercase tracking-wider">AI Tool</p>
+                <div className="space-y-1">
+                  <button onClick={() => handleToolSelect("default")}
+                    className={`w-full flex items-center gap-2.5 rounded-xl px-3 py-2.5 border transition-all ${selectedTool === "default" ? "bg-primary/10 border-primary/30" : "bg-white/3 border-white/8 hover:bg-white/6"}`}>
+                    <div className={`h-7 w-7 rounded-lg flex items-center justify-center shrink-0 ${selectedTool === "default" ? "bg-primary/20" : "bg-white/8"}`}>
+                      <BoltIcon className={`h-3.5 w-3.5 ${selectedTool === "default" ? "text-primary" : "text-muted-foreground"}`} />
+                    </div>
+                    <div className="flex-1 text-left">
+                      <p className={`text-xs font-semibold ${selectedTool === "default" ? "text-primary" : "text-foreground"}`}>Default (Auto)</p>
+                      <p className="text-[10px] text-muted-foreground/50">AI picks best tool from prompt</p>
+                    </div>
+                    {selectedTool === "default" && <div className="h-2 w-2 rounded-full bg-primary shrink-0" />}
+                  </button>
+                  {TOOL_DEFS.map(tool => {
+                    const Icon = tool.icon;
+                    const isActive = selectedTool === tool.id;
+                    const isLocked = tool.proOnly && !isPro;
+                    return (
+                      <button key={tool.id} onClick={() => !isLocked && handleToolSelect(tool.id)}
+                        className={`w-full flex items-center gap-2.5 rounded-xl px-3 py-2 border transition-all ${isActive ? "bg-primary/10 border-primary/30" : isLocked ? "bg-white/2 border-white/5 opacity-40 cursor-not-allowed" : "bg-white/3 border-white/8 hover:bg-white/6"}`}>
+                        <div className={`h-6 w-6 rounded-md flex items-center justify-center shrink-0 ${isActive ? "bg-primary/20" : "bg-white/8"}`}>
+                          <Icon className={`h-3 w-3 ${isActive ? "text-primary" : "text-muted-foreground"}`} />
+                        </div>
+                        <p className={`flex-1 text-left text-xs font-medium ${isActive ? "text-primary" : "text-foreground"}`}>{tool.name}</p>
+                        {isLocked && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "rgba(245,158,11,0.15)", color: "rgba(245,158,11,0.9)" }}>PRO</span>}
+                        {isActive && !isLocked && <div className="h-1.5 w-1.5 rounded-full bg-primary shrink-0" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              <div className="h-px bg-white/8" />
               {/* Aspect Ratio */}
               <div className="space-y-1.5">
-                <p className="text-xs text-muted-foreground">Aspect Ratio</p>
+                <p className="text-[9px] font-semibold text-muted-foreground/60 uppercase tracking-wider">Aspect Ratio</p>
                 <div className="flex flex-wrap gap-1.5">
                   {ASPECT_RATIOS.map(ar => (
                     <button key={ar} onClick={() => setGenSettings(s => ({ ...s, aspectRatio: ar }))}
-                      className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-all duration-150 ${
-                        genSettings.aspectRatio === ar
-                          ? "bg-primary/10 text-primary border-primary/30"
-                          : "bg-white/5 text-muted-foreground border-white/10 hover:bg-white/8"
-                      }`}>{ar}</button>
+                      className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-all duration-150 ${genSettings.aspectRatio === ar ? "bg-primary/10 text-primary border-primary/30" : "bg-white/5 text-muted-foreground border-white/10 hover:bg-white/8"}`}>{ar}</button>
                   ))}
                 </div>
               </div>
-
               {/* Outputs */}
               <div className="space-y-1.5">
-                <p className="text-xs text-muted-foreground">Number of Outputs</p>
+                <p className="text-[9px] font-semibold text-muted-foreground/60 uppercase tracking-wider">Outputs</p>
                 <div className="flex gap-1.5">
                   {[1, 2, 3].map(n => (
                     <button key={n} onClick={() => setGenSettings(s => ({ ...s, numOutputs: n }))}
-                      className={`flex-1 py-1.5 rounded-lg text-sm font-semibold border transition-all duration-150 ${
-                        genSettings.numOutputs === n
-                          ? "bg-primary/10 text-primary border-primary/30"
-                          : "bg-white/5 text-muted-foreground border-white/10 hover:bg-white/8"
-                      }`}>{n}</button>
+                      className={`flex-1 py-1.5 rounded-lg text-sm font-bold border transition-all duration-150 ${genSettings.numOutputs === n ? "bg-primary/10 text-primary border-primary/30" : "bg-white/5 text-muted-foreground border-white/10 hover:bg-white/8"}`}>{n}</button>
                   ))}
                 </div>
               </div>
-
               {/* Quality */}
               <div className="space-y-1.5">
-                <p className="text-xs text-muted-foreground">Image Quality</p>
+                <p className="text-[9px] font-semibold text-muted-foreground/60 uppercase tracking-wider">Image Quality</p>
                 <div className="grid grid-cols-2 gap-1.5">
                   {QUALITY_OPTIONS.map(q => {
                     const locked = PLAN_ORDER[q.minPlan] > planLevel;
@@ -1156,10 +1226,8 @@ export default function WelcomeDashboard() {
                   })}
                 </div>
                 <div className="mt-1 pt-2 border-t border-white/8 flex items-center justify-between">
-                  <span className="text-[10px] text-muted-foreground">Cost for this quality</span>
-                  <span className="text-[10px] font-semibold" style={{ color: "#89E900" }}>
-                    {calculateCreditCost(selectedTool, selectedModel as ModelId, genSettings.quality as QualityId)} credits
-                  </span>
+                  <span className="text-[10px] text-muted-foreground">Estimated cost</span>
+                  <span className="text-[10px] font-semibold" style={{ color: "#89E900" }}>{currentCreditCost} credits</span>
                 </div>
               </div>
             </PopoverContent>
