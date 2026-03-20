@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { useEffect } from "react";
+import { BrowserRouter, Navigate, Route, Routes, useNavigate, useParams } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -56,6 +57,16 @@ import PlanPage from "@/pages/app/PlanPage";
 import CheckoutPage from "@/pages/app/CheckoutPage";
 import SettingsPage from "@/pages/app/SettingsPage";
 import RewardsPage from "@/pages/app/RewardsPage";
+import BillingPage from "@/pages/app/BillingPage";
+
+function RefRedirect() {
+  const { userId } = useParams<{ userId: string }>();
+  const navigate = useNavigate();
+  useEffect(() => {
+    navigate(`/signup?ref=${userId}`, { replace: true });
+  }, [userId, navigate]);
+  return null;
+}
 
 // Admin pages
 import AdminDashboard from "@/pages/admin/AdminDashboard";
@@ -106,6 +117,7 @@ const App = () => (
             <Route path="/terms" element={<TermsPage />} />
             <Route path="/refund-policy" element={<RefundPolicyPage />} />
             <Route path="/cookies" element={<CookiesPolicyPage />} />
+            <Route path="/ref/:userId" element={<RefRedirect />} />
 
             {/* App Dashboard — Protected */}
             <Route path="/app" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>

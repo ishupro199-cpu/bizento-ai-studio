@@ -222,12 +222,15 @@ router.post("/verify", verifyFirebaseToken, async (req, res) => {
       createdAt: FieldValue.serverTimestamp(),
     });
 
+    const purchaseBonus = await giveReferralPurchaseBonus(adminDb, uid, totalNewCredits);
+
     return res.json({
       success: true,
       plan,
       credits: totalNewCredits,
       newBalance,
       planExpiry: expiryDate.toISOString(),
+      referralBonus: purchaseBonus,
     });
   } catch (err) {
     console.error("Verify payment error:", err.message);
@@ -250,5 +253,52 @@ router.get("/config", (_req, res) => {
     keyId: process.env.RAZORPAY_KEY_ID || null,
   });
 });
+
+async function giveReferralPurchaseBonus(adminDb, userId, purchasedCredits) {
+  try {
+    const userSnap = await adminDb.collection("users").doc(userId).get();
+    if (!userSnap.exists) return null;
+    const userData = userSnap.data() || {};
+    const referrerId = userData.referredBy;
+    if (!referrerId) return null;
+
+    const alreadyRewarded = await adminDb.collection("referrals")
+      .where("referred_user_id", "==", userId)
+      .where("purchase_reward_given", "==", true)
+      .limit(1).get();
+    if (!alreadyRewarded.empty) return null;
+
+    const bonus = Math.floor(purchasedCredits * 0.5);
+    if (bonus <= 0) return null;
+
+    await adminDb.runTransaction(async (tx) => {
+      const referrerRef = adminDb.collection("users").doc(referrerId);
+      tx.update(referrerRef, {
+        creditsRemaining: FieldValue.increment(bonus),
+        referralCreditsEarned: FieldValue.increment(bonus),
+      });
+      const refSnap = await adminDb.collection("referrals")
+        .where("referred_user_id", "==", userId)
+        .where("referrer_id", "==", referrerId)
+        .limit(1).get();
+      if (!refSnap.empty) {
+        tx.update(refSnap.docs[0].ref, { purchase_reward_given: true, purchase_bonus: bonus });
+      }
+    });
+
+    await adminDb.collection("transactions").add({
+      userId: referrerId,
+      type: "referral_reward",
+      credits: bonus,
+      description: `Purchase bonus — referred user bought a plan (${bonus} credits = 50% of ${purchasedCredits})`,
+      createdAt: FieldValue.serverTimestamp(),
+    });
+
+    return bonus;
+  } catch (err) {
+    console.error("Referral purchase bonus error:", err.message);
+    return null;
+  }
+}
 
 export { router as paymentRouter };
