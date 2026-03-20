@@ -55,7 +55,7 @@ export default function RewardsPage() {
   const [copied, setCopied] = useState(false);
 
   const referralLink = user?.uid
-    ? `${window.location.origin}/signup?ref=${user.uid}`
+    ? `${window.location.origin}/ref/${user.uid}`
     : "";
 
   useEffect(() => {
@@ -113,7 +113,7 @@ export default function RewardsPage() {
             <h1 className="text-xl font-bold text-foreground">Invite & Earn Credits</h1>
           </div>
           <p className="text-sm text-muted-foreground pl-11.5">
-            Invite friends and earn free credits when they join and generate images.
+            Earn 5 credits per referral + Earn 50% credits when they purchase a plan
           </p>
         </div>
 
@@ -178,8 +178,8 @@ export default function RewardsPage() {
           <div className="space-y-3">
             {[
               { step: "1", text: "Share your unique referral link with friends" },
-              { step: "2", text: "Friend signs up and completes their first generation" },
-              { step: "3", text: "You earn +20 credits • Friend earns +10 credits" },
+              { step: "2", text: "Friend signs up using your link — you both get +5 credits instantly" },
+              { step: "3", text: "When your friend buys any plan, you earn 50% of their purchased credits automatically" },
             ].map(({ step, text }) => (
               <div key={step} className="flex items-start gap-3">
                 <div className="h-6 w-6 rounded-full flex items-center justify-center shrink-0 text-xs font-bold" style={{ background: "rgba(137,233,0,0.12)", color: "#89E900", border: "1px solid rgba(137,233,0,0.2)" }}>
@@ -188,6 +188,15 @@ export default function RewardsPage() {
                 <p className="text-sm text-foreground/70 pt-0.5">{text}</p>
               </div>
             ))}
+          </div>
+
+          {/* Purchase reward example */}
+          <div className="mt-4 rounded-xl px-4 py-3 border border-primary/15" style={{ background: "rgba(137,233,0,0.04)" }}>
+            <p className="text-xs font-semibold text-primary mb-1.5">Purchase Reward Example</p>
+            <p className="text-xs text-foreground/60 leading-relaxed">
+              Friend buys Starter (100 credits) → <span className="text-primary font-semibold">you get +50 credits</span><br />
+              Friend buys Pro (450 credits) → <span className="text-primary font-semibold">you get +225 credits</span>
+            </p>
           </div>
         </div>
 
@@ -235,7 +244,7 @@ export default function RewardsPage() {
                     </div>
                   </div>
                   <span className={`text-[10px] font-semibold px-2 py-1 rounded-full ${ref.status === "completed" ? "text-primary bg-primary/10 border border-primary/20" : "text-amber-400 bg-amber-400/10 border border-amber-400/20"}`}>
-                    {ref.status === "completed" ? `+${20 + (ref.milestoneBonus || 0)} cr` : "Pending"}
+                    {ref.status === "completed" ? `+${5 + (ref.milestoneBonus || 0)} cr` : "Pending"}
                   </span>
                 </div>
               ))}

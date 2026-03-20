@@ -638,7 +638,7 @@ export default function WelcomeDashboard() {
                 {/* + button */}
                 <Popover open={plusOpen} onOpenChange={setPlusOpen}>
                   <PopoverTrigger asChild>
-                    <button disabled={uploadingProduct} title="Add / Select Tool"
+                    <button disabled={uploadingProduct || !!productPreview} title={productPreview ? "Remove image to add a new one" : "Add / Select Tool"}
                       className="h-7 w-7 shrink-0 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors text-muted-foreground hover:text-foreground mb-0.5 disabled:opacity-40">
                       <Plus className="h-3.5 w-3.5" />
                     </button>
@@ -761,6 +761,12 @@ export default function WelcomeDashboard() {
                   className="flex-1 bg-transparent resize-none text-sm text-foreground placeholder:text-muted-foreground/35 outline-none leading-relaxed max-h-32 overflow-y-auto scrollbar-none py-1"
                   onInput={(e) => { const el = e.currentTarget; el.style.height = "auto"; el.style.height = `${el.scrollHeight}px`; }} />
 
+                {/* Credit pill inside prompt box */}
+                <div className={`shrink-0 flex items-center gap-1 px-2 py-1 rounded-full border text-[10px] font-semibold transition-all duration-200 mb-0.5 ${hasEnoughCredits ? "border-primary/25 bg-primary/8 text-primary" : "border-destructive/30 bg-destructive/8 text-destructive"}`}>
+                  <BoltIcon className="h-2.5 w-2.5" />
+                  <span>{currentCreditCost}</span>
+                </div>
+
                 {/* Send button */}
                 <button onClick={handleSend} disabled={!canSend} title="Send (Ctrl+Enter)"
                   className="h-8 w-8 shrink-0 flex items-center justify-center rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-150 mb-0.5">
@@ -768,17 +774,12 @@ export default function WelcomeDashboard() {
                 </button>
               </div>
 
-              {/* Active tool indicator + credit pill */}
+              {/* Active tool indicator */}
               <div className="flex items-center gap-2 px-1">
                 {(() => { const Icon = currentTool.icon; return <Icon className="h-3 w-3 text-muted-foreground/40" />; })()}
                 <span className="text-[10px] text-muted-foreground/40">{currentTool.name}</span>
                 <span className="text-[10px] text-muted-foreground/25">·</span>
                 <span className="text-[10px] text-muted-foreground/40 capitalize">{selectedModel} model</span>
-                <span className="text-[10px] text-muted-foreground/25">·</span>
-                <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-semibold transition-all duration-200 ${hasEnoughCredits ? "border-primary/25 bg-primary/8 text-primary" : "border-destructive/30 bg-destructive/8 text-destructive"}`}>
-                  <BoltIcon className="h-2.5 w-2.5" />
-                  <span>{currentCreditCost} credits</span>
-                </div>
               </div>
 
 
@@ -1106,7 +1107,7 @@ export default function WelcomeDashboard() {
           {/* + button — image upload only */}
           <Popover open={plusOpen} onOpenChange={setPlusOpen}>
             <PopoverTrigger asChild>
-              <button disabled={isGenerating || uploadingProduct} title="Attach Image"
+              <button disabled={isGenerating || uploadingProduct || !!productPreview} title={productPreview ? "Remove image to add a new one" : "Attach Image"}
                 className="h-8 w-8 shrink-0 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors text-muted-foreground hover:text-foreground mb-0.5 disabled:opacity-40">
                 <Plus className="h-4.5 w-4.5" />
               </button>
@@ -1250,6 +1251,14 @@ export default function WelcomeDashboard() {
             }}
           />
 
+          {/* Credit pill inside prompt box */}
+          {!isGenerating && (
+            <div className={`shrink-0 flex items-center gap-1 px-2 py-1 rounded-full border text-[10px] font-semibold transition-all duration-200 mb-0.5 ${hasEnoughCredits ? "border-primary/25 bg-primary/8 text-primary" : "border-destructive/30 bg-destructive/8 text-destructive"}`}>
+              <BoltIcon className="h-2.5 w-2.5" />
+              <span>{currentCreditCost}</span>
+            </div>
+          )}
+
           {/* Send button */}
           <button onClick={handleSend}
             disabled={!canSend}
@@ -1259,17 +1268,12 @@ export default function WelcomeDashboard() {
           </button>
         </div>
 
-        {/* Active tool indicator + credit pill */}
+        {/* Active tool indicator */}
         <div className="flex items-center gap-2 mt-1.5 px-1">
           {(() => { const Icon = currentTool.icon; return <Icon className="h-3 w-3 text-muted-foreground/40" />; })()}
           <span className="text-[10px] text-muted-foreground/40">{currentTool.name}</span>
           <span className="text-[10px] text-muted-foreground/25">·</span>
           <span className="text-[10px] text-muted-foreground/40 capitalize">{selectedModel} model</span>
-          <span className="text-[10px] text-muted-foreground/25">·</span>
-          <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-semibold transition-all duration-200 ${hasEnoughCredits ? "border-primary/25 bg-primary/8 text-primary" : "border-destructive/30 bg-destructive/8 text-destructive"}`}>
-            <BoltIcon className="h-2.5 w-2.5" />
-            <span>{currentCreditCost} credits</span>
-          </div>
         </div>
 
       </div>}

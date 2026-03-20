@@ -132,6 +132,7 @@ const App = () => (
               <Route path="checkout" element={<CheckoutPage />} />
               <Route path="settings" element={<SettingsPage />} />
               <Route path="rewards" element={<RewardsPage />} />
+              <Route path="billing" element={<BillingPage />} />
             </Route>
 
             {/* Admin Panel — Admin only */}

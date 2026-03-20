@@ -357,14 +357,14 @@ function SidebarInner({
           <p className="px-3 py-1 text-[10px] uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.28)" }}>Account</p>
         )}
         <NavLink
-          to="/app/plan"
+          to="/app/billing"
           onClick={handleNavClick}
-          title={isCollapsed ? "Plan" : undefined}
+          title={isCollapsed ? "Plans & Billing" : undefined}
           className={`flex items-center gap-3 rounded-lg py-2 text-sm font-medium transition-colors duration-150 ${isCollapsed ? "justify-center px-0 w-full" : "px-3"}`}
-          style={{ color: location.pathname.startsWith("/app/plan") ? "#89E900" : "rgba(255,255,255,0.6)", background: location.pathname.startsWith("/app/plan") ? "rgba(137,233,0,0.08)" : "transparent" }}
+          style={{ color: (location.pathname.startsWith("/app/billing") || location.pathname.startsWith("/app/plan")) ? "#89E900" : "rgba(255,255,255,0.6)", background: (location.pathname.startsWith("/app/billing") || location.pathname.startsWith("/app/plan")) ? "rgba(137,233,0,0.08)" : "transparent" }}
         >
           <CreditCardIcon className="h-[18px] w-[18px] shrink-0" />
-          {!isCollapsed && <span className="whitespace-nowrap">Plan</span>}
+          {!isCollapsed && <span className="whitespace-nowrap">Plans & Billing</span>}
         </NavLink>
         <NavLink
           to="/app/settings"
