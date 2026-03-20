@@ -1,0 +1,382 @@
+You are a senior full-stack SaaS engineer and QA expert.
+
+Build and finalize a complete production-ready AI SaaS platform called Pixalera.
+
+This must be a fully working system with real backend, database, storage, payments, and verified workflows.
+
+NO mock data. NO placeholders.
+
+---
+
+================================
+🎯 CORE REQUIREMENT
+
+• Fully functional system
+• Real-time updates
+• Bug-free workflows
+• Production-ready architecture
+
+---
+
+================================
+1️⃣ UI LAYOUT FIX (CRITICAL)
+
+Fix chat interface behavior:
+
+• Navbar → fixed at top
+• Prompt box → fixed at bottom
+• ONLY chat/messages area should scroll
+
+Ensure:
+
+• no scrolling on navbar
+• no movement of prompt box
+• mobile + desktop responsive
+
+---
+
+================================
+2️⃣ PROMPT BOX SYSTEM
+
+Implement:
+
+• single image upload only
+• disable add button after upload
+• allow remove image (X button)
+
+---
+
+CREDIT DISPLAY:
+
+Inside prompt box (right side before send button):
+
+Show:
+
+"⚡ X credits"
+
+Dynamically update based on:
+
+• tool
+• model
+• quality
+
+---
+
+Disable generate if:
+
+• insufficient credits
+
+---
+
+================================
+3️⃣ CREDIT SYSTEM (FINAL)
+
+Catalog:
+Flash → 5 credits
+Pro → 10 credits
+
+Photography / Ad Creatives:
+Flash → 3 credits
+Pro → 5 credits
+
+Cinematic Ads (CGI):
+Flash → 30 credits
+Pro → 50 credits
+
+---
+
+QUALITY ADD-ON:
+
+2K → +4 credits
+4K → +8 credits
+
+---
+
+================================
+4️⃣ PLANS SYSTEM (FINAL)
+
+FREE:
+15 credits/month
+
+STARTER:
+100 credits/month
++20 bonus credits
+
+PRO:
+450 credits (3 months)
++50 bonus credits
+
+---
+
+================================
+5️⃣ BILLING DASHBOARD (IMPORTANT)
+
+Create full "Plans & Billing" page.
+
+---
+
+SHOW:
+
+• Current plan
+• Status (Active / Expired)
+• Expiry date
+
+---
+
+CREDITS:
+
+• total credits
+• remaining credits
+• usage breakdown
+
+---
+
+USAGE:
+
+Catalog
+Ads
+Photography
+
+---
+
+BILLING DETAILS:
+
+• plan price
+• GST (18%)
+• total paid
+• payment method
+
+---
+
+TRANSACTION HISTORY:
+
+Date | Type | Credits | Status
+
+---
+
+FEATURE ACCESS:
+
+Show unlocked features clearly.
+
+---
+
+================================
+6️⃣ REWARD & REFERRAL SYSTEM (UPDATED)
+
+Add sidebar item:
+
+"Rewards" (above History)
+
+---
+
+REFERRAL LINK:
+
+Generate unique URL:
+
+/ref/{user_id}
+
+---
+
+REWARD LOGIC:
+
+Signup referral:
+
+• 5 credits to referrer
+• 5 credits to referred user
+
+---
+
+PURCHASE REWARD:
+
+If referred user buys any plan:
+
+→ referrer gets 50% of purchased credits
+
+Example:
+
+Starter (100 credits) → referrer gets 50 credits
+
+---
+
+REWARDS PAGE:
+
+Show:
+
+• referral link
+• copy button
+• share buttons
+
+---
+
+MENTION CLEARLY:
+
+"Earn 5 credits per referral
+
++ Earn 50% credits when they purchase a plan"
+
+---
+
+STATS:
+
+• total referrals
+• credits earned
+• bonus earned
+
+---
+
+================================
+7️⃣ PAYMENT SYSTEM (RAZORPAY)
+
+Implement full Razorpay integration.
+
+---
+
+CHECKOUT PAGE:
+
+Show:
+
+• selected plan
+• credits
+• bonus credits
+• GST (18%)
+• final total
+
+---
+
+After payment success:
+
+• update plan
+• add credits
+• store payment
+
+---
+
+================================
+8️⃣ DATABASE STRUCTURE
+
+Users
+Plans
+Credits
+Transactions
+Payments
+Referrals
+Rewards
+Generations
+
+---
+
+Ensure:
+
+• proper relationships
+• real-time updates
+
+---
+
+================================
+9️⃣ ADMIN PANEL
+
+Admin can:
+
+• view users
+• track credits
+• monitor payments
+• view referrals
+• detect abuse
+• adjust credits
+
+---
+
+================================
+🔟 REAL-TIME SYSTEM
+
+After:
+
+• generation
+• referral
+• payment
+
+Update instantly:
+
+• credits
+• UI
+• database
+
+---
+
+================================
+1️⃣1️⃣ ERROR HANDLING
+
+Handle:
+
+• low credits
+• payment failure
+• API errors
+
+---
+
+================================
+1️⃣2️⃣ BUG FIXING (MANDATORY)
+
+Scan entire project.
+
+Fix:
+
+• UI bugs
+• backend bugs
+• logic errors
+• broken flows
+
+---
+
+================================
+1️⃣3️⃣ WORKFLOW TESTING
+
+Test full flow:
+
+USER:
+
+Signup → Login → Generate → Credits deduct → Save → Buy plan → Credits update
+
+---
+
+ADMIN:
+
+Login → View users → Track payments → Check referrals
+
+---
+
+Fix ALL issues found.
+
+---
+
+================================
+1️⃣4️⃣ FINAL VERIFICATION
+
+Ensure:
+
+• all features working
+• all workflows correct
+• database synced
+• payments working
+• storage working
+
+---
+
+================================
+🎯 FINAL GOAL
+
+Deliver a complete, real, working SaaS product:
+
+Pixalera
+
+• fully functional
+• fully tested
+• ready to launch
+
+---
+
+IMPORTANT:
+
+Do NOT stop until:
+
+everything is working perfectly.
