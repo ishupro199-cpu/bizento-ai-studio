@@ -401,10 +401,10 @@ export function CinematicAdResult({
                   style={{ background: data.allFormats.find(f => f.id === result.format)?.gradient || "#333" }}>
                   <span className="text-2xl">{data.allFormats.find(f => f.id === result.format)?.icon}</span>
                 </div>
-                <div className="text-center">
-                  <p className="text-xs text-white/40 font-medium">Preview Mode</p>
-                  <p className="text-[10px] text-white/25 mt-1">Add REPLICATE_API_TOKEN for real images</p>
-                </div>
+<div className="text-center">
+                <p className="text-xs text-white/40 font-medium">Preview Mode</p>
+                <p className="text-[10px] text-white/25 mt-1">Add NVIDIA_API_KEY or REPLICATE_API_TOKEN for real images</p>
+              </div>
               </div>
             )}
           </div>
@@ -555,7 +555,7 @@ export function CinematicAdResult({
 
       {!result.hasRealImages && (
         <p className="text-[10px] text-amber-400/70 text-center">
-          Preview mode — add REPLICATE_API_TOKEN to generate real cinematic ad images
+          Preview mode — add NVIDIA_API_KEY or REPLICATE_API_TOKEN to generate real cinematic ad images
         </p>
       )}
     </div>

@@ -276,7 +276,7 @@ export function PhotoResult({ result, onApprove, onRefine, approved }: PhotoResu
               <ImageIcon className="h-12 w-12 text-white/15" />
               <div className="text-center">
                 <p className="text-xs text-white/40 font-medium">Preview Mode</p>
-                <p className="text-[10px] text-white/25 mt-1">Add REPLICATE_API_TOKEN for real images</p>
+                <p className="text-[10px] text-white/25 mt-1">Add NVIDIA_API_KEY or REPLICATE_API_TOKEN for real images</p>
               </div>
             </div>
           )}
@@ -384,7 +384,7 @@ export function PhotoResult({ result, onApprove, onRefine, approved }: PhotoResu
       {/* No real images notice */}
       {!result.hasRealImages && (
         <p className="text-[10px] text-amber-400/70 text-center">
-          Preview mode — add REPLICATE_API_TOKEN to generate real hero shots
+          Preview mode — add NVIDIA_API_KEY or REPLICATE_API_TOKEN to generate real hero shots
         </p>
       )}
     </div>

@@ -229,7 +229,7 @@ export function GenerationResults({ results, prompt, isPro, isFree, onRegenerate
           <div>
             <p className="text-xs font-medium text-foreground">Running in Preview Mode</p>
             <p className="text-[10px] text-muted-foreground leading-relaxed mt-0.5">
-              Add a <span className="text-primary font-mono">REPLICATE_API_TOKEN</span> to enable real AI image generation.
+              Add a <span className="text-primary font-mono">NVIDIA_API_KEY</span> or <span className="text-primary font-mono">REPLICATE_API_TOKEN</span> to enable real AI image generation.
             </p>
           </div>
         </div>

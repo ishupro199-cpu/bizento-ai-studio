@@ -558,7 +558,7 @@ export function AdsResult({ result, data, onRegenerate, onRefine }: AdsResultPro
                 style={{ background: "rgba(255,255,255,0.02)" }}>
                 <div className="text-4xl mb-3">🖼️</div>
                 <p className="text-sm font-semibold text-foreground">API Key Required</p>
-                <p className="text-[11px] text-muted-foreground/60 mt-1">REPLICATE_API_TOKEN configure karein image generate karne ke liye</p>
+                <p className="text-[11px] text-muted-foreground/60 mt-1">NVIDIA_API_KEY ya REPLICATE_API_TOKEN configure karein image generate karne ke liye</p>
                 <p className="text-[10px] text-muted-foreground/40 mt-3 px-4 break-all">{result.imagePrompt?.slice(0, 120)}...</p>
               </div>
             )}

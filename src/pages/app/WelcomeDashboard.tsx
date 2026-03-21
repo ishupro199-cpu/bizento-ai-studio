@@ -1436,7 +1436,7 @@ export default function WelcomeDashboard() {
                     ))}
                   </div>
                   {catalogShots.every(s => !s.imageUrl) ? (
-                    <p className="text-[10px] text-amber-400/70 text-right">Preview mode — add REPLICATE_API_TOKEN for real images</p>
+                    <p className="text-[10px] text-amber-400/70 text-right">Preview mode — add NVIDIA_API_KEY or REPLICATE_API_TOKEN for real images</p>
                   ) : (
                     <div className="flex items-center justify-end gap-2">
                       <button onClick={downloadCatalogZip}
@@ -1473,7 +1473,7 @@ export default function WelcomeDashboard() {
                     ))}
                   </div>
                   {!generatedImages[0]?.isReal && (
-                    <p className="text-[10px] text-amber-400/70 text-right">Preview mode — add REPLICATE_API_TOKEN for real images</p>
+                    <p className="text-[10px] text-amber-400/70 text-right">Preview mode — add NVIDIA_API_KEY or REPLICATE_API_TOKEN for real images</p>
                   )}
                 </div>
               )}
@@ -1634,11 +1634,11 @@ export default function WelcomeDashboard() {
                       );
                     })}
                   </div>
-                  {catalogShots.some(s => !s.imageUrl) && (
-                    <p className="text-[9px] text-amber-400/60 bg-amber-400/5 border border-amber-400/15 rounded-lg px-2.5 py-1.5">
-                      Some shots are in preview mode. Add REPLICATE_API_TOKEN for full quality generation.
-                    </p>
-                  )}
+{catalogShots.some(s => !s.imageUrl) && (
+  <p className="text-[9px] text-amber-400/60 bg-amber-400/5 border border-amber-400/15 rounded-lg px-2.5 py-1.5">
+  Some shots are in preview mode. Add NVIDIA_API_KEY or REPLICATE_API_TOKEN for full quality generation.
+  </p>
+  )}
                 </div>
               )}
 

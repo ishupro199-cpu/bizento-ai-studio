@@ -217,7 +217,7 @@ router.post(
       return res.status(400).json({ error: "prompt required" });
     }
 
-    const hasToken = !!process.env.REPLICATE_API_TOKEN;
+    const hasToken = !!process.env.NVIDIA_API_KEY || !!process.env.REPLICATE_API_TOKEN;
     const startTime = Date.now();
 
     try {
@@ -508,7 +508,7 @@ router.post("/photograph/build-prompt", async (req, res) => {
       lighting: effectiveLighting,
     });
 
-    const hasToken = !!process.env.REPLICATE_API_TOKEN;
+const hasToken = !!process.env.NVIDIA_API_KEY || !!process.env.REPLICATE_API_TOKEN;
     let imageUrls = [];
     if (hasToken) {
       imageUrls = await generateImages(photographyPrompt, "", 1).catch(() => []);
@@ -521,7 +521,6 @@ router.post("/photograph/build-prompt", async (req, res) => {
       style: effectiveStyle,
       background,
       lighting: effectiveLighting,
-      analysis: productAnalysis,
       refinementsApplied: refinements,
       imageUrls,
       hasRealImages: imageUrls.length > 0,
@@ -601,7 +600,7 @@ router.post("/cinematic-ads/build", async (req, res) => {
       analysis: productAnalysis,
     });
 
-    const hasToken = !!process.env.REPLICATE_API_TOKEN;
+    const hasToken = !!process.env.NVIDIA_API_KEY || !!process.env.REPLICATE_API_TOKEN;
     let imageUrls = [];
     if (hasToken) {
       imageUrls = await generateImages(adPrompt, "", 1).catch(() => []);
@@ -703,7 +702,7 @@ router.post("/ads-creation/build", async (req, res) => {
       analysis: productAnalysis,
     });
 
-    const hasToken = !!process.env.REPLICATE_API_TOKEN;
+    const hasToken = !!process.env.NVIDIA_API_KEY || !!process.env.REPLICATE_API_TOKEN;
 
     const [copyResult, imageUrls] = await Promise.all([
       generateAdCopy({
