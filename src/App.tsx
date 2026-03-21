@@ -49,6 +49,7 @@ import CookiesPolicyPage from "@/pages/website/CookiesPolicyPage";
 import WelcomeDashboard from "@/pages/app/WelcomeDashboard";
 import CatalogsPage from "@/pages/app/CatalogsPage";
 import AdsPage from "@/pages/app/AdsPage";
+import CinematicAdsPage from "@/pages/app/CinematicAdsPage";
 import ImagesPage from "@/pages/app/ImagesPage";
 import PromptLibraryPage from "@/pages/app/PromptLibraryPage";
 import InspirationHubPage from "@/pages/app/InspirationHubPage";
@@ -126,6 +127,7 @@ const App = () => (
               <Route path="inspiration" element={<InspirationHubPage />} />
               <Route path="catalogs" element={<CatalogsPage />} />
               <Route path="ads" element={<AdsPage />} />
+              <Route path="cinematic-ads" element={<CinematicAdsPage />} />
               <Route path="images" element={<ImagesPage />} />
               <Route path="credits" element={<CreditsPage />} />
               <Route path="plan" element={<PlanPage />} />

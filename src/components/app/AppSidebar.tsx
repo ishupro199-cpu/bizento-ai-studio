@@ -16,6 +16,7 @@ import {
   PencilIcon,
   TrashIcon,
   ArchiveBoxIcon,
+  FilmIcon,
 } from "@heroicons/react/24/outline";
 import { BizentoIcon } from "@/components/BizentoIcon";
 import { NavLink } from "@/components/NavLink";
@@ -27,6 +28,7 @@ const navItems = [
   { title: "Inspiration Hub", url: "/app/inspiration", icon: LightBulbIcon },
   { title: "My Catalogs", url: "/app/catalogs", icon: FolderOpenIcon },
   { title: "My Ads", url: "/app/ads", icon: MegaphoneIcon },
+  { title: "Cinematic Ads", url: "/app/cinematic-ads", icon: FilmIcon },
   { title: "Images", url: "/app/images", icon: PhotoIcon },
   { title: "Rewards", url: "/app/rewards", icon: GiftIcon },
 ];

@@ -337,6 +337,142 @@ export async function buildPhotographyPrompt(params: {
   }
 }
 
+// ── Cinematic Ads Tool Types ──────────────────────────────────────────────────
+
+export interface CinematicAdFormat {
+  id: string;
+  label: string;
+  desc: string;
+  icon: string;
+  gradient: string;
+  subOptions: Array<{ id: string; label: string; icon: string }>;
+}
+
+export interface CinematicColorGrade {
+  id: string;
+  label: string;
+  desc: string;
+  prompt: string;
+  preview: string;
+}
+
+export interface CinematicAspectRatio {
+  id: string;
+  label: string;
+  desc: string;
+  prompt: string;
+}
+
+export interface CinematicAdsFormatSuggestion {
+  formatId: string;
+  format: CinematicAdFormat;
+  reason: string;
+}
+
+export interface CinematicAdsAnalysis {
+  product_name: string;
+  product_category: string;
+  brand_feel: string;
+  target_gender: string;
+  target_age_group: string;
+  primary_emotion: string;
+  best_model_type: string;
+  lifestyle_context: string;
+  color_mood: string;
+  primary_color: string;
+  material_feel: string;
+  premium_budget_signal: string;
+}
+
+export interface CinematicAdsAnalyzeResponse {
+  success: boolean;
+  analysis: CinematicAdsAnalysis;
+  suggestions: CinematicAdsFormatSuggestion[];
+  allFormats: CinematicAdFormat[];
+  colorGrades: CinematicColorGrade[];
+  aspectRatios: CinematicAspectRatio[];
+  defaultFormat: string;
+  defaultSubFormat: string;
+  defaultColorGrade: string;
+  defaultAspectRatio: string;
+  error?: string;
+}
+
+export interface CinematicAdsBuildResponse {
+  success: boolean;
+  prompt: string;
+  negativePrompt: string;
+  format: string;
+  subFormat: string;
+  colorGrade: string;
+  aspectRatio: string;
+  analysis: CinematicAdsAnalysis;
+  refinementsApplied: Record<string, string>;
+  imageUrls: string[];
+  hasRealImages: boolean;
+  requiresApiKey: boolean;
+  error?: string;
+}
+
+export async function analyzeForCinematicAds(
+  imageUrl: string | undefined,
+  prompt: string
+): Promise<CinematicAdsAnalyzeResponse> {
+  try {
+    const res = await fetch("/api/generate/cinematic-ads/analyze", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ imageUrl, prompt }),
+    });
+    return await res.json();
+  } catch (err: any) {
+    return {
+      success: false, error: err.message,
+      analysis: {} as CinematicAdsAnalysis,
+      suggestions: [],
+      allFormats: [],
+      colorGrades: [],
+      aspectRatios: [],
+      defaultFormat: "cgi",
+      defaultSubFormat: "splash_liquid",
+      defaultColorGrade: "warm_cinematic",
+      defaultAspectRatio: "4:5",
+    };
+  }
+}
+
+export async function buildCinematicAdsPrompt(params: {
+  imageUrl?: string;
+  prompt: string;
+  format: string;
+  subFormat: string;
+  colorGrade: string;
+  aspectRatio: string;
+  analysis?: CinematicAdsAnalysis | null;
+  refinementText?: string;
+}): Promise<CinematicAdsBuildResponse> {
+  try {
+    const res = await fetch("/api/generate/cinematic-ads/build", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(params),
+    });
+    return await res.json();
+  } catch (err: any) {
+    return {
+      success: false, error: err.message,
+      prompt: "", negativePrompt: "",
+      format: params.format, subFormat: params.subFormat,
+      colorGrade: params.colorGrade, aspectRatio: params.aspectRatio,
+      analysis: params.analysis as CinematicAdsAnalysis,
+      refinementsApplied: {},
+      imageUrls: [],
+      hasRealImages: false,
+      requiresApiKey: true,
+    };
+  }
+}
+
 export async function checkApiHealth(): Promise<{
   available: boolean;
   hasReplicateToken: boolean;

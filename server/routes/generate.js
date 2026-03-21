@@ -16,6 +16,16 @@ import {
   STYLE_BACKGROUNDS,
   LIGHTING_MOODS,
 } from "../services/photographyPipeline.js";
+import {
+  analyzeProductForCinematicAds,
+  suggestAdFormats,
+  buildCinematicAdPrompt,
+  detectCinematicRefinementIntent,
+  AD_FORMATS,
+  COLOR_GRADES,
+  ASPECT_RATIOS,
+  CINEMATIC_NEGATIVE_PROMPT,
+} from "../services/cinematicAdsPipeline.js";
 
 const router = Router();
 
@@ -508,6 +518,100 @@ router.post("/photograph/build-prompt", async (req, res) => {
     });
   } catch (err) {
     console.error("Photography build-prompt error:", err.message);
+    return res.status(500).json({ error: err.message, success: false });
+  }
+});
+
+// ── CINEMATIC ADS: analyze product ───────────────────────────────────────────
+router.post("/cinematic-ads/analyze", async (req, res) => {
+  const { imageUrl, prompt = "" } = req.body;
+  try {
+    const analysis = await analyzeProductForCinematicAds(imageUrl, prompt);
+    const suggestions = suggestAdFormats(analysis);
+    const defaultSuggestionId = suggestions[0]?.formatId || "cgi";
+    const defaultFormat = AD_FORMATS.find(f => f.id === defaultSuggestionId) || AD_FORMATS[1];
+    return res.json({
+      success: true,
+      analysis,
+      suggestions,
+      allFormats: AD_FORMATS,
+      colorGrades: COLOR_GRADES,
+      aspectRatios: ASPECT_RATIOS,
+      defaultFormat: defaultSuggestionId,
+      defaultSubFormat: defaultFormat.subOptions[0]?.id || "",
+      defaultColorGrade: "warm_cinematic",
+      defaultAspectRatio: "4:5",
+    });
+  } catch (err) {
+    console.error("Cinematic ads analyze error:", err.message);
+    return res.status(500).json({ error: err.message, success: false });
+  }
+});
+
+// ── CINEMATIC ADS: build prompt + generate ────────────────────────────────────
+router.post("/cinematic-ads/build", async (req, res) => {
+  const {
+    imageUrl,
+    prompt = "",
+    format = "cgi",
+    subFormat = "splash_liquid",
+    colorGrade = "warm_cinematic",
+    aspectRatio = "4:5",
+    analysis = null,
+    refinementText = "",
+  } = req.body;
+  try {
+    let productAnalysis = analysis;
+    if (!productAnalysis) {
+      productAnalysis = await analyzeProductForCinematicAds(imageUrl, prompt);
+    }
+
+    let effectiveFormat = format;
+    let effectiveSubFormat = subFormat;
+    let effectiveColorGrade = colorGrade;
+    let effectiveAspectRatio = aspectRatio;
+
+    if (refinementText) {
+      const refinements = detectCinematicRefinementIntent(refinementText);
+      if (refinements.switchFormat) effectiveFormat = refinements.switchFormat;
+      if (refinements.switchSubFormat) effectiveSubFormat = refinements.switchSubFormat;
+      if (refinements.switchColorGrade) effectiveColorGrade = refinements.switchColorGrade;
+      if (refinements.switchAspectRatio) effectiveAspectRatio = refinements.switchAspectRatio;
+    }
+
+    const { prompt: adPrompt, negativePrompt } = buildCinematicAdPrompt({
+      product: productAnalysis.product_name || prompt,
+      color: productAnalysis.primary_color || "premium",
+      material: productAnalysis.material_feel || "smooth",
+      format: effectiveFormat,
+      subFormat: effectiveSubFormat,
+      colorGrade: effectiveColorGrade,
+      aspectRatio: effectiveAspectRatio,
+      analysis: productAnalysis,
+    });
+
+    const hasToken = !!process.env.REPLICATE_API_TOKEN;
+    let imageUrls = [];
+    if (hasToken) {
+      imageUrls = await generateImages(adPrompt, "", 1).catch(() => []);
+    }
+
+    return res.json({
+      success: true,
+      prompt: adPrompt,
+      negativePrompt,
+      format: effectiveFormat,
+      subFormat: effectiveSubFormat,
+      colorGrade: effectiveColorGrade,
+      aspectRatio: effectiveAspectRatio,
+      analysis: productAnalysis,
+      refinementsApplied: refinementText ? detectCinematicRefinementIntent(refinementText) : {},
+      imageUrls,
+      hasRealImages: imageUrls.length > 0,
+      requiresApiKey: !hasToken,
+    });
+  } catch (err) {
+    console.error("Cinematic ads build error:", err.message);
     return res.status(500).json({ error: err.message, success: false });
   }
 });

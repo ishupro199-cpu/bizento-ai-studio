@@ -1,0 +1,768 @@
+# Pixalera — Cinematic Ads Tool
+## Complete AI Model Training Document + Generation Prompts v1.0
+
+---
+
+## WHAT THIS TOOL DOES (vs other tools)
+
+| | Product Photography | Cinematic Ads |
+|---|---|---|
+| Goal | Beautiful product shot | Ad that makes people BUY |
+| Human presence | Never | Often (AI models, lifestyle) |
+| Storytelling | Product-focused | Emotion + product together |
+| Output feel | Editorial / Magazine | Commercial / Campaign |
+| Used for | Website, listing | Instagram, YouTube, Facebook ads |
+| Benchmark | Aesop, Apple catalog | Nike, Dior, Zara campaign video/frame |
+
+This tool creates content that looks like a professional ad agency made it — not just a nice photo.
+
+---
+
+## PART 1: Product + Ad Strategy Analysis
+
+### What to extract from every uploaded image
+
+```
+AD ANALYSIS SCHEMA:
+─────────────────────────────────────────────────────────
+product_name:            [specific]
+product_category:        [same as catalog tool]
+brand_feel:              [Luxury / Aspirational / Everyday / Youth / Professional]
+target_gender:           [Women / Men / Unisex / Kids]
+target_age_group:        [13-18 / 18-25 / 25-35 / 35-50 / 50+]
+primary_emotion:         [Desire / Confidence / Comfort / Energy / Elegance /
+                          Joy / Achievement / Freshness / Power]
+best_model_type:         [Female model / Male model / No model / Hand only /
+                          Couple / Friends group / Child]
+lifestyle_context:       [Urban / Outdoor / Home / Gym / Office / Party /
+                          Travel / Morning routine / Evening glam]
+color_mood:              [Warm / Cool / Dark luxury / Vibrant / Pastel / Earthy]
+ad_format_suggestion:    [top 2 from: Model/Influencer / CGI / Scene Builder / Brand Story]
+```
+
+### Auto-suggestion logic
+
+```
+Beauty / Perfume / Jewelry   → Suggest: Model/Influencer + CGI Hero
+Sports / Fitness gear        → Suggest: Model/Influencer + Scene Builder (outdoor)
+Food / Beverage              → Suggest: Scene Builder + Brand Story
+Electronics / Gadgets        → Suggest: CGI Hero + Scene Builder
+Fashion / Apparel            → Suggest: Model/Influencer + Scene Builder
+Home Decor / Lifestyle       → Suggest: Scene Builder + Brand Story
+Kids products                → Suggest: Model/Influencer (child) + Scene Builder
+Premium brand signal         → Always suggest CGI Hero as top option
+Budget / Mass market         → Suggest Scene Builder + Model/Influencer
+```
+
+Show suggestions with 1-line reason:
+> "Model/Influencer recommended — skincare products convert best when showing real-looking usage on a person."
+
+---
+
+## PART 2: The 4 Ad Formats — Deep Explanation
+
+### FORMAT 1: Model / Influencer
+
+**What it is:** AI generates a realistic human model naturally using or wearing the product. The model looks like a real influencer or model — not AI-looking, not stock photo-looking. The product is clearly visible.
+
+**Key rules:**
+- Model must look like a real person — no uncanny valley, no plastic skin
+- Product must be visible, identifiable, correctly proportioned
+- Model's interaction with product must look natural (actually holding, wearing, using)
+- Background supports the story — not distracting
+- Model ethnicity: default Indian (fair to medium-dark skin tones) unless user specifies
+- No explicit faces on model unless user requests — safe default is lifestyle angle (profile, 3/4 view, hands visible, face partial)
+
+**Model types available:**
+```
+Young Woman (18-28)     → Beauty, fashion, lifestyle, skincare
+Young Man (22-32)       → Electronics, sports, fashion, grooming
+Professional Woman      → Office products, premium bags, business wear
+Professional Man        → Watches, suits, premium accessories
+Fitness Woman/Man       → Sports gear, supplements, activewear
+Homemaker/Mother        → Home products, kids items, kitchen
+Hand-only               → Jewelry, watches, cosmetics, food — safest option
+Couple                  → Gifting, lifestyle, home products
+Friends group           → Youth products, snacks, entertainment
+Child (6-12)            → Toys, kids fashion, school supplies
+```
+
+---
+
+### FORMAT 2: CGI / Macro Cinematic
+
+**What it is:** Product treated as the main character in a cinematic scene — no human model. Product floats, spins, emerges from liquid/particles/light. Looks like a premium TV commercial for a global brand.
+
+**Key rules:**
+- Product proportions must be 100% accurate
+- CGI elements (particles, liquid, light beams) must enhance — never obscure the product
+- Background is abstract/atmospheric — deep space, dark void, liquid surface, particle field
+- Color grade is dramatic and intentional
+- This style works even for simple products — a shampoo bottle in a water splash = premium
+- Think: Apple iPhone reveal, Chanel No.5 commercial, Red Bull energy ad
+
+**CGI scene types:**
+```
+Splash / Liquid         → Product emerging from or surrounded by liquid (water, oil, milk, color)
+Particle / Dust         → Product surrounded by floating particles, powder, glitter, sand
+Light Rays              → Product lit by dramatic god rays, lens flares, prismatic light
+Space / Float           → Product floating in deep space or dark void with stars
+Fire / Smoke            → Product with atmospheric smoke, steam, or fire elements
+Crystal / Glass         → Product on crystal/glass surface, refractions and caustics
+Nature Macro            → Product surrounded by extreme close-up nature: petals, leaves, droplets
+Motion Blur             → Product shown as if in fast motion, trails, speed lines
+```
+
+---
+
+### FORMAT 3: Scene Builder
+
+**What it is:** Product placed in a fully styled, aspirational lifestyle scene — but the scene itself is cinematic, not just a lifestyle photo. Cinematic camera angle, dramatic lighting, story in a single frame.
+
+**Key rules:**
+- Scene must look like a movie still or high-end commercial still
+- Depth of field: product sharp, background cinematic blur
+- Lighting: directional, dramatic — not flat
+- Scene fully realized: furniture, environment, context all present
+- No model visible (or hands only optional)
+- Scene perfectly matches the product's target lifestyle
+
+**Scene presets:**
+```
+Morning Luxury          → Bedroom, sunrise light, coffee + product on bedside/table
+Urban Professional      → Modern office, city view, product on desk
+Evening Glow            → Warm candlelit table, product with wine/book
+Outdoor Adventure       → Mountain/forest, golden light, product on rock
+Beach / Coastal         → Sandy surface, ocean in background, product in scene
+Kitchen / Home          → Premium kitchen counter, product with ingredients
+Gym / Fitness Studio    → Gym environment, equipment, product on bench
+Rooftop Party           → City night lights, bokeh, product in social setting
+Luxury Hotel            → Marble surfaces, expensive furniture, product in scene
+Minimalist Interior     → Scandinavian/Japanese interior, product as design object
+```
+
+---
+
+### FORMAT 4: Brand Story
+
+**What it is:** A single powerful image that tells an emotional story about why the product exists — not what it is, but what it means to the user. Concept-driven, sometimes abstract, always emotionally resonant.
+
+**Key rules:**
+- Must have a clear emotional concept (confidence, freedom, care, ambition)
+- Product may be smaller in frame — emotion is the hero
+- Text overlay zone: always leave 30-40% of frame as clean negative space for headline text
+- Color palette must reinforce the emotion
+- Think: Dove "Real Beauty", Nike "Just Do It", Tanishq Indian wedding ads
+
+**Emotion-to-visual mapping:**
+```
+Confidence          → Product with bold lighting, person standing tall (if model), warm gold tones
+Freedom             → Open outdoor scene, product in motion/action, bright sky
+Care / Love         → Warm soft light, gentle hands, pastel/warm palette, soft bokeh
+Ambition            → Dark dramatic background, product lit like a trophy, cool-warm contrast
+Freshness / Energy  → Bright clean colors, sharp lighting, dynamic composition
+Elegance            → Dark luxury setting, minimal elements, product as jewel
+Joy / Celebration   → Bright vibrant colors, movement, confetti, warm golden light
+Achievement         → Product as reward, dramatic hero lighting, strong shadow
+```
+
+---
+
+## PART 3: Universal Prompt Components
+
+### [CINEMATIC_QUALITY_SUFFIX] — append to every prompt
+```
+cinematic commercial photography quality,
+photorealistic not illustrated, hyperrealistic,
+professional advertising campaign standard,
+physically accurate materials, lighting, and shadows,
+8K resolution, anamorphic lens bokeh,
+no AI artifacts, no distortion, no watermarks,
+color-graded like a premium brand advertisement,
+award-winning commercial photography
+```
+
+### [CINEMATIC_NEGATIVE_PROMPT] — use with every generation
+```
+illustration, cartoon, 3D render look, animated, CGI-obvious look,
+stock photo feel, amateur lighting, flat lighting,
+cheap or generic look, watermarks, text overlays,
+blurry product, wrong product shape or color,
+distorted human anatomy, extra fingers, plastic skin,
+uncanny valley faces, AI-obvious faces,
+cluttered composition, confusing visual hierarchy,
+overexposed, underexposed, blown highlights,
+amateur composition, obvious green screen look
+```
+
+---
+
+## PART 4: Complete Prompts — All 4 Formats
+
+---
+
+### FORMAT 1 PROMPTS: Model / Influencer
+
+#### Prompt 1A — Female Model, Beauty/Skincare Usage
+```
+Cinematic beauty advertisement photograph featuring an Indian woman model (25-30 years),
+[SKIN_TONE: fair / medium / dark] complexion, natural beauty,
+model shown [ACTION: applying / holding / using] [PRODUCT] naturally,
+scene: [LIFESTYLE_CONTEXT: morning bathroom routine / vanity table / outdoor morning],
+lighting: [MOOD: soft window light / warm golden studio / cool morning light],
+model wearing [OUTFIT: minimal / casual white / elegant simple clothing],
+camera: eye level or slightly elevated, 85mm portrait lens feel,
+background: [BACKGROUND: soft blurred interior / marble surface / warm room],
+expression: confident, genuine, aspirational — not overly posed,
+product clearly visible and identifiable in frame,
+[CINEMATIC_QUALITY_SUFFIX]
+```
+
+#### Prompt 1B — Male Model, Electronics/Sports/Grooming
+```
+Cinematic advertising photograph featuring an Indian man (24-32 years),
+[SKIN_TONE: medium / athletic build appearance],
+model shown [ACTION: using / holding / carrying] [PRODUCT] confidently,
+scene: [CONTEXT: modern office / gym / outdoor urban / kitchen],
+lighting: [MOOD: directional dramatic studio / natural outdoor / cool professional],
+model wearing [OUTFIT: casual streetwear / athletic / business casual],
+camera: slight low angle (power feel) or eye level, 50-85mm lens quality,
+background: [BACKGROUND: blurred urban / gym environment / office setting],
+expression: focused, confident, aspirational,
+product prominently visible and correctly scaled,
+[CINEMATIC_QUALITY_SUFFIX]
+```
+
+#### Prompt 1C — Hands Only (Safest, works for any product)
+```
+Cinematic close-up advertisement photograph showing elegant human hands
+[GENDER_APPROPRIATE: feminine hands with manicured nails / masculine well-groomed hands]
+naturally [ACTION: holding / presenting / using / applying] [PRODUCT],
+[COLOR] [MATERIAL] [PRODUCT] clearly visible and sharply in focus,
+background: [BACKGROUND based on category],
+lighting: [MOOD], warm or cool tone based on product brand feel,
+shallow depth of field (f/1.8 equivalent), background beautifully blurred,
+skin texture real and natural — not plastic,
+product proportions perfectly accurate,
+premium hand-model quality (think: watch advertisement, jewelry commercial),
+[CINEMATIC_QUALITY_SUFFIX]
+```
+
+#### Prompt 1D — Lifestyle Scene with Partial Model (Back/Side/Silhouette)
+```
+Cinematic lifestyle advertisement photograph,
+[PRODUCT] as hero product, person shown partially — [VIEW: back view / side silhouette / profile / legs only],
+person [ACTION: walking with / sitting with / reaching for] [PRODUCT],
+setting: [ASPIRATIONAL_SCENE: urban rooftop at golden hour / beach sunrise / luxury hotel room],
+lighting: golden hour / dramatic window light / atmospheric,
+camera: 35mm wide feel with foreground-background depth,
+person in frame as lifestyle context, product clearly identifiable,
+aspirational, editorial, [TARGET_AUDIENCE]-focused,
+color grade: [COLOR_GRADE: warm cinematic / cool editorial / vibrant],
+[CINEMATIC_QUALITY_SUFFIX]
+```
+
+---
+
+### FORMAT 2 PROMPTS: CGI / Macro Cinematic
+
+#### Prompt 2A — Liquid Splash / Emergence
+```
+Ultra premium CGI-style cinematic advertisement image of [PRODUCT],
+[COLOR] [MATERIAL] [PRODUCT] dramatically emerging from [LIQUID: crystal clear water / milk / colored liquid matching brand palette],
+liquid splash frozen in motion around product — physically accurate fluid dynamics,
+background: pure black (#000000) or deep [BRAND_COLOR] background,
+product perfectly sharp and centered, liquid elements radiating outward,
+dramatic studio spotlight from above hitting product,
+light refracting through liquid, caustics visible on surface,
+product proportions and color 100% accurate,
+think: premium fragrance or beverage commercial quality,
+[CINEMATIC_QUALITY_SUFFIX]
+```
+
+#### Prompt 2B — Particle / Powder / Dust
+```
+Cinematic advertising photograph of [PRODUCT],
+[COLOR] [MATERIAL] product surrounded by [PARTICLES: floating gold dust / color powder explosion / crystalline particles / botanical matter],
+particles frozen in motion, backlit by dramatic [LIGHT_COLOR: warm gold / cool blue-white / purple] light,
+deep [BACKGROUND: black / dark navy / charcoal] background,
+product as absolute center of visual attention,
+particles create a halo effect around the product,
+atmosphere: premium, magical, aspirational,
+physically accurate particle behavior — not flat, has depth and volume,
+[CINEMATIC_QUALITY_SUFFIX]
+```
+
+#### Prompt 2C — Dramatic Light Rays / Spotlight
+```
+Cinematic dramatic product advertisement photograph of [PRODUCT],
+product placed on [SURFACE: dark glass / black marble / dark wet stone],
+single powerful god-ray or spotlight from directly above cutting through dark atmosphere,
+[COLOR] [MATERIAL] product perfectly lit by this beam, everything else in deep shadow,
+surface reflection of product visible below,
+optional: subtle atmospheric mist/haze catching the light beam,
+color grade: [GRADE: high contrast teal-orange / deep blue-white / warm gold-black],
+premium luxury brand aesthetic — think Tom Ford, Chanel, Rolex advertisement,
+[CINEMATIC_QUALITY_SUFFIX]
+```
+
+#### Prompt 2D — Space / Float / Dark Void
+```
+Futuristic cinematic advertisement image of [PRODUCT],
+[PRODUCT] floating in dark space environment,
+dramatic directional lighting from upper-left highlighting product's key surfaces,
+subtle star field or atmospheric depth in background (out of focus),
+product casting realistic shadow/light interaction on surrounding space,
+optional: subtle energy field or glow emanating from product,
+camera: slightly below product looking up (power perspective),
+color grade: cool sci-fi or warm premium depending on product,
+think: Apple product reveal / Samsung commercial / premium tech ad,
+[CINEMATIC_QUALITY_SUFFIX]
+```
+
+#### Prompt 2E — Nature Macro / Organic
+```
+Ultra close-up macro cinematic advertisement photograph,
+[PRODUCT] surrounded by extreme macro [NATURE_ELEMENT: water droplets on petals / morning dew / green leaves / flower petals],
+product placed among [BOTANICAL: roses / tropical leaves / herbs / dried flowers],
+soft natural diffused light or golden hour light from one side,
+extreme shallow depth of field — product sharp, nature elements softly blurred,
+color palette: [PALETTE matching product: warm organic / fresh green / romantic pink / cool botanical],
+nature elements touching or framing the product organically,
+premium beauty or natural brand aesthetic,
+[CINEMATIC_QUALITY_SUFFIX]
+```
+
+---
+
+### FORMAT 3 PROMPTS: Scene Builder
+
+#### Prompt 3A — Morning Luxury Scene
+```
+Cinematic interior lifestyle advertisement photograph,
+[PRODUCT] placed prominently on [SURFACE: marble bedside table / premium wooden surface / linen bed],
+morning golden hour sunlight streaming through sheer curtains from left,
+scene elements: [2-3 PROPS: steaming coffee cup / fresh flowers / open book / white linen],
+warm 3000-3400K color temperature, golden morning light,
+shallow depth of field — product sharp, room beautifully blurred background,
+room aesthetic: [STYLE: minimalist Scandinavian / warm Bohemian / modern luxury],
+no human present, product as star of aspirational morning,
+horizontal 16:9 or 4:5 composition for Instagram,
+[CINEMATIC_QUALITY_SUFFIX]
+```
+
+#### Prompt 3B — Urban Professional Scene
+```
+Cinematic modern office lifestyle advertisement photograph,
+[PRODUCT] on [SURFACE: clean minimal desk / marble conference table / glass surface],
+scene: premium modern office, city view visible through window background,
+lighting: cool clean daylight from large windows, slight blue-white tone,
+[2 PROPS: minimal notebook / coffee cup / glasses — not cluttered],
+camera: slightly elevated, product in foreground, city blurred in background,
+color grade: cool professional, clean, aspirational,
+product clearly dominant in frame, professional context supporting,
+[CINEMATIC_QUALITY_SUFFIX]
+```
+
+#### Prompt 3C — Evening Luxury Scene
+```
+Cinematic evening lifestyle advertisement photograph,
+[PRODUCT] in warm evening setting — [SCENE: candlelit dinner table / luxury bar / rooftop terrace at night],
+lighting: warm amber candlelight or city lights bokeh in background,
+[2-3 PROPS: candle / wine glass / flowers / city lights in distance],
+deep warm golden-orange color grade,
+atmospheric, romantic, premium evening aesthetic,
+background city lights as beautiful bokeh orbs,
+product perfectly lit by warm foreground light,
+[CINEMATIC_QUALITY_SUFFIX]
+```
+
+#### Prompt 3D — Outdoor Adventure Scene
+```
+Cinematic outdoor advertisement photograph,
+[PRODUCT] placed on [OUTDOOR_SURFACE: smooth rock / wooden surface / grass / sand],
+dramatic outdoor landscape visible in background: [LANDSCAPE: mountain range / ocean / forest / desert],
+lighting: golden hour sun from behind and to the side — dramatic backlighting,
+long warm shadow from product on surface,
+color grade: warm cinematic, enhanced natural colors, high contrast,
+product feels at home in this aspirational outdoor world,
+no clutter, breathing space, nature and product coexisting beautifully,
+[CINEMATIC_QUALITY_SUFFIX]
+```
+
+---
+
+### FORMAT 4 PROMPTS: Brand Story
+
+#### Prompt 4A — Confidence / Empowerment Story
+```
+Cinematic brand story advertisement image for [PRODUCT],
+central concept: [EMOTION: confidence / empowerment / self-expression],
+[PRODUCT] as the hero object in a powerful visual narrative,
+lighting: dramatic directional light, strong shadow, high contrast,
+color grade: [GRADE: warm gold tones / cool blue-white / deep teal-orange],
+composition: product with intentional empty space on [SIDE: left / right] for headline text,
+background: [STYLE: dark dramatic / bold color / atmospheric],
+overall feeling: this product is transformative, not just functional,
+think: [BRAND_REFERENCE: Nike "Just Do It" energy / Dove Real Beauty / Tanishq jewelry campaign],
+no text in image (text added as overlay), clean negative space zone,
+[CINEMATIC_QUALITY_SUFFIX]
+```
+
+#### Prompt 4B — Elegance / Luxury Story
+```
+Cinematic luxury brand story image for [PRODUCT],
+concept: effortless elegance, quiet luxury, understated excellence,
+[PRODUCT] positioned as a jewel in a minimal, dark, sophisticated environment,
+lighting: narrow precision spotlight on product from above,
+everything else in deep shadow — product emerges from darkness,
+color palette: [PALETTE: black-gold / navy-silver / charcoal-white],
+composition: product centered with massive negative space around,
+mood: exclusive, rare, desirable, worth every rupee,
+think: Chanel / Hermès / Cartier campaign quality,
+empty space for short luxury headline text,
+[CINEMATIC_QUALITY_SUFFIX]
+```
+
+#### Prompt 4C — Joy / Celebration Story
+```
+Cinematic celebratory brand story image for [PRODUCT],
+concept: happiness, celebration, sharing, togetherness,
+[PRODUCT] in a joyful vibrant scene with warm celebratory energy,
+lighting: bright, warm, high-key — all surfaces glowing with warmth,
+color grade: warm vibrant, saturated yet not garish, festive,
+elements: [CELEBRATORY PROPS: confetti fragments / fairy lights bokeh / flowers / colorful backgrounds],
+composition: dynamic, energetic — slight diagonal, not static,
+mood: this product belongs at every good moment in life,
+think: Cadbury Dairy Milk emotional ads / Fevicol / Asian Paints celebration campaigns,
+[CINEMATIC_QUALITY_SUFFIX]
+```
+
+#### Prompt 4D — Freshness / Energy Story
+```
+Cinematic fresh energy brand story image for [PRODUCT],
+concept: vitality, freshness, new beginning, clean energy,
+[PRODUCT] with dynamic composition suggesting movement and energy,
+lighting: bright clean cool-white or fresh morning light,
+color grade: fresh, clean, slightly desaturated greens/blues or crisp whites,
+elements: [FRESH ELEMENTS: water splashes / morning light rays / green nature / crisp white space],
+composition: product placed dynamically, not static,
+mood: this product makes you feel alive, refreshed, ready,
+think: Maaza / Mountain Dew / Clinic Plus fresh energy,
+[CINEMATIC_QUALITY_SUFFIX]
+```
+
+---
+
+## PART 5: Aspect Ratio Configuration
+
+### Per platform, adjust prompt composition
+
+```
+9:16 (Instagram Reels / YouTube Shorts / Stories):
+→ "vertical 9:16 composition, product positioned in center-lower third,
+   dramatic sky/ceiling/space in upper portion,
+   bottom third clean for text overlay (CTA, price, handle)"
+
+1:1 (Instagram Feed / Facebook Post):
+→ "square 1:1 composition, product centered, 
+   equal breathing space on all sides,
+   balanced composition, no important elements cut at edges"
+
+4:5 (Instagram Feed — optimal):
+→ "portrait 4:5 composition, product in upper-center,
+   lower portion available for text overlay,
+   most visual real estate in Instagram feed"
+
+16:9 (YouTube thumbnail / Facebook cover / Website banner):
+→ "widescreen 16:9 composition, product as left-side or center hero,
+   right side available for text (title, offer, CTA),
+   cinematic horizontal feeling, wide establishing shot energy"
+
+3:4 (Pinterest / Print):
+→ "tall portrait 3:4 composition, product at visual center,
+   top and bottom space for title and details"
+```
+
+---
+
+## PART 6: Color Grade Presets
+
+Inject the chosen color grade as an additional sentence in every prompt.
+
+```
+WARM CINEMATIC (most products):
+"color grade: warm cinematic tones — boosted oranges and yellows,
+ slightly desaturated blues, filmic warmth, 3200-3400K feel,
+ think: every Bollywood brand commercial, warm and inviting"
+
+COOL LUXURY (premium tech, jewelry, premium fashion):
+"color grade: cool luxury tone — teal shadows, bright highlights,
+ desaturated mid-tones, high contrast, silver and white emphasis,
+ think: Apple, Samsung, Rolex advertisement aesthetic"
+
+DARK DRAMATIC (perfume, whiskey, premium cosmetics):
+"color grade: dark dramatic — deep blacks, hot whites,
+ strong color contrast, shadows dense and rich,
+ think: Chanel No.5, Johnnie Walker, Tom Ford aesthetic"
+
+VIBRANT POP (youth products, food, beverages, FMCG):
+"color grade: vibrant and saturated — punchy colors, 
+ high saturation, clean whites, energetic palette,
+ think: Mountain Dew, Pepsi, Maaza Indian commercial"
+
+EARTHY ORGANIC (natural, Ayurvedic, organic, home):
+"color grade: warm earthy — desaturated natural tones,
+ warm browns, muted greens, soft cream and terracotta,
+ think: Forest Essentials, Khadi, organic brand aesthetic"
+
+PASTEL FRESH (beauty, skincare, kids, feminine products):
+"color grade: soft pastel — light airy tones, 
+ gentle pinks and lavenders, clean whites, delicate feel,
+ think: Dove, Cetaphil, feminine skincare campaign"
+```
+
+---
+
+## PART 7: Animation States (UI — What User Sees)
+
+### Each format gets its OWN distinct loading animation
+
+**This is critical — the animation must match the premium cinematic feel of the tool.**
+
+```
+FORMAT 1 (Model/Influencer):
+─────────────────────────────
+[Upload] → 
+[Scan pulse: product outline traces]
+[Card 1 slides in]: "Product detected: [name]"
+[Card 2 slides in]: "Best model type: [type]"
+[Card 3 slides in]: "Scene concept: [scene]"
+[Loading bar animation: film strip style — frames sliding left to right]
+Text: "Casting your ad scene..."
+[FRAME REVEAL: cinematic wipe from left to reveal final image]
+
+FORMAT 2 (CGI):
+─────────────────────────────
+[Upload] →
+[Scan pulse]
+[Card 1]: "Product: [name]"
+[Card 2]: "CGI concept: [Splash / Particles / etc.]"
+[Loading animation: pulsing abstract particles building up from center outward]
+Text: "Building cinematic world..."
+[REVEAL: fade in from black, like a brand reveal]
+
+FORMAT 3 (Scene Builder):
+─────────────────────────────
+[Upload] →
+[Scan pulse]
+[Card 1]: "Product: [name]"
+[Card 2]: "Scene: [scene type]"
+[Card 3]: "Mood: [lighting mood]"
+[Loading animation: scene elements appearing one by one — background, then props, then product]
+Text: "Setting the scene..."
+[REVEAL: iris wipe from center outward]
+
+FORMAT 4 (Brand Story):
+─────────────────────────────
+[Upload] →
+[Scan pulse]
+[Card 1]: "Product: [name]"
+[Card 2]: "Core emotion: [emotion]"
+[Card 3]: "Story concept: [concept]"
+[Loading animation: slow pulsing heartbeat-like wave — emotional, thoughtful]
+Text: "Crafting your brand story..."
+[REVEAL: slow fade in — like an emotional scene appearing from darkness]
+```
+
+### Timing reference
+
+```
+Scan animation:           1.5 seconds
+Each attribute card:      0.6 seconds per card (staggered slide-in)
+Loading animation:        Loops until generation complete (avg 8-15s)
+Frame reveal animation:   0.8 seconds (chosen wipe style per format)
+Total perceived feel:     Premium, intentional, not rushed
+```
+
+### What NEVER to show
+
+```
+× Plain spinner circle
+× Generic "Loading..." text
+× Progress bar as only element
+× Same animation for all 4 formats
+× Instant jumpy appearance of image
+× Error state without clear message
+```
+
+---
+
+## PART 8: Chat Refinement Detection
+
+### After output shown — detect what user wants to change
+
+```
+REFINEMENT DETECTION MAP:
+─────────────────────────────────────────────────────────
+"model change karo / female chahiye / male chahiye"
+  → swap model type parameter, keep all else
+
+"background change / dark karo / outdoor karo"
+  → swap scene/background parameter
+
+"warm karo / golden light / garam tone"
+  → update color grade to WARM CINEMATIC
+
+"moody / dramatic / dark karo"
+  → update color grade to DARK DRAMATIC
+
+"vibrant / colorful / bright karo"
+  → update color grade to VIBRANT POP
+
+"CGI karo / particles / splash chahiye"
+  → switch to FORMAT 2, rebuild with CGI prompt
+
+"simple karo / no model / product only"
+  → switch to FORMAT 3 Scene Builder or CGI
+
+"aspect ratio change / vertical chahiye / square chahiye"
+  → update aspect ratio parameter, regenerate
+
+"text space chahiye / headline ke liye jagah chahiye"
+  → adjust composition to leave 35% blank space on one side
+
+"aur cinematic / cinematic feel zyada"
+  → boost: add more depth of field, stronger color grade, dramatic lighting
+
+"real dikhao / natural dikhao / fake lag raha"
+  → switch to softer, more photorealistic parameters, reduce CGI elements
+
+"different emotion / confidence chahiye / joy chahiye"
+  → switch to FORMAT 4 and rebuild with appropriate Brand Story prompt
+```
+
+### Response format for refinements
+
+```
+"[What's changing] update kar raha hoon..."
+[Quick 3-5 second update animation — no full scan]
+[New image shown with cinematic reveal]
+```
+
+---
+
+## PART 9: Platform Export Configuration
+
+### After approval, offer platform-specific versions
+
+When user approves an image, show:
+> "Kaunse platform ke liye optimize karein? Ek click mein sahi size mein export ho jaayega."
+
+**Platform export specs:**
+
+```
+Instagram Feed (Square):   1080 × 1080px, 1:1, JPG quality 95
+Instagram Feed (Portrait): 1080 × 1350px, 4:5, JPG quality 95
+Instagram Story / Reel:    1080 × 1920px, 9:16, JPG quality 95
+Facebook Post:             1200 × 1200px, 1:1, JPG quality 90
+Facebook Cover:            1640 × 924px, 16:9, JPG quality 90
+YouTube Thumbnail:         1280 × 720px, 16:9, JPG quality 95
+WhatsApp Catalog:          800 × 800px, 1:1, JPG quality 85
+Website Hero Banner:       1920 × 1080px, 16:9, JPG quality 90
+Pinterest:                 1000 × 1500px, 2:3, JPG quality 90
+```
+
+**Free tier:** 1 platform export, watermarked
+**Starter:** 3 platform exports, no watermark
+**Pro:** All platforms simultaneously, no watermark, PNG option
+
+---
+
+## PART 10: Quality Control — Cinematic Standard
+
+### Pass/fail checklist before showing to user
+
+```
+□ Does this look like a real commercial/advertisement?
+□ Is the product clearly identifiable and correctly colored?
+□ Does the lighting match the chosen mood?
+□ Is the color grade applied correctly (not flat/neutral when dramatic was requested)?
+□ For Model format: does the model look like a real person (not AI-obvious)?
+□ For Model format: is the product correctly scaled and positioned in the model's hands/body?
+□ For CGI format: are the CGI elements (particles/liquid/light) photorealistic?
+□ For Scene Builder: does the scene look aspirational and real?
+□ Is there clear visual hierarchy — one main subject, supporting elements?
+□ Would this image stop someone scrolling on Instagram?
+□ Is there proper breathing space / negative space in composition?
+```
+
+### Auto-regeneration trigger
+
+If more than 2 checklist items fail → auto-regenerate ONCE before showing.
+If second also fails → show with flag and regenerate button.
+
+### Benchmark targets
+
+```
+Model/Influencer → Nykaa, Myntra, Mamaearth campaign quality
+CGI Cinematic    → Apple, Samsung, OnePlus product reveal quality
+Scene Builder    → Airbnb, MakeMyTrip, Swiggy campaign quality
+Brand Story      → Asian Paints, Tanishq, Cadbury emotional campaign quality
+```
+
+---
+
+## PART 11: System Prompt for Cinematic Ads AI
+
+```
+You are Pixalera's Cinematic Ads AI. Your job is to create advertisement-quality visuals 
+that look like they were made by a professional Indian advertising agency. Your output 
+must make people WANT to buy the product — it should create desire, not just show the product.
+
+QUALITY BENCHMARK:
+Your output must look like it belongs in a premium brand's Instagram feed, 
+a TV commercial freeze-frame, or a billboard campaign.
+Not a product photo. Not a catalog image. An AD.
+
+THE 4 FORMATS:
+1. Model/Influencer — real-looking AI person naturally using the product
+2. CGI/Cinematic — product as hero in dramatic atmospheric scene (liquid, particles, light)
+3. Scene Builder — product in a fully realized aspirational lifestyle scene
+4. Brand Story — emotion-driven concept image, product as symbol not just object
+
+WORKFLOW:
+1. Analyze product → extract category, brand feel, target audience, primary emotion
+2. Suggest top 2 formats best suited for this product with reason
+3. Wait for user to choose format + mood + aspect ratio
+4. Build precise cinematic prompt using the correct format template
+5. Always append cinematic quality suffix and cinematic negative prompt
+6. Apply chosen color grade as additional prompt component
+7. Show output with correct format-specific reveal animation
+
+ANIMATION RULE:
+Each of the 4 formats gets its own distinct loading animation:
+- Model: film strip loading → cinematic wipe reveal
+- CGI: particles building → fade from black reveal
+- Scene: elements appearing → iris wipe reveal
+- Brand Story: heartbeat pulse → slow fade reveal
+
+LANGUAGE: Match user's language (Hindi/English/Hinglish).
+
+REFINEMENTS:
+For any chat message after output is shown:
+- Detect exactly what parameter the user wants changed
+- Update only that parameter
+- No full scan animation, just quick 3-5s update
+- Show new image with same format's reveal animation
+
+CRITICAL OUTPUT RULE:
+The output must make someone stop scrolling. 
+If it looks like a generic product photo, it has failed.
+If it looks like an ad, it has succeeded.
+```
+
+---
+
+*End of Pixalera Cinematic Ads Training Document v1.0*
+*Covers: 4 ad formats with complete prompts, animation states per format, color grade presets, aspect ratio configs, chat refinement detection, platform export specs, quality control, system prompt.*
