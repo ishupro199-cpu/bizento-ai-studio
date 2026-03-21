@@ -32,7 +32,15 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { callGenerationApi } from "@/lib/generationApi";
+import {
+  callGenerationApi,
+  analyzeForPhotography,
+  buildPhotographyPrompt as buildPhotoPromptApi,
+} from "@/lib/generationApi";
+import type {
+  BrainInsightsData, SEOData, CatalogShot, CatalogSEO,
+  PhotographyAnalyzeResponse, PhotographyBuildResponse, PhotographyAnalysis,
+} from "@/lib/generationApi";
 import { toast } from "sonner";
 import { augmentPrompt } from "@/lib/promptAugmentation";
 import { useAuth } from "@/contexts/AuthContext";
@@ -42,7 +50,7 @@ import { storage } from "@/lib/firebase";
 import { PlatformOptimization } from "@/components/app/PlatformOptimization";
 import { BrainInsights } from "@/components/app/BrainInsights";
 import { SEOPanel } from "@/components/app/SEOPanel";
-import type { BrainInsightsData, SEOData, CatalogShot, CatalogSEO } from "@/lib/generationApi";
+import { PhotoStylePicker, PhotoResult } from "@/components/app/PhotographyWorkflow";
 import JSZip from "jszip";
 
 const TOOL_DEFS: Array<{
@@ -168,7 +176,7 @@ const PRO_PROMPTS = [
   "Premium whiskey bottle with shattering ice in dramatic dark studio lighting",
 ];
 
-type ChatPhase = "idle" | "chat-thinking" | "thinking" | "show-styles" | "generating" | "results" | "approved" | "ai-chat" | "image-only" | "clarifying" | "refine-thinking";
+type ChatPhase = "idle" | "chat-thinking" | "thinking" | "show-styles" | "show-photo-styles" | "generating" | "results" | "approved" | "ai-chat" | "image-only" | "clarifying" | "refine-thinking" | "photo-results" | "photo-approved";
 type ConversationState = "FRESH" | "OUTPUT_SHOWN" | "CLARIFYING";
 type IntentType = "greeting" | "question" | "generate" | "refine" | "unclear" | "attribute_update";
 type PlatformId = "amazon" | "flipkart" | "meesho" | "myntra" | "instagram";
@@ -338,6 +346,12 @@ export default function WelcomeDashboard() {
   const [catalogSEO, setCatalogSEO] = useState<CatalogSEO | null>(null);
   const [activePlatform, setActivePlatform] = useState<PlatformId>("amazon");
   const [activeToolName, setActiveToolName] = useState<string>("");
+
+  // Photography tool state
+  const [photoStyleData, setPhotoStyleData] = useState<PhotographyAnalyzeResponse | null>(null);
+  const [photoBuiltResult, setPhotoBuiltResult] = useState<PhotographyBuildResponse | null>(null);
+  const [photoApproved, setPhotoApproved] = useState(false);
+  const [photoBuildLoading, setPhotoBuildLoading] = useState(false);
 
   // Inspiration prompts
   const [promptSeed, setPromptSeed] = useState(() => Math.floor(Math.random() * ALL_INSPIRATION_PROMPTS.length));
@@ -551,6 +565,24 @@ export default function WelcomeDashboard() {
       return;
     }
 
+    // ── PHOTOGRAPHY TOOL: analyze product → show style picker ──────────────────
+    const effectiveToolForPhoto = selectedTool !== "default" ? selectedTool : null;
+    if (intentType === "generate" && (effectiveToolForPhoto === "photo" || (selectedTool === "default" && hasImage && prompt.toLowerCase().includes("photo")))) {
+      if (effectiveToolForPhoto === "photo") {
+        setPhase("thinking");
+        setPhotoStyleData(null);
+        setPhotoBuiltResult(null);
+        setPhotoApproved(false);
+        const [, styleData] = await Promise.all([
+          runThinkingAnimation(),
+          analyzeForPhotography(productUrl || undefined, prompt),
+        ]);
+        setPhotoStyleData(styleData);
+        setPhase("show-photo-styles");
+        return;
+      }
+    }
+
     // ── GENERATE + image (Case B): full scan → generation ──
     if (intentType === "generate" && hasImage) {
       if (selectedTool === "default") {
@@ -568,6 +600,21 @@ export default function WelcomeDashboard() {
         await runThinkingAnimation();
         await startGeneration("luxury", prompt);
       }
+      return;
+    }
+
+    // ── PHOTOGRAPHY TOOL with no image: still show style picker ─────────────
+    if (intentType === "generate" && !hasImage && effectiveToolForPhoto === "photo") {
+      setPhase("thinking");
+      setPhotoStyleData(null);
+      setPhotoBuiltResult(null);
+      setPhotoApproved(false);
+      const [, styleData] = await Promise.all([
+        runThinkingAnimation(),
+        analyzeForPhotography(undefined, prompt),
+      ]);
+      setPhotoStyleData(styleData);
+      setPhase("show-photo-styles");
       return;
     }
 
@@ -781,9 +828,61 @@ export default function WelcomeDashboard() {
     setBrainInsights(null);
     setSeoData(null);
     setActiveToolName("");
+    setPhotoStyleData(null);
+    setPhotoBuiltResult(null);
+    setPhotoApproved(false);
+    setPhotoBuildLoading(false);
     clearProduct();
     setReferencePreview(null);
     startNewChat();
+  };
+
+  const handlePhotoGenerate = async (style: string, background: string, lighting: string) => {
+    setPhotoBuildLoading(true);
+    setPhase("show-photo-styles");
+    try {
+      const result = await buildPhotoPromptApi({
+        imageUrl: productUrl || undefined,
+        prompt: sentPrompt,
+        style,
+        background,
+        lighting,
+        analysis: photoStyleData?.analysis || null,
+      });
+      setPhotoBuiltResult(result);
+      setPhotoApproved(false);
+      setPhase("photo-results");
+    } catch (err: any) {
+      toast.error("Photography generation failed: " + (err.message || "unknown error"));
+      setPhase("show-photo-styles");
+    } finally {
+      setPhotoBuildLoading(false);
+    }
+  };
+
+  const handlePhotoRefine = async (refinementText: string) => {
+    if (!photoBuiltResult) return;
+    setPhotoBuildLoading(true);
+    setPhase("show-photo-styles");
+    try {
+      const result = await buildPhotoPromptApi({
+        imageUrl: productUrl || undefined,
+        prompt: sentPrompt,
+        style: photoBuiltResult.style,
+        background: photoBuiltResult.background,
+        lighting: photoBuiltResult.lighting,
+        analysis: photoBuiltResult.analysis,
+        refinementText,
+      });
+      setPhotoBuiltResult(result);
+      setPhotoApproved(false);
+      setPhase("photo-results");
+    } catch (err: any) {
+      toast.error("Refinement failed: " + (err.message || "unknown error"));
+      setPhase("photo-results");
+    } finally {
+      setPhotoBuildLoading(false);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -813,7 +912,7 @@ export default function WelcomeDashboard() {
 
       {/* ─── CHAT AREA ─── */}
       <div className={`flex-1 overflow-y-auto sidebar-scroll ${phase === "idle" ? "" : "px-3 sm:px-6 py-6 space-y-5"}`}
-        style={{ paddingBottom: phase === "idle" ? 0 : phase === "show-styles" ? "220px" : "100px" }}>
+        style={{ paddingBottom: phase === "idle" ? 0 : (phase === "show-styles" || phase === "show-photo-styles") ? "220px" : "100px" }}>
 
         {/* IDLE STATE — fully inline, no sticky bar */}
         {phase === "idle" && (
@@ -1181,7 +1280,7 @@ export default function WelcomeDashboard() {
         )}
 
         {/* Thinking / Generating steps — only for actual generation flow */}
-        {(phase === "thinking" || phase === "generating" || phase === "show-styles" || phase === "results" || phase === "approved") && (
+        {(phase === "thinking" || phase === "generating" || phase === "show-styles" || phase === "show-photo-styles" || phase === "results" || phase === "approved" || phase === "photo-results" || phase === "photo-approved") && (
           <div className="flex justify-start animate-fade-in">
             <div className="max-w-[80%] space-y-1">
               <div className="flex items-center gap-2 mb-2">
@@ -1569,6 +1668,37 @@ export default function WelcomeDashboard() {
           </div>
         )}
 
+        {/* ── PHOTOGRAPHY RESULTS ── */}
+        {(phase === "photo-results" || phase === "photo-approved") && photoBuiltResult && (
+          <div className="flex justify-end animate-fade-in">
+            <div className="max-w-[92%] w-full">
+              <PhotoResult
+                result={photoBuiltResult}
+                approved={phase === "photo-approved"}
+                onApprove={() => setPhase("photo-approved")}
+                onRefine={handlePhotoRefine}
+              />
+              {phase === "photo-approved" && (
+                <div className="flex justify-end mt-3">
+                  <button onClick={handleReset} className="text-xs text-muted-foreground hover:text-foreground underline transition-colors">
+                    New Photography Session
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ── PHOTOGRAPHY BUILD LOADING ── */}
+        {phase === "show-photo-styles" && photoBuildLoading && (
+          <div className="flex justify-end animate-fade-in">
+            <div className="max-w-[92%] w-full flex items-center gap-2 px-4 py-3 bg-white/3 border border-white/10 rounded-2xl">
+              <div className="h-4 w-4 rounded-full border-2 border-primary/20 border-t-primary animate-spin shrink-0" />
+              <span className="text-sm text-foreground/70">Building your photography prompt…</span>
+            </div>
+          </div>
+        )}
+
         {/* Platform optimization */}
         {showApprovedPlatform && phase === "approved" && (
           <div className="flex justify-start animate-fade-in">
@@ -1593,6 +1723,15 @@ export default function WelcomeDashboard() {
 
         <div ref={chatEndRef} />
       </div>
+
+      {/* ─── PHOTOGRAPHY STYLE PICKER ─── */}
+      {phase === "show-photo-styles" && photoStyleData && !photoBuildLoading && (
+        <PhotoStylePicker
+          data={photoStyleData}
+          onGenerate={handlePhotoGenerate}
+          isBuilding={photoBuildLoading}
+        />
+      )}
 
       {/* ─── STYLE CARDS ─── */}
       {phase === "show-styles" && (

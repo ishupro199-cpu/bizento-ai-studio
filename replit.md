@@ -18,6 +18,10 @@ AI-powered product photography and marketing visual generation SaaS. Users uploa
 src/
   components/
     app/        # App-specific components (sidebar, navbar, GenerationResults, UpgradeModal, etc.)
+      PhotographyWorkflow.tsx   # PhotoStylePicker + PhotoResult for the Product Photography Tool
+      PlatformOptimization.tsx  # Platform-specific SEO optimization (Amazon, Flipkart, Meesho, Myntra, Instagram)
+      BrainInsights.tsx         # AI reasoning panel
+      SEOPanel.tsx              # SEO copy panel for non-catalog tools
     ui/         # shadcn/ui component library
   contexts/     # React contexts (AuthContext, AppContext)
   hooks/        # Custom hooks (useFirestore, useGenerationState, useAdminStats)
@@ -25,23 +29,27 @@ src/
   lib/
     firebase.ts         # Firebase config
     firestore.ts        # Firestore schema helpers (transactions, payments, adminLogs, planExpiry)
-    generationApi.ts    # API client (auth-token-aware, Razorpay calls)
+    generationApi.ts    # API client + Photography types (PhotographyAnalysis, PhotographyBuildResponse, etc.)
     promptAugmentation.ts
     stylePresets.ts
   pages/
     website/    # Public marketing pages (Landing, Features, Pricing, Login, Signup)
-    app/        # Protected app pages (Dashboard, CheckoutPage, CreditsPage, PlanPage, etc.)
+    app/        # Protected app pages (Dashboard = WelcomeDashboard.tsx, CheckoutPage, CreditsPage, PlanPage)
     admin/      # Admin panel pages (Users, Logs, Billing, Stats)
 server/
   index.js                    # Express server entry (port 3001, ESM)
   middleware/auth.js          # Credit guard: pre-deduct, suspend check, plan expiry, feature gating
-  routes/generate.js          # POST /api/generate
+  routes/generate.js          # POST /api/generate, /photograph/analyze, /photograph/build-prompt, /chat
   routes/payment.js           # POST /api/payment/create-order + /verify
-  routes/admin.js             # Admin CRUD: suspend, credits adjust, plan change, delete, logs, users, stats, generations, transactions, blog, notify
+  routes/admin.js             # Admin CRUD
   routes/notifications.js     # GET /api/notifications + POST/DELETE
   routes/blogs.js             # GET /api/blogs + POST/PATCH/DELETE
   config/firebase.js          # Firebase Admin SDK init
-  services/pipeline.js        # Replicate API (flux-schnell, bg-removal, llava-13b)
+  services/pipeline.js        # Replicate API (flux-schnell, bg-removal, llava-13b) + catalog shot builder
+  services/photographyPipeline.js  # Product Photography Tool: 6 styles, backgrounds, lighting, prompt builder
+  services/gemini.js          # Gemini AI chat + prompt augmentation (gemini-2.5-flash)
+  services/brain.js           # Intent classification (gemini-2.5-flash)
+  services/seoGenerator.js    # 5-platform SEO generation (gemini-2.5-flash)
 ```
 
 ## Running the App

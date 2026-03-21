@@ -425,6 +425,93 @@ router.post(
   }
 );
 
+// ── PHOTOGRAPHY: analyze product + suggest styles ─────────────────────────────
+router.post("/photograph/analyze", async (req, res) => {
+  const { imageUrl, prompt = "" } = req.body;
+  try {
+    const analysis = await analyzeProductForPhotography(imageUrl, prompt);
+    const suggestions = suggestPhotographyStyles(analysis);
+    const defaultStyle = suggestions[0]?.styleId || "studio";
+    return res.json({
+      success: true,
+      analysis,
+      suggestions,
+      allStyles: PHOTOGRAPHY_STYLES,
+      styleBackgrounds: STYLE_BACKGROUNDS,
+      lightingMoods: LIGHTING_MOODS,
+      defaultStyle,
+      defaultBackground: STYLE_BACKGROUNDS[defaultStyle]?.[0] || "Pure White",
+      defaultLighting: "natural",
+    });
+  } catch (err) {
+    console.error("Photography analyze error:", err.message);
+    return res.status(500).json({ error: err.message, success: false });
+  }
+});
+
+// ── PHOTOGRAPHY: build prompt + return config for generation ──────────────────
+router.post("/photograph/build-prompt", async (req, res) => {
+  const {
+    imageUrl,
+    prompt = "",
+    style = "studio",
+    background = "Pure White",
+    lighting = "natural",
+    analysis = null,
+    refinementText = "",
+  } = req.body;
+  try {
+    let productAnalysis = analysis;
+    if (!productAnalysis) {
+      productAnalysis = await analyzeProductForPhotography(imageUrl, prompt);
+    }
+
+    const refinements = refinementText ? detectRefinementIntent(refinementText) : [];
+
+    // Apply refinement overrides
+    let effectiveStyle = style;
+    let effectiveLighting = lighting;
+    if (refinements.includes("dark")) { effectiveStyle = "dark"; }
+    if (refinements.includes("white")) { effectiveStyle = "studio"; }
+    if (refinements.includes("warm")) { effectiveLighting = "warm"; }
+    if (refinements.includes("moody")) { effectiveLighting = "moody"; }
+    if (refinements.includes("outdoor")) { effectiveStyle = "outdoor"; }
+
+    const { prompt: photographyPrompt, negativePrompt } = buildPhotographyPrompt({
+      product: productAnalysis.product_name || prompt,
+      color: productAnalysis.primary_color || "neutral",
+      material: productAnalysis.material_feel || "smooth",
+      category: productAnalysis.product_category || "Other",
+      style: effectiveStyle,
+      background,
+      lighting: effectiveLighting,
+    });
+
+    const hasToken = !!process.env.REPLICATE_API_TOKEN;
+    let imageUrls = [];
+    if (hasToken) {
+      imageUrls = await generateImages(photographyPrompt, "", 1).catch(() => []);
+    }
+
+    return res.json({
+      success: true,
+      prompt: photographyPrompt,
+      negativePrompt,
+      style: effectiveStyle,
+      background,
+      lighting: effectiveLighting,
+      analysis: productAnalysis,
+      refinementsApplied: refinements,
+      imageUrls,
+      hasRealImages: imageUrls.length > 0,
+      requiresApiKey: !hasToken,
+    });
+  } catch (err) {
+    console.error("Photography build-prompt error:", err.message);
+    return res.status(500).json({ error: err.message, success: false });
+  }
+});
+
 router.post("/chat", async (req, res) => {
   const { prompt, history = [] } = req.body;
   if (!prompt) return res.status(400).json({ error: "prompt required" });

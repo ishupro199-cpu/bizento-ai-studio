@@ -221,6 +221,122 @@ export async function verifyPayment(params: {
   }
 }
 
+// ── Photography Tool Types ────────────────────────────────────────────────────
+export interface PhotographyStyle {
+  id: string;
+  label: string;
+  desc: string;
+  thumbnail: string;
+}
+
+export interface PhotographyLightingMood {
+  id: string;
+  label: string;
+  desc: string;
+}
+
+export interface PhotographyStyleSuggestion {
+  styleId: string;
+  style: PhotographyStyle;
+  reason: string;
+}
+
+export interface PhotographyAnalysis {
+  product_name: string;
+  product_category: string;
+  product_subcategory: string;
+  primary_color: string;
+  material_feel: string;
+  size_class: string;
+  premium_budget_signal: string;
+  target_audience: string;
+  image_quality: string;
+}
+
+export interface PhotographyAnalyzeResponse {
+  success: boolean;
+  analysis: PhotographyAnalysis;
+  suggestions: PhotographyStyleSuggestion[];
+  allStyles: PhotographyStyle[];
+  styleBackgrounds: Record<string, string[]>;
+  lightingMoods: PhotographyLightingMood[];
+  defaultStyle: string;
+  defaultBackground: string;
+  defaultLighting: string;
+  error?: string;
+}
+
+export interface PhotographyBuildResponse {
+  success: boolean;
+  prompt: string;
+  negativePrompt: string;
+  style: string;
+  background: string;
+  lighting: string;
+  analysis: PhotographyAnalysis;
+  refinementsApplied: string[];
+  imageUrls: string[];
+  hasRealImages: boolean;
+  requiresApiKey: boolean;
+  error?: string;
+}
+
+export async function analyzeForPhotography(
+  imageUrl: string | undefined,
+  prompt: string
+): Promise<PhotographyAnalyzeResponse> {
+  try {
+    const res = await fetch("/api/generate/photograph/analyze", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ imageUrl, prompt }),
+    });
+    return await res.json();
+  } catch (err: any) {
+    return {
+      success: false, error: err.message,
+      analysis: {} as PhotographyAnalysis,
+      suggestions: [],
+      allStyles: [],
+      styleBackgrounds: {},
+      lightingMoods: [],
+      defaultStyle: "studio",
+      defaultBackground: "Pure White",
+      defaultLighting: "natural",
+    };
+  }
+}
+
+export async function buildPhotographyPrompt(params: {
+  imageUrl?: string;
+  prompt: string;
+  style: string;
+  background: string;
+  lighting: string;
+  analysis?: PhotographyAnalysis | null;
+  refinementText?: string;
+}): Promise<PhotographyBuildResponse> {
+  try {
+    const res = await fetch("/api/generate/photograph/build-prompt", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(params),
+    });
+    return await res.json();
+  } catch (err: any) {
+    return {
+      success: false, error: err.message,
+      prompt: "", negativePrompt: "",
+      style: params.style, background: params.background, lighting: params.lighting,
+      analysis: params.analysis as PhotographyAnalysis,
+      refinementsApplied: [],
+      imageUrls: [],
+      hasRealImages: false,
+      requiresApiKey: true,
+    };
+  }
+}
+
 export async function checkApiHealth(): Promise<{
   available: boolean;
   hasReplicateToken: boolean;
