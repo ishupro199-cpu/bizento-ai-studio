@@ -1,16 +1,17 @@
 import axios from "axios";
 
 const REPLICATE_API = "https://api.replicate.com/v1";
-const HF_API = "https://api-inference.huggingface.co/models";
+const NVIDIA_API = "https://ai.api.nvidia.com/v1";
+
 const token = () => process.env.REPLICATE_API_TOKEN;
-const hfToken = () => process.env.HUGGINGFACE_API_TOKEN;
+const nvidiaKey = () => process.env.NVIDIA_API_KEY;
 
 const ASPECT_RATIO_MAP = {
-  "1:1": "1:1",
-  "4:5": "4:5",
-  "16:9": "16:9",
-  "9:16": "9:16",
-  "3:2": "3:2",
+  "1:1": { w: 1024, h: 1024 },
+  "4:5": { w: 896, h: 1120 },
+  "16:9": { w: 1344, h: 768 },
+  "9:16": { w: 768, h: 1344 },
+  "3:2": { w: 1216, h: 832 },
 };
 
 async function sleep(ms) {
@@ -34,6 +35,136 @@ async function withRetry(fn, maxRetries = 3, baseDelayMs = 1500) {
   throw lastErr;
 }
 
+// ── NVIDIA NIM — Stable Diffusion / FLUX via NVIDIA API ─────────────────────
+async function generateImagesNvidia(prompt, count = 3, aspectRatio = "1:1") {
+  const key = nvidiaKey();
+  if (!key) return null;
+
+  const dims = ASPECT_RATIO_MAP[aspectRatio] || ASPECT_RATIO_MAP["1:1"];
+  const results = [];
+
+  try {
+    // Try FLUX.1-schnell via NVIDIA NIM first
+    const response = await withRetry(async () => {
+      return await axios.post(
+        `${NVIDIA_API}/genai/black-forest-labs/flux-schnell`,
+        {
+          prompt: `${prompt}, photorealistic, high quality, commercial photography`,
+          width: dims.w,
+          height: dims.h,
+          num_inference_steps: 4,
+          seed: Math.floor(Math.random() * 999999),
+          guidance_scale: 0,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${key}`,
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          timeout: 120000,
+        }
+      );
+    }, 2, 2000);
+
+    if (response.data?.artifacts?.[0]?.base64) {
+      const base64 = response.data.artifacts[0].base64;
+      results.push(`data:image/webp;base64,${base64}`);
+    } else if (response.data?.image_url) {
+      results.push(response.data.image_url);
+    }
+
+    // Generate more variants if needed
+    if (results.length > 0 && count > 1) {
+      const extras = await Promise.allSettled(
+        Array.from({ length: Math.min(count - 1, 2) }, (_, i) =>
+          axios.post(
+            `${NVIDIA_API}/genai/black-forest-labs/flux-schnell`,
+            {
+              prompt: `${prompt}, photorealistic, high quality, commercial photography, variant ${i + 2}`,
+              width: dims.w,
+              height: dims.h,
+              num_inference_steps: 4,
+              seed: Math.floor(Math.random() * 999999),
+              guidance_scale: 0,
+            },
+            {
+              headers: {
+                Authorization: `Bearer ${key}`,
+                "Content-Type": "application/json",
+                Accept: "application/json",
+              },
+              timeout: 120000,
+            }
+          ).catch(() => null)
+        )
+      );
+
+      for (const result of extras) {
+        if (result.status === "fulfilled" && result.value) {
+          const data = result.value.data;
+          if (data?.artifacts?.[0]?.base64) {
+            results.push(`data:image/webp;base64,${data.artifacts[0].base64}`);
+          } else if (data?.image_url) {
+            results.push(data.image_url);
+          }
+        }
+      }
+    }
+
+    if (results.length > 0) {
+      console.log(`NVIDIA NIM (FLUX) generated ${results.length} image(s)`);
+      return results;
+    }
+  } catch (err) {
+    console.warn("NVIDIA FLUX failed, trying SDXL:", err.message);
+  }
+
+  // Fallback to SDXL via NVIDIA
+  try {
+    const sdxlResponse = await withRetry(async () => {
+      return await axios.post(
+        `${NVIDIA_API}/genai/stabilityai/sdxl-turbo`,
+        {
+          text_prompts: [{ text: `${prompt}, photorealistic, high quality`, weight: 1 }],
+          sampler: "K_DPM_2_ANCESTRAL",
+          steps: 4,
+          seed: Math.floor(Math.random() * 999999),
+          width: Math.min(dims.w, 1024),
+          height: Math.min(dims.h, 1024),
+          cfg_scale: 1,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${key}`,
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          timeout: 90000,
+        }
+      );
+    }, 2, 2000);
+
+    if (sdxlResponse.data?.artifacts) {
+      for (const art of sdxlResponse.data.artifacts.slice(0, count)) {
+        if (art.base64) {
+          results.push(`data:image/png;base64,${art.base64}`);
+        }
+      }
+    }
+
+    if (results.length > 0) {
+      console.log(`NVIDIA NIM (SDXL) generated ${results.length} image(s)`);
+      return results;
+    }
+  } catch (err) {
+    console.warn("NVIDIA SDXL also failed:", err.message);
+  }
+
+  return null;
+}
+
+// ── Replicate fallback ────────────────────────────────────────────────────────
 async function waitForPrediction(predictionId, maxWaitMs = 120000) {
   const start = Date.now();
   while (Date.now() - start < maxWaitMs) {
@@ -51,7 +182,7 @@ async function waitForPrediction(predictionId, maxWaitMs = 120000) {
 async function generateImagesReplicate(prompt, scenePrompt, count = 3, aspectRatio = "1:1") {
   if (!token()) return null;
   const fullPrompt = scenePrompt ? `${prompt}, ${scenePrompt}` : prompt;
-  const mappedRatio = ASPECT_RATIO_MAP[aspectRatio] || "1:1";
+  const ratioStr = aspectRatio in ASPECT_RATIO_MAP ? aspectRatio : "1:1";
 
   return await withRetry(async () => {
     const res = await axios.post(
@@ -62,7 +193,7 @@ async function generateImagesReplicate(prompt, scenePrompt, count = 3, aspectRat
           num_outputs: Math.min(count, 4),
           output_format: "webp",
           output_quality: 90,
-          aspect_ratio: mappedRatio,
+          aspect_ratio: ratioStr,
         },
       },
       {
@@ -80,12 +211,14 @@ async function generateImagesReplicate(prompt, scenePrompt, count = 3, aspectRat
   }, 2, 2000);
 }
 
+// ── HuggingFace last resort ───────────────────────────────────────────────────
 async function generateImageHF(prompt, model = "stabilityai/stable-diffusion-xl-base-1.0") {
+  const hfToken = process.env.HUGGINGFACE_API_TOKEN;
   const headers = { "Content-Type": "application/json" };
-  if (hfToken()) headers["Authorization"] = `Bearer ${hfToken()}`;
+  if (hfToken) headers["Authorization"] = `Bearer ${hfToken}`;
   try {
     const res = await axios.post(
-      `${HF_API}/${model}`,
+      `https://api-inference.huggingface.co/models/${model}`,
       { inputs: prompt, options: { wait_for_model: true } },
       { headers, responseType: "arraybuffer", timeout: 60000 }
     );
@@ -100,9 +233,21 @@ async function generateImageHF(prompt, model = "stabilityai/stable-diffusion-xl-
   }
 }
 
+// ── Main export: tries NVIDIA → Replicate → HuggingFace ──────────────────────
 export async function generateImages(prompt, scenePrompt, count = 3, aspectRatio = "1:1") {
   const fullPrompt = `${prompt}${scenePrompt ? `, ${scenePrompt}` : ""}, photorealistic, high quality, commercial photography`;
 
+  // 1. Try NVIDIA NIM first (primary)
+  if (nvidiaKey()) {
+    try {
+      const urls = await generateImagesNvidia(fullPrompt, count, aspectRatio);
+      if (urls && urls.length > 0) return urls;
+    } catch (err) {
+      console.error("NVIDIA pipeline failed:", err.message);
+    }
+  }
+
+  // 2. Try Replicate (secondary)
   if (token()) {
     try {
       const urls = await generateImagesReplicate(prompt, scenePrompt, count, aspectRatio);
@@ -115,10 +260,11 @@ export async function generateImages(prompt, scenePrompt, count = 3, aspectRatio
     }
   }
 
+  // 3. HuggingFace last resort
   try {
     console.log("Trying HuggingFace inference API...");
     const imagePromises = Array.from({ length: Math.min(count, 3) }, (_, i) =>
-      generateImageHF(`${fullPrompt}, variant ${i + 1}`, "stabilityai/stable-diffusion-xl-base-1.0")
+      generateImageHF(`${fullPrompt}, variant ${i + 1}`)
     );
     const results = await Promise.all(imagePromises);
     const valid = results.filter(Boolean);
@@ -133,6 +279,7 @@ export async function generateImages(prompt, scenePrompt, count = 3, aspectRatio
   return null;
 }
 
+// ── Background removal (Replicate only, NVIDIA doesn't have this) ─────────────
 export async function removeBackground(imageUrl) {
   if (!token()) return null;
   return await withRetry(async () => {
@@ -154,51 +301,36 @@ export async function removeBackground(imageUrl) {
   }, 2, 1500).catch(() => null);
 }
 
-// Full Product Analysis Schema per training document Part 1
+// ── Product analysis via NVIDIA vision model ──────────────────────────────────
 export async function analyzeProduct(imageUrl) {
-  if (!token()) {
-    return {
-      product_name: "product",
-      product_category: "General Product",
-      product_subcategory: "product",
-      brand_name: "unbranded",
-      primary_color: "neutral",
-      secondary_colors: [],
-      material: "[INFER]",
-      finish: "[INFER]",
-      size_visible: "[INFER]",
-      key_features: [],
-      condition: "New",
-      target_use: "daily use",
-      image_quality: "Good",
-      background_in_photo: "unknown",
-      multiple_items: false,
-      description: "",
-      category: "product",
-      colors: ["neutral"],
-    };
-  }
+  const key = nvidiaKey();
 
-  return await withRetry(async () => {
-    const res = await axios.post(
-      `${REPLICATE_API}/models/yorickvp/llava-13b/predictions`,
-      {
-        input: {
-          image: imageUrl,
-          prompt: `Analyze this ecommerce product image precisely and extract these details:
-
-1. PRODUCT: Specific product name (e.g. "Ceramic Coffee Mug with Lid" not just "mug")
-2. CATEGORY: One of: Electronics / Apparel / Home & Kitchen / Beauty / Sports / Books / Toys / Footwear / Bags / Jewelry / Food / Other
-3. SUBCATEGORY: Specific type (e.g. "Ceramic Mug", "Running Shoes", "Face Serum")
-4. BRAND: Any brand name or logo visible, or "unbranded"
-5. PRIMARY_COLOR: Exact color (e.g. "Matte Black", "Ivory White", "Forest Green")
-6. SECONDARY_COLORS: Any accent colors, or "none"
-7. MATERIAL: Primary material (e.g. Ceramic, Steel, Cotton, Leather, Plastic)
-8. FINISH: Matte / Glossy / Textured / Brushed / Natural / other
-9. FEATURES: Up to 5 key visible features separated by commas (e.g. handle, lid, logo, spout, zip)
-10. BACKGROUND: white / colored / cluttered / outdoor / lifestyle
-11. IMAGE_QUALITY: Good / Poor lighting / Blurry / Cluttered background
-12. MULTIPLE_ITEMS: yes or no
+  // Try NVIDIA vision first
+  if (key && imageUrl) {
+    try {
+      const response = await withRetry(async () => {
+        return await axios.post(
+          `${NVIDIA_API}/vlm/nvidia/neva-22b`,
+          {
+            messages: [
+              {
+                role: "user",
+                content: [
+                  {
+                    type: "text",
+                    text: `Analyze this ecommerce product image and extract:
+PRODUCT: Specific product name
+CATEGORY: One of: Electronics / Apparel / Home & Kitchen / Beauty / Sports / Books / Toys / Footwear / Bags / Jewelry / Food / Other
+SUBCATEGORY: Specific type
+BRAND: Brand name or "unbranded"
+PRIMARY_COLOR: Exact color
+SECONDARY_COLORS: Accent colors or "none"
+MATERIAL: Primary material
+FINISH: Matte / Glossy / Textured / Brushed / Natural / other
+FEATURES: Up to 5 key features separated by commas
+BACKGROUND: white / colored / cluttered / outdoor / lifestyle
+IMAGE_QUALITY: Good / Poor lighting / Blurry / Cluttered background
+MULTIPLE_ITEMS: yes or no
 
 Reply in EXACTLY this format, one per line:
 PRODUCT: [value]
@@ -213,6 +345,128 @@ FEATURES: [value]
 BACKGROUND: [value]
 IMAGE_QUALITY: [value]
 MULTIPLE_ITEMS: [value]`,
+                  },
+                  {
+                    type: "image_url",
+                    image_url: { url: imageUrl },
+                  },
+                ],
+              },
+            ],
+            max_tokens: 400,
+            temperature: 0.1,
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${key}`,
+              "Content-Type": "application/json",
+            },
+            timeout: 60000,
+          }
+        );
+      }, 2, 2000);
+
+      const text = response.data?.choices?.[0]?.message?.content || "";
+      if (text) {
+        return parseAnalysisText(text);
+      }
+    } catch (err) {
+      console.warn("NVIDIA vision analysis failed:", err.message);
+    }
+  }
+
+  // Fallback to Replicate LLaVA
+  if (token()) {
+    try {
+      return await analyzeProductReplicate(imageUrl);
+    } catch (err) {
+      console.warn("Replicate analysis failed:", err.message);
+    }
+  }
+
+  return getDefaultAnalysis();
+}
+
+function parseAnalysisText(text) {
+  const extract = (key) => {
+    const match = text.match(new RegExp(`^${key}:\\s*(.+?)\\s*$`, "im"));
+    return match ? match[1].trim() : null;
+  };
+
+  const primaryColor = extract("PRIMARY_COLOR") || "neutral";
+  const colorMatch = text.match(/\b(red|blue|green|black|white|gold|silver|brown|pink|purple|yellow|orange|grey|gray|navy|cream|beige)\b/gi);
+  const colors = colorMatch ? [...new Set(colorMatch.map((c) => c.toLowerCase()))] : ["neutral"];
+  const featuresStr = extract("FEATURES") || "";
+  const key_features = featuresStr && featuresStr.toLowerCase() !== "none"
+    ? featuresStr.split(",").map((f) => f.trim()).filter(Boolean)
+    : [];
+  const multipleStr = (extract("MULTIPLE_ITEMS") || "no").toLowerCase();
+
+  return {
+    product_name: extract("PRODUCT") || "product",
+    product_category: extract("CATEGORY") || "General Product",
+    product_subcategory: extract("SUBCATEGORY") || extract("PRODUCT") || "product",
+    brand_name: extract("BRAND") || "unbranded",
+    primary_color: primaryColor,
+    secondary_colors: (extract("SECONDARY_COLORS") || "none").toLowerCase() === "none" ? [] : (extract("SECONDARY_COLORS") || "").split(",").map((c) => c.trim()),
+    material: extract("MATERIAL") || "[INFER]",
+    finish: extract("FINISH") || "[INFER]",
+    size_visible: "[INFER]",
+    key_features,
+    condition: "New",
+    target_use: "daily use",
+    image_quality: extract("IMAGE_QUALITY") || "Good",
+    background_in_photo: extract("BACKGROUND") || "unknown",
+    multiple_items: multipleStr === "yes",
+    description: text,
+    category: extract("CATEGORY") || "product",
+    colors,
+  };
+}
+
+function getDefaultAnalysis() {
+  return {
+    product_name: "product",
+    product_category: "General Product",
+    product_subcategory: "product",
+    brand_name: "unbranded",
+    primary_color: "neutral",
+    secondary_colors: [],
+    material: "[INFER]",
+    finish: "[INFER]",
+    size_visible: "[INFER]",
+    key_features: [],
+    condition: "New",
+    target_use: "daily use",
+    image_quality: "Good",
+    background_in_photo: "unknown",
+    multiple_items: false,
+    description: "",
+    category: "product",
+    colors: ["neutral"],
+  };
+}
+
+async function analyzeProductReplicate(imageUrl) {
+  return await withRetry(async () => {
+    const res = await axios.post(
+      `${REPLICATE_API}/models/yorickvp/llava-13b/predictions`,
+      {
+        input: {
+          image: imageUrl,
+          prompt: `Analyze this ecommerce product image precisely and extract these details:
+PRODUCT: [product name]
+CATEGORY: [Electronics / Apparel / Home & Kitchen / Beauty / Sports / Books / Toys / Footwear / Bags / Jewelry / Food / Other]
+SUBCATEGORY: [specific type]
+BRAND: [brand or "unbranded"]
+PRIMARY_COLOR: [exact color]
+SECONDARY_COLORS: [colors or "none"]
+MATERIAL: [material]
+FINISH: [Matte/Glossy/Textured/Brushed/Natural/other]
+FEATURES: [up to 5 features]
+BACKGROUND: [white/colored/cluttered/outdoor/lifestyle]
+IMAGE_QUALITY: [Good/Poor lighting/Blurry/Cluttered background]
+MULTIPLE_ITEMS: [yes/no]`,
           max_tokens: 400,
         },
       },
@@ -230,67 +484,11 @@ MULTIPLE_ITEMS: [value]`,
       ? res.data.output
       : res.data.id ? await waitForPrediction(res.data.id) : null;
     const text = Array.isArray(output) ? output.join("") : output || "";
-
-    const extract = (key) => {
-      const match = text.match(new RegExp(`^${key}:\\s*(.+?)\\s*$`, 'im'));
-      return match ? match[1].trim() : null;
-    };
-
-    const primaryColor = extract("PRIMARY_COLOR") || "neutral";
-    const colorMatch = text.match(/\b(red|blue|green|black|white|gold|silver|brown|pink|purple|yellow|orange|grey|gray|navy|cream|beige)\b/gi);
-    const colors = colorMatch ? [...new Set(colorMatch.map(c => c.toLowerCase()))] : ["neutral"];
-
-    const featuresStr = extract("FEATURES") || "";
-    const key_features = featuresStr && featuresStr.toLowerCase() !== "none"
-      ? featuresStr.split(",").map(f => f.trim()).filter(Boolean)
-      : [];
-
-    const multipleStr = (extract("MULTIPLE_ITEMS") || "no").toLowerCase();
-
-    return {
-      product_name: extract("PRODUCT") || "product",
-      product_category: extract("CATEGORY") || "General Product",
-      product_subcategory: extract("SUBCATEGORY") || extract("PRODUCT") || "product",
-      brand_name: extract("BRAND") || "unbranded",
-      primary_color: primaryColor,
-      secondary_colors: (extract("SECONDARY_COLORS") || "none").toLowerCase() === "none" ? [] : (extract("SECONDARY_COLORS") || "").split(",").map(c => c.trim()),
-      material: extract("MATERIAL") || "[INFER]",
-      finish: extract("FINISH") || "[INFER]",
-      size_visible: "[INFER]",
-      key_features,
-      condition: "New",
-      target_use: "daily use",
-      image_quality: extract("IMAGE_QUALITY") || "Good",
-      background_in_photo: extract("BACKGROUND") || "unknown",
-      multiple_items: multipleStr === "yes",
-      description: text,
-      // Legacy compat
-      category: extract("CATEGORY") || "product",
-      colors,
-    };
-  }, 2, 2000).catch(() => ({
-    product_name: "product",
-    product_category: "General Product",
-    product_subcategory: "product",
-    brand_name: "unbranded",
-    primary_color: "neutral",
-    secondary_colors: [],
-    material: "[INFER]",
-    finish: "[INFER]",
-    size_visible: "[INFER]",
-    key_features: [],
-    condition: "New",
-    target_use: "daily use",
-    image_quality: "Good",
-    background_in_photo: "unknown",
-    multiple_items: false,
-    description: "Product image analyzed",
-    category: "product",
-    colors: ["neutral"],
-  }));
+    return parseAnalysisText(text);
+  }, 2, 2000).catch(() => getDefaultAnalysis());
 }
 
-// 6 standard catalog shot type prompts per training document Part 2
+// ── Catalog shot prompts ──────────────────────────────────────────────────────
 export function buildCatalogShotPrompts(analysis) {
   const productName = analysis.product_name || "product";
   const primaryColor = analysis.primary_color || "neutral";
@@ -304,7 +502,6 @@ export function buildCatalogShotPrompts(analysis) {
   const productDesc = [primaryColor, material, productName].filter(Boolean).join(" ");
   const brandNote = brand ? `, ${brand} brand clearly visible and sharp` : "";
 
-  // Lifestyle context mapping per training doc
   const LIFESTYLE_MAP = {
     "food": "kitchen counter with fresh ingredients, natural daylight streaming in",
     "beauty": "marble surface with minimal botanical props, soft natural light",
@@ -364,7 +561,7 @@ export function buildCatalogShotPrompts(analysis) {
       type: "infographic",
       label: "Infographic Shot",
       description: "Clean shot for feature callout overlays",
-      prompt: `Clean professional product photography of ${productDesc} at slight angle showing all sides, white background, all key features clearly visible (${featuresForInfogr}), even studio lighting no harsh shadows, hyperrealistic sharp detail on all sides, no text overlays (text added programmatically by UI), commercial product photography for ecommerce infographic use, ${QUALITY_ENHANCER}`,
+      prompt: `Clean professional product photography of ${productDesc} at slight angle showing all sides, white background, all key features clearly visible (${featuresForInfogr}), even studio lighting no harsh shadows, hyperrealistic sharp detail on all sides, no text overlays, commercial product photography for ecommerce infographic use, ${QUALITY_ENHANCER}`,
     },
   ];
 }

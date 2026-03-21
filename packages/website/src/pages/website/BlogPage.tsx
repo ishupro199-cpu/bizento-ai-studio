@@ -91,62 +91,37 @@ export default function BlogPage() {
   const [email, setEmail] = useState("");
 
   useEffect(() => {
-    let resolved = false;
-
-    const timeout = setTimeout(() => {
-      if (!resolved) {
-        resolved = true;
-        setPosts(FALLBACK_POSTS);
-        setLoading(false);
-      }
-    }, 5000);
-
-    let q;
-    try {
-      q = query(collection(db, "blogPosts"), orderBy("createdAt", "desc"));
-    } catch {
-      clearTimeout(timeout);
-      setPosts(FALLBACK_POSTS);
-      setLoading(false);
-      return;
-    }
-
+    const q = query(
+      collection(db, "blog_posts"),
+      orderBy("publishedAt", "desc")
+    );
     const unsub = onSnapshot(q, (snap) => {
-      if (!resolved) {
-        resolved = true;
-        clearTimeout(timeout);
-        const all = snap.docs
-          .map((d) => {
-            const data = d.data();
-            return {
-              id: d.id,
-              title: data.title || "",
-              slug: data.slug || d.id,
-              excerpt: data.excerpt || "",
-              content: data.content || "",
-              category: data.category || "Guide",
-              published: data.published ?? true,
-              author: data.author || "Team Pixalera",
-              imageUrl: data.imageUrl || `https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&q=80`,
-              readTime: data.readTime || getReadTime(data.content || ""),
-              tags: data.tags || [],
-              createdAt: data.createdAt?.toDate?.() || new Date(),
-            };
-          })
-          .filter((p) => p.published);
-        setPosts(all.length > 0 ? all : FALLBACK_POSTS);
-        setLoading(false);
-      }
+      const all = snap.docs
+        .map((d) => {
+          const data = d.data();
+          return {
+            id: d.id,
+            title: data.title || "",
+            slug: data.slug || d.id,
+            excerpt: data.excerpt || "",
+            content: data.content || "",
+            category: data.tags?.[0] || "Guide",
+            published: data.status === "published",
+            author: data.author || "Team Pixalera",
+            imageUrl: data.coverImageURL || "",
+            readTime: getReadTime(data.content || ""),
+            tags: data.tags || [],
+            createdAt: data.publishedAt?.toDate?.() || data.createdAt?.toDate?.() || new Date(),
+          };
+        })
+        .filter((p) => p.published);
+      setPosts(all);
+      setLoading(false);
     }, () => {
-      if (!resolved) {
-        resolved = true;
-        clearTimeout(timeout);
-        setPosts(FALLBACK_POSTS);
-        setLoading(false);
-      }
+      setPosts([]);
+      setLoading(false);
     });
-
-    return () => { clearTimeout(timeout); unsub(); };
+    return () => unsub();
   }, []);
 
   const filteredPosts = activeTag === "All"
@@ -192,6 +167,12 @@ export default function BlogPage() {
                 <div key={i} className="rounded-2xl h-48 animate-pulse" style={{ background: "rgba(255,255,255,0.04)" }} />
               ))}
             </div>
+          </div>
+        ) : filteredPosts.length === 0 ? (
+          <div className="text-center py-20">
+            <div className="text-4xl mb-4">📝</div>
+            <h3 className="text-xl font-semibold mb-2">No posts yet</h3>
+            <p style={{ color: "#8A8F9E" }}>Check back soon — we're working on something great.</p>
           </div>
         ) : (
           <>

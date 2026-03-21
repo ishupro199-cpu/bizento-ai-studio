@@ -7,6 +7,8 @@ import { aiTestRouter } from "./routes/aiTest.js";
 import { referralRouter } from "./routes/referral.js";
 import { notificationsRouter } from "./routes/notifications.js";
 import { blogsRouter } from "./routes/blogs.js";
+import { sitemapRouter } from "./routes/sitemap.js";
+import { supportRouter } from "./routes/support.js";
 import { initFirebaseAdmin } from "./config/firebase.js";
 
 const app = express();
@@ -35,6 +37,8 @@ app.use("/api/ai-test", aiTestRouter);
 app.use("/api/referral", referralRouter);
 app.use("/api/notifications", notificationsRouter);
 app.use("/api/blogs", blogsRouter);
+app.use("/api/support", supportRouter);
+app.use("/", sitemapRouter);
 
 app.use((err, _req, res, _next) => {
   console.error(err.stack);

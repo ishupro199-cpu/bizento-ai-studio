@@ -103,8 +103,9 @@ export default function AdminReferralsPage() {
             <input
               value={search}
               onChange={e => setSearch(e.target.value)}
-              placeholder="Search by user ID..."
-              className="w-full bg-white/4 border border-white/10 rounded-xl pl-9 pr-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/40 outline-none focus:border-white/20 transition-colors"
+              placeholder="Search by user ID or email..."
+              style={{ background: "#1e1e1e", color: "#fff", borderColor: "rgba(255,255,255,0.12)" }}
+              className="w-full border rounded-xl pl-9 pr-3 py-2 text-sm placeholder:text-muted-foreground/40 outline-none focus:border-white/20 transition-colors"
             />
           </div>
           <div className="flex gap-1.5">

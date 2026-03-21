@@ -1,6 +1,23 @@
 import { getAdminAuth, getAdminDb } from "../config/firebase.js";
 import { FieldValue } from "firebase-admin/firestore";
 
+export async function requireAdmin(req, res, next) {
+  try {
+    const db = getAdminDb();
+    if (!db || !req.uid) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+    const userDoc = await db.collection("users").doc(req.uid).get();
+    if (!userDoc.exists || userDoc.data()?.role !== "admin") {
+      return res.status(403).json({ error: "Admin access required" });
+    }
+    req.email = userDoc.data()?.email || req.userEmail;
+    next();
+  } catch (err) {
+    return res.status(403).json({ error: "Forbidden" });
+  }
+}
+
 export async function verifyFirebaseToken(req, res, next) {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith("Bearer ")) {

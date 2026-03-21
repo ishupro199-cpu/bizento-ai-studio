@@ -49,7 +49,7 @@ export default function AdminSupportPage() {
   const [msgApi, ctx] = message.useMessage();
 
   useEffect(() => {
-    const q = query(collection(db, "supportTickets"), orderBy("createdAt", "desc"));
+    const q = query(collection(db, "support_tickets"), orderBy("createdAt", "desc"));
     const unsub = onSnapshot(q, snap => {
       setTickets(snap.docs.map(d => {
         const data = d.data();
@@ -61,7 +61,7 @@ export default function AdminSupportPage() {
           userEmail: data.userEmail || "unknown",
           status: data.status || "open",
           priority: data.priority || "normal",
-          adminNote: data.adminNote,
+          adminNote: data.adminReply || data.adminNote,
           createdAt: ts instanceof Timestamp ? ts.toDate() : new Date(),
         };
       }));
@@ -71,7 +71,7 @@ export default function AdminSupportPage() {
   }, []);
 
   const updateStatus = async (id: string, status: string) => {
-    await updateDoc(doc(db, "supportTickets", id), { status });
+    await updateDoc(doc(db, "support_tickets", id), { status });
     msgApi.success("Status updated");
     if (selectedTicket?.id === id) setSelectedTicket(t => t ? { ...t, status } : null);
   };
@@ -79,18 +79,33 @@ export default function AdminSupportPage() {
   const handleReply = async () => {
     if (!selectedTicket || !replyText.trim()) return;
     setReplying(true);
-    await updateDoc(doc(db, "supportTickets", selectedTicket.id), {
-      adminNote: replyText.trim(),
-      status: "in-progress",
+    await updateDoc(doc(db, "support_tickets", selectedTicket.id), {
+      adminReply: replyText.trim(),
+      status: "replied",
       repliedAt: serverTimestamp(),
     });
+    if (selectedTicket.userEmail) {
+      const { where, getDocs } = await import("firebase/firestore");
+      const usersSnap = await getDocs(query(collection(db, "users"), where("email", "==", selectedTicket.userEmail)));
+      if (!usersSnap.empty) {
+        const userId = usersSnap.docs[0].id;
+        await addDoc(collection(db, "notifications"), {
+          userId,
+          title: "Admin replied to your support ticket",
+          message: `Your ticket "${selectedTicket.subject}" has a new reply.`,
+          type: "info",
+          isRead: false,
+          createdAt: serverTimestamp(),
+        });
+      }
+    }
     setReplyText("");
     msgApi.success("Reply saved");
     setReplying(false);
   };
 
   const handleDelete = async (id: string) => {
-    await deleteDoc(doc(db, "supportTickets", id));
+    await deleteDoc(doc(db, "support_tickets", id));
     msgApi.success("Ticket deleted");
     if (selectedTicket?.id === id) setSelectedTicket(null);
   };

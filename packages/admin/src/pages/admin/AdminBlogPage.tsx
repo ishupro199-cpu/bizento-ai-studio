@@ -107,10 +107,16 @@ function BlogPostModal({ open, onClose, editItem }: { open: boolean; onClose: ()
         imageUrl: imageUrl || null,
       };
       if (editItem) {
-        await updateDoc(doc(db, "blogPosts", editItem.id), { ...data, updatedAt: serverTimestamp() });
+        await updateDoc(doc(db, "blog_posts", editItem.id), { ...data, updatedAt: serverTimestamp() });
         msgApi.success("Post updated");
       } else {
-        await addDoc(collection(db, "blogPosts"), { ...data, createdAt: serverTimestamp() });
+        await addDoc(collection(db, "blog_posts"), {
+          ...data,
+          status: values.published ? "published" : "draft",
+          coverImageURL: imageUrl || null,
+          publishedAt: values.published ? serverTimestamp() : null,
+          createdAt: serverTimestamp(),
+        });
         msgApi.success("Post published");
       }
       onClose();

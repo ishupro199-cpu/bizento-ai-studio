@@ -42,6 +42,7 @@ import SettingsPage from "@/pages/app/SettingsPage";
 import RewardsPage from "@/pages/app/RewardsPage";
 import BillingPage from "@/pages/app/BillingPage";
 
+import MaintenancePage from "@/pages/website/MaintenancePage";
 import NotFound from "@/pages/NotFound";
 
 function RefRedirect() {
@@ -81,6 +82,7 @@ const App = () => (
             <Route path="/refund-policy" element={<RefundPolicyPage />} />
             <Route path="/cookies" element={<CookiesPolicyPage />} />
             <Route path="/ref/:userId" element={<RefRedirect />} />
+            <Route path="/maintenance" element={<MaintenancePage />} />
 
             {/* App Dashboard — Protected */}
             <Route path="/app" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
