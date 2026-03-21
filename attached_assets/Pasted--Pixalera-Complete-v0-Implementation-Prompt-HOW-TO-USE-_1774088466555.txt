@@ -1,0 +1,1031 @@
+# Pixalera — Complete v0 Implementation Prompt
+
+---
+
+## HOW TO USE THIS PROMPT
+
+Paste the entire contents of "THE PROMPT" section below into v0.
+Do it in one single message — do not break it into parts.
+v0 will implement everything in one comprehensive pass.
+
+---
+
+# ═══════════════════════════════════════════════════════════
+# THE PROMPT — COPY EVERYTHING BELOW THIS LINE
+# ═══════════════════════════════════════════════════════════
+
+You are building a complete fullstack implementation for **Pixalera** — an AI-powered product image generation SaaS platform. The existing project is on Replit using React (frontend) + Node.js/Express (backend) + Firebase (Firestore + Storage + Auth).
+
+This is a **comprehensive upgrade task**. You must implement every section listed below completely. No mock data anywhere. No placeholder functions. Everything must be real, working, connected to Firebase.
+
+---
+
+## TECH STACK (DO NOT CHANGE)
+
+- **Frontend:** React + Vite + Tailwind CSS
+- **Backend:** Node.js + Express (Replit)
+- **Database:** Firebase Firestore
+- **Storage:** Firebase Storage
+- **Auth:** Firebase Authentication
+- **State:** React Context + useReducer
+- **API calls:** fetch / axios with proper error handling
+- **Environment:** All secrets in `process.env` — never hardcoded
+
+---
+
+## FIREBASE COLLECTIONS STRUCTURE
+
+Use exactly these collection names throughout all implementations:
+
+```
+/users/{userId}
+  - email, displayName, photoURL, plan, credits, createdAt,
+    referralCode, referredBy, isActive, isBanned, role (user/admin)
+
+/plans/{planId}
+  - name, price, credits, features[], isActive, createdAt
+
+/orders/{orderId}
+  - userId, planId, amount, status, createdAt, paymentId
+
+/credits_log/{logId}
+  - userId, amount (negative=deducted, positive=added),
+    reason (image_generation/catalog/referral/purchase/admin_adjustment),
+    toolUsed, createdAt
+
+/referrals/{referralId}
+  - referrerId, referredUserId, status, creditsAwarded, createdAt
+
+/inspiration_prompts/{promptId}
+  - title, prompt, imageURL, category, addedBy, createdAt, isActive
+
+/banners/{bannerId}
+  - imageURL, title, link, isActive, displayOrder, createdAt
+
+/notifications/{notificationId}
+  - userId (or "all"), title, message, type, isRead, createdAt
+
+/blog_posts/{postId}
+  - title, slug, content, excerpt, coverImageURL,
+    author, tags[], status (draft/published), publishedAt, createdAt
+
+/pages/{pageId}
+  - pageKey (e.g. "landing", "about", "privacy"), title,
+    sections: [{sectionKey, imageURL, content}], updatedAt
+
+/support_tickets/{ticketId}
+  - userId, userEmail, subject, message, status (open/replied/closed),
+    adminReply, createdAt, repliedAt
+
+/moderation/{itemId}
+  - type, contentId, reportedBy, reason, status, reviewedBy, createdAt
+
+/admin_logs/{logId}
+  - adminId, action, targetType, targetId, details, createdAt
+
+/settings/{settingKey}
+  - maintenance_mode: { isActive, message, estimatedTime }
+  - credit_rules: { image_generation_cost, catalog_cost, text_is_free: true }
+```
+
+---
+
+## SECTION 1: USER MANAGEMENT — FULLSTACK WORKING
+
+### Admin Panel: Users Section
+
+**Remove all mock data. Connect directly to Firestore `/users` collection.**
+
+Implement the following features completely:
+
+**1.1 — User List (real data)**
+```
+- Fetch all users from Firestore with pagination (20 per page)
+- Columns: Avatar, Name, Email, Plan, Credits, Status (Active/Banned), Joined date, Actions
+- Real-time search: filter by name OR email as user types
+- Filter chips: All / Active / Banned / Free plan / Paid plan
+- Sort: by joined date, by credits, by plan
+- Show total user count (real number from Firestore)
+```
+
+**1.2 — Add User**
+```
+- Form: Email, Display Name, Plan (dropdown from /plans), Initial Credits, Role (user/admin)
+- On submit: create Firebase Auth account + Firestore /users document
+- Auto-generate referral code (8 char alphanumeric)
+- Show success toast with new user's UID
+- Error handling: duplicate email → show "User already exists"
+```
+
+**1.3 — Edit User**
+```
+- Click edit icon → slide-in drawer (not modal) from right
+- Editable fields: Display Name, Plan, Credits (manual adjustment), Role, isActive, isBanned
+- Credits adjustment: show current balance, input for adjustment amount (+/-),
+  reason dropdown (bonus/correction/penalty), saves to /credits_log
+- On save: update Firestore, show success state, close drawer
+```
+
+**1.4 — Delete User**
+```
+- Confirmation dialog: "Are you sure? This will permanently delete the user and all their data."
+- Type user email to confirm deletion
+- On confirm: delete Firebase Auth account + all Firestore user documents
+- Log deletion in /admin_logs
+```
+
+**1.5 — View User Detail**
+```
+- Click row → full user detail page
+- Tabs: Overview / Credits History / Orders / AI Tool Usage / Support Tickets
+- Overview: all user fields, plan badge, credit balance
+- Credits History: list from /credits_log filtered by userId, shows +/- amounts with reason
+- Orders: list from /orders filtered by userId
+- AI Tool Usage: aggregated stats — total generations, favorite tool, credits spent
+```
+
+---
+
+## SECTION 2: BILLING + PLANS — REAL DATA
+
+**Remove all mock billing data. Connect to Firestore `/plans` and `/orders`.**
+
+**2.1 — Plans Management**
+```
+- List all plans from /plans collection
+- Add plan: name, price (₹), credits included, features list (add/remove feature tags)
+- Edit plan: update any field, changes reflect on user-facing pricing page immediately
+- Toggle plan active/inactive (inactive plans hidden from public pricing)
+- Delete plan: only if no active users on this plan
+```
+
+**2.2 — Orders / Transactions**
+```
+- Real orders from /orders collection
+- Columns: Order ID, User (name+email), Plan, Amount, Status, Date
+- Filter by status: all/completed/pending/failed
+- Search by user email or order ID
+- Revenue stats at top: Total revenue (all time), This month, Active subscriptions count
+- Export orders as CSV button
+```
+
+**2.3 — Credits System (CRITICAL RULES)**
+```
+Rule 1: Text generation = 0 credits (always free)
+Rule 2: Image generation = deduct credits (amount from /settings/credit_rules)
+Rule 3: Catalog generation = deduct credits
+Rule 4: Product photography = deduct credits
+Rule 5: Cinematic ads = deduct credits
+Rule 6: Ads creation = deduct credits
+
+Credit deduction flow:
+  1. Before generation: check user's credit balance
+  2. If balance >= cost: proceed, deduct after successful generation
+  3. If balance < cost: show "Insufficient credits" modal with upgrade CTA
+  4. Every deduction: write to /credits_log with toolUsed, amount, userId, timestamp
+  5. Credit balance in /users/{userId}.credits updates in real-time
+
+Admin credit management:
+  - Manually add/deduct credits for any user
+  - Bulk credit operations: select multiple users → add X credits to all
+  - Credit rules settings: admin can change cost per tool from settings page
+```
+
+---
+
+## SECTION 3: REFERRALS — REAL DATA + SEARCH FIX
+
+**3.1 — Fix search bar color**
+```
+The search bar in referrals section has white text on white background.
+Fix: search input must use theme-aware colors.
+Use: background: var(--input-bg), color: var(--text-primary), border: 1px solid var(--border-color)
+This must respect dark/light mode of the admin panel theme.
+```
+
+**3.2 — Real referrals data**
+```
+- Fetch from /referrals collection
+- Columns: Referrer (name+email), Referred User (name+email), Status, Credits Awarded, Date
+- Stats at top: Total referrals, Successful conversions, Total credits awarded via referrals
+- Filter: all / pending / completed
+- Search: by referrer email or referred user email (fix the input color)
+```
+
+**3.3 — Referral logic (backend)**
+```
+- Every user has a unique referralCode in /users
+- When new user signs up with referral code:
+  1. Verify code exists in /users
+  2. Create /referrals document: referrerId, referredUserId, status: 'pending'
+  3. When referred user completes first paid order:
+     - Update referral status to 'completed'
+     - Add credits to referrer (amount from /settings)
+     - Write to /credits_log for both users
+```
+
+---
+
+## SECTION 4: AI TOOLS SECTION IN ADMIN — REAL DATA
+
+**Remove all mock tool usage data. Show real aggregated stats.**
+
+```
+Fetch from /credits_log where reason = 'image_generation'/'catalog'/'photography'/'cinematic'/'ads'
+
+Display:
+- Total generations per tool (real count)
+- Credits consumed per tool (real sum)
+- Most popular tool (highest usage)
+- Daily/weekly/monthly chart (real data, use recharts)
+- Recent generations list (last 20, with user, tool, timestamp)
+- Failed generations count (from error logs if tracked)
+
+No mock numbers anywhere. If data is empty: show empty state with "No generations yet"
+```
+
+---
+
+## SECTION 5: INSPIRATION HUB — FULLSTACK
+
+### Admin Side
+
+**5.1 — Add Prompt feature (fully working)**
+```
+Form fields:
+  - Title (text input)
+  - Prompt text (textarea, large)
+  - Category (dropdown: Catalog / Photography / Cinematic / Ads / General)
+  - Image upload (drag-and-drop + click to upload)
+    → Upload to Firebase Storage: /inspiration/{promptId}/image.jpg
+    → Show upload progress bar
+    → Show image preview after upload
+  - isActive toggle
+
+On submit:
+  → Save to Firestore /inspiration_prompts
+  → imageURL = Firebase Storage download URL
+  → Show success toast
+  → New prompt appears in list immediately (real-time)
+```
+
+**5.2 — Manage prompts**
+```
+- List all prompts from Firestore (real data, no mock)
+- Edit: update any field, re-upload image
+- Delete: removes Firestore doc + Firebase Storage image
+- Toggle active/inactive per prompt
+- Drag to reorder (updates displayOrder field)
+```
+
+### User Side
+
+**5.3 — Inspiration Hub page (user-facing)**
+```
+- Remove ALL mock/hardcoded inspiration data
+- Fetch only active prompts from /inspiration_prompts where isActive=true
+- Display as image grid with prompt text on hover/click
+- Filter by category tabs
+- Click prompt → copy prompt text to clipboard with toast confirmation
+- Click "Use this prompt" → opens the relevant Pixalera tool with prompt pre-filled
+- Empty state: "Admin hasn't added any inspiration prompts yet"
+  (shown only if no prompts exist — not by default)
+```
+
+---
+
+## SECTION 6: MARKETING — BANNERS + NOTIFICATIONS
+
+### Banners
+
+**6.1 — New banner with image upload**
+```
+Admin form:
+  - Title (text)
+  - Link URL (where banner clicks go)
+  - Image upload (required)
+    → Upload to Firebase Storage: /banners/{bannerId}/image.jpg
+    → Show preview, progress bar
+  - Display order (number)
+  - isActive toggle
+  - Start date / End date (optional — auto-deactivate after end date)
+
+On save:
+  → Save to /banners Firestore
+  → Banner appears on website immediately (no deploy needed)
+
+Website integration:
+  → Fetch active banners from Firestore on page load
+  → Display in designated banner section (homepage/dashboard)
+  → Banners auto-refresh every 5 minutes or on route change
+  → Clicking banner opens link in new tab
+  → Banner with end date past current time auto-hidden
+```
+
+**6.2 — Notifications — admin sends to users**
+```
+Admin compose form:
+  - Target: All users / Specific user (search by email) / Plan-based (free/starter/pro)
+  - Title (max 60 chars)
+  - Message (max 200 chars)
+  - Type: info / success / warning / promotional
+  - Send now button
+
+Backend:
+  → For "All users": query /users, create /notifications doc for each userId
+     (or use userId = "all" and fan-out on read)
+  → For specific user: single /notifications doc with that userId
+  → createdAt timestamp, isRead: false by default
+
+User dashboard (NOTIFICATION ICON WORKING):
+  → Notification bell icon in nav bar
+  → Red badge showing unread count (real-time listener on /notifications)
+  → Click bell → dropdown showing last 10 notifications
+  → Click notification → marks as read (isRead: true in Firestore)
+  → "Mark all as read" button
+  → Real-time updates: new notification appears instantly without page refresh
+```
+
+---
+
+## SECTION 7: CONTENT MANAGER — UPGRADE
+
+### Pages Manager
+
+**7.1 — All pages listed**
+```
+Fetch from /pages Firestore collection.
+Pre-populate with these page keys if not exists:
+  landing, about, pricing, features, privacy, terms, refund, contact, faq
+
+For each page show:
+  - Page name + URL path
+  - Last updated timestamp
+  - Edit button → opens page editor
+```
+
+**7.2 — Page editor with section image editing**
+```
+Page editor UI:
+  - Left panel: list of sections for that page (e.g. Hero, Features, Testimonials, CTA)
+  - Right panel: selected section editor
+
+For each section:
+  - Show CURRENT image (fetched from Firebase Storage URL stored in Firestore)
+  - Image dimensions + file size info
+  - Upload new image button:
+    → Drag-and-drop or click
+    → Preview new image alongside current image
+    → "Replace image" button → uploads to Firebase Storage, updates Firestore URL
+  - Text content fields (title, subtitle, body text) — editable
+  - Save section button → updates /pages/{pageId} in Firestore
+  - Changes go live on website immediately (website fetches from Firestore)
+```
+
+### Blog Manager
+
+**7.3 — Blog CRUD (fully working)**
+```
+Blog post editor:
+  - Title
+  - Slug (auto-generated from title, editable)
+  - Content (rich text editor — use react-quill or tiptap)
+  - Excerpt (max 160 chars, used for SEO meta description)
+  - Cover image upload → Firebase Storage /blog/{postId}/cover.jpg
+  - Tags (add/remove tag chips)
+  - Status: Draft / Published
+  - Publish date (can schedule future publish)
+  - SEO fields: meta title, meta description, canonical URL
+
+List view:
+  - All posts from /blog_posts (real Firestore data)
+  - Filter: all / published / draft
+  - Search by title
+  - Quick status toggle (draft ↔ published)
+  - Delete with confirmation
+
+Website blog page:
+  - Remove ALL mock blog data
+  - Fetch published posts from /blog_posts where status='published'
+  - Sort by publishedAt descending
+  - Blog list page + individual post page
+  - Dynamic routes: /blog and /blog/:slug
+  - Empty state if no posts published yet
+```
+
+---
+
+## SECTION 8: SUPPORT — FULLSTACK
+
+**8.1 — Website contact/support form → admin panel**
+```
+Website support form (already exists, make it work):
+  On submit:
+    → Save to Firestore /support_tickets:
+       { userId (if logged in), userEmail, subject, message, status: 'open', createdAt }
+    → Show "Message sent" confirmation to user
+    → Do NOT send email (just save to Firestore)
+
+Admin support section:
+  - List all tickets from /support_tickets
+  - Columns: Ticket ID, User Email, Subject, Status badge, Date
+  - Filter: Open / Replied / Closed
+  - Unread count badge on support nav item
+  - Click ticket → open ticket detail view
+
+Ticket detail view:
+  - Full message displayed
+  - User info (if logged in user — show link to user profile)
+  - Reply textarea
+  - Send Reply button:
+    → Updates /support_tickets/{ticketId}: adminReply, status: 'replied', repliedAt
+    → Creates notification for the user: "Admin replied to your support ticket"
+  - Mark as Closed button
+  - Ticket history (if multiple replies — store as replies[] array)
+```
+
+---
+
+## SECTION 9: MODERATION — FULLSTACK
+
+```
+Moderation queue (admin panel):
+  - Fetch items from /moderation where status='pending'
+  - Each item shows: type, content preview, reported by, reason, date
+  - Actions per item:
+    → Approve: mark status='approved', restore content if hidden
+    → Remove: mark status='removed', delete or hide the content
+    → Ban User: mark user isBanned=true in /users, status='actioned'
+    → Dismiss: mark status='dismissed' (false report)
+  - All actions logged in /admin_logs
+  - Moderation stats: pending count, total actioned, banned users count
+```
+
+---
+
+## SECTION 10: MAINTENANCE MODE — FULLSTACK + ANIMATED PAGE
+
+**10.1 — Admin toggle**
+```
+Settings → System → Maintenance Mode section:
+  - Toggle: Enable/Disable maintenance mode
+  - Custom message input: "Tell users why site is under maintenance"
+    (e.g. "We're upgrading our servers for a better experience!")
+  - Estimated time input: "Back in X hours" or specific time
+  - Save button → writes to /settings/maintenance_mode in Firestore
+
+On save: { isActive: true/false, message: "...", estimatedTime: "...", updatedAt }
+```
+
+**10.2 — Maintenance page (user-facing)**
+```
+When /settings/maintenance_mode.isActive = true:
+  → All non-admin routes redirect to /maintenance page
+  → Admin users are NOT redirected (they see the normal site)
+  → Maintenance page must have:
+
+ANIMATED MAINTENANCE PAGE:
+  Background: dark gradient (deep navy to black)
+  
+  Center content:
+    - Animated gear/cog SVG that slowly rotates (CSS animation, 8s loop)
+    - Below gear: animated progress bar that loops (shimmer effect)
+    - Headline: "We'll be right back" (large, white, font-weight 500)
+    - Subtitle: [custom message from Firestore] displayed here
+    - Estimated time: "Estimated time: [value from Firestore]"
+    - Small text: "Follow us @pixalera for updates"
+  
+  Animations (CSS keyframes only, no libraries):
+    - Gear: rotate 360deg infinite, 8s linear
+    - Progress bar: shimmer left-to-right, 2s ease infinite
+    - Content: fade-in on load, 0.8s ease
+    - Floating particles in background: 6-8 small circles, slow float up animation
+  
+  Auto-refresh: page checks Firestore every 30 seconds
+  If isActive becomes false: auto-redirect to homepage
+```
+
+---
+
+## SECTION 11: ADMIN LOGS — FULLSTACK
+
+```
+Every admin action must write to /admin_logs:
+{
+  adminId: uid,
+  adminEmail: email,
+  action: "user_deleted" | "credits_adjusted" | "plan_created" | 
+          "banner_added" | "notification_sent" | "user_banned" | 
+          "blog_published" | "maintenance_toggled" | etc.,
+  targetType: "user" | "plan" | "banner" | "blog_post" | "system",
+  targetId: the ID of affected document,
+  details: { before: {...}, after: {...} } // what changed
+  createdAt: serverTimestamp()
+}
+
+Admin logs page:
+  - List all logs newest first, paginated (50 per page)
+  - Filter by: admin, action type, date range
+  - Search by targetId or adminEmail
+  - Cannot delete logs (append-only for audit trail)
+  - Export as CSV option
+```
+
+---
+
+## SECTION 12: FIREBASE SECURITY RULES
+
+Implement these exact Firestore security rules:
+
+```javascript
+// firestore.rules
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function isMaintenanceMode() {
+      return get(/databases/$(database)/documents/settings/maintenance_mode).data.isActive == true;
+    }
+
+    // USERS
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isAuthenticated() && request.auth.uid == userId;
+      allow update: if isOwner(userId) && 
+        !request.resource.data.diff(resource.data).affectedKeys()
+          .hasAny(['role', 'credits', 'plan', 'isBanned']) // users cannot change these
+        || isAdmin(); // admins can change everything
+      allow delete: if isAdmin();
+    }
+
+    // PLANS (public read, admin write)
+    match /plans/{planId} {
+      allow read: if true; // public
+      allow write: if isAdmin();
+    }
+
+    // ORDERS
+    match /orders/{orderId} {
+      allow read: if isOwner(resource.data.userId) || isAdmin();
+      allow create: if isAuthenticated();
+      allow update, delete: if isAdmin();
+    }
+
+    // CREDITS LOG (users see own, admins see all)
+    match /credits_log/{logId} {
+      allow read: if isOwner(resource.data.userId) || isAdmin();
+      allow create: if isAuthenticated() && 
+        request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isAdmin();
+    }
+
+    // REFERRALS
+    match /referrals/{referralId} {
+      allow read: if isOwner(resource.data.referrerId) || 
+                     isOwner(resource.data.referredUserId) || 
+                     isAdmin();
+      allow create: if isAuthenticated();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // INSPIRATION PROMPTS (active ones public, admin manages all)
+    match /inspiration_prompts/{promptId} {
+      allow read: if resource.data.isActive == true || isAdmin();
+      allow write: if isAdmin();
+    }
+
+    // BANNERS (active public, admin manages)
+    match /banners/{bannerId} {
+      allow read: if resource.data.isActive == true || isAdmin();
+      allow write: if isAdmin();
+    }
+
+    // NOTIFICATIONS (users see own, admins see all)
+    match /notifications/{notificationId} {
+      allow read: if isOwner(resource.data.userId) || 
+                     resource.data.userId == 'all' || 
+                     isAdmin();
+      allow create: if isAdmin();
+      allow update: if isOwner(resource.data.userId); // user marks as read
+      allow delete: if isAdmin();
+    }
+
+    // BLOG POSTS (published ones public)
+    match /blog_posts/{postId} {
+      allow read: if resource.data.status == 'published' || isAdmin();
+      allow write: if isAdmin();
+    }
+
+    // PAGES (public read, admin write)
+    match /pages/{pageId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // SUPPORT TICKETS
+    match /support_tickets/{ticketId} {
+      allow read: if isOwner(resource.data.userId) || isAdmin();
+      allow create: if true; // anyone can submit support ticket (even logged out)
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // MODERATION
+    match /moderation/{itemId} {
+      allow read, write: if isAdmin();
+      allow create: if isAuthenticated(); // users can report content
+    }
+
+    // ADMIN LOGS (admin read-only, system write)
+    match /admin_logs/{logId} {
+      allow read: if isAdmin();
+      allow create: if isAdmin();
+      allow update, delete: if false; // NEVER allow modification of audit logs
+    }
+
+    // SETTINGS (public read for maintenance check, admin write)
+    match /settings/{settingKey} {
+      allow read: if true; // needed for maintenance mode check
+      allow write: if isAdmin();
+    }
+  }
+}
+```
+
+### Firebase Storage Rules:
+
+```javascript
+// storage.rules
+
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // Helper
+    function isAdmin() {
+      return request.auth != null && 
+        firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isImageFile() {
+      return request.resource.contentType.matches('image/.*');
+    }
+    
+    function isUnder10MB() {
+      return request.resource.size < 10 * 1024 * 1024;
+    }
+
+    // Inspiration prompt images — admin upload, public read
+    match /inspiration/{promptId}/{fileName} {
+      allow read: if true;
+      allow write: if isAdmin() && isImageFile() && isUnder10MB();
+    }
+
+    // Banner images — admin upload, public read
+    match /banners/{bannerId}/{fileName} {
+      allow read: if true;
+      allow write: if isAdmin() && isImageFile() && isUnder10MB();
+    }
+
+    // Blog cover images — admin upload, public read
+    match /blog/{postId}/{fileName} {
+      allow read: if true;
+      allow write: if isAdmin() && isImageFile() && isUnder10MB();
+    }
+
+    // Page section images — admin upload, public read
+    match /pages/{pageId}/{sectionKey}/{fileName} {
+      allow read: if true;
+      allow write: if isAdmin() && isImageFile() && isUnder10MB();
+    }
+
+    // User-generated images (AI outputs) — owner read, authenticated write
+    match /generated/{userId}/{fileName} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if request.auth != null && 
+                      request.auth.uid == userId && 
+                      isImageFile() && 
+                      isUnder10MB();
+    }
+
+    // User profile photos
+    match /profiles/{userId}/{fileName} {
+      allow read: if true;
+      allow write: if request.auth != null && 
+                      request.auth.uid == userId && 
+                      isImageFile() && 
+                      request.resource.size < 2 * 1024 * 1024; // 2MB max for avatars
+    }
+  }
+}
+```
+
+---
+
+## SECTION 13: COMPLETE SEO IMPLEMENTATION
+
+### 13.1 — Dynamic Meta Tags (every page)
+
+```jsx
+// Use react-helmet-async for all meta tag management
+
+// Default meta (applied globally):
+<HelmetProvider>
+  <Helmet>
+    <html lang="en" />
+    <meta charSet="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0F0F1A" />
+    <link rel="canonical" href="https://pixalera.com{currentPath}" />
+  </Helmet>
+</HelmetProvider>
+
+// Per-page meta — implement for every route:
+Homepage:
+  title: "Pixalera — AI Product Photography & Catalog Generator for Indian Sellers"
+  description: "Create professional ecommerce product images, catalogs, cinematic ads and marketing posts with AI. Made for Amazon, Flipkart, Meesho sellers. Try free."
+  og:image: /og-home.jpg (1200x630)
+  keywords: "AI product photography, ecommerce catalog generator, product image AI India, flipkart seller tools, amazon product photos, meesho catalog"
+
+Pricing:
+  title: "Pricing — Pixalera AI | Free & Paid Plans for Sellers"
+  description: "Choose your Pixalera plan. Free tier available. Starter from ₹499/mo. Pro unlimited. No credit card required to start."
+
+Blog post pages (dynamic):
+  title: "{post.title} | Pixalera Blog"
+  description: "{post.excerpt}"
+  og:image: {post.coverImageURL}
+  article:published_time: {post.publishedAt}
+  article:tag: {post.tags}
+```
+
+### 13.2 — Structured Data (JSON-LD)
+
+Add to homepage:
+```json
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Pixalera",
+  "applicationCategory": "BusinessApplication",
+  "operatingSystem": "Web",
+  "description": "AI-powered product photography and catalog generation platform for ecommerce sellers",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "INR",
+    "description": "Free tier available"
+  },
+  "aggregateRating": {
+    "@type": "AggregateRating",
+    "ratingValue": "4.8",
+    "ratingCount": "127"
+  }
+}
+```
+
+Add to blog posts:
+```json
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "{title}",
+  "image": "{coverImageURL}",
+  "datePublished": "{publishedAt}",
+  "dateModified": "{updatedAt}",
+  "author": {
+    "@type": "Organization",
+    "name": "Pixalera"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Pixalera",
+    "logo": { "@type": "ImageObject", "url": "https://pixalera.com/logo.png" }
+  },
+  "description": "{excerpt}"
+}
+```
+
+### 13.3 — Sitemap (auto-generated)
+
+Create `server/routes/sitemap.js`:
+```javascript
+// GET /sitemap.xml
+// Dynamically generates sitemap from Firestore data
+
+router.get('/sitemap.xml', async (req, res) => {
+  const staticPages = [
+    { url: '/', priority: '1.0', changefreq: 'weekly' },
+    { url: '/pricing', priority: '0.9', changefreq: 'monthly' },
+    { url: '/features', priority: '0.8', changefreq: 'monthly' },
+    { url: '/about', priority: '0.6', changefreq: 'monthly' },
+    { url: '/blog', priority: '0.8', changefreq: 'daily' },
+    { url: '/contact', priority: '0.5', changefreq: 'yearly' },
+    { url: '/privacy', priority: '0.3', changefreq: 'yearly' },
+    { url: '/terms', priority: '0.3', changefreq: 'yearly' },
+  ];
+
+  // Dynamic blog posts
+  const posts = await db.collection('blog_posts')
+    .where('status', '==', 'published').get();
+  
+  const blogUrls = posts.docs.map(doc => ({
+    url: `/blog/${doc.data().slug}`,
+    priority: '0.7',
+    changefreq: 'monthly',
+    lastmod: doc.data().publishedAt?.toDate().toISOString()
+  }));
+
+  const allUrls = [...staticPages, ...blogUrls];
+  
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${allUrls.map(page => `
+  <url>
+    <loc>https://pixalera.com${page.url}</loc>
+    <changefreq>${page.changefreq}</changefreq>
+    <priority>${page.priority}</priority>
+    ${page.lastmod ? `<lastmod>${page.lastmod}</lastmod>` : ''}
+  </url>`).join('')}
+</urlset>`;
+
+  res.header('Content-Type', 'application/xml');
+  res.send(xml);
+});
+```
+
+### 13.4 — robots.txt
+
+```
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /dashboard
+Disallow: /api/
+Disallow: /maintenance
+
+Sitemap: https://pixalera.com/sitemap.xml
+```
+
+### 13.5 — Performance (Core Web Vitals)
+
+```
+Implement these performance optimizations:
+
+1. Image lazy loading: all images below fold use loading="lazy"
+2. Image optimization: all Firebase Storage images use ?w=800&q=75 URL params
+3. Font loading: add <link rel="preconnect"> for Google Fonts if used
+4. Code splitting: React.lazy() for all admin panel routes
+5. Firestore caching: enable persistence for offline support
+   firebase.firestore().enablePersistence()
+6. API response caching: cache static data (plans, pages) for 5 minutes
+7. Compress all API responses: use compression middleware in Express
+8. Meta og:image: pre-generate and cache OG images — use a static fallback
+```
+
+---
+
+## SECTION 14: SECURITY AUDIT + BUG FIXES
+
+**14.1 — Authentication checks**
+```
+Every admin route (frontend + backend) must verify:
+  1. User is authenticated (Firebase Auth token valid)
+  2. User has role === 'admin' in Firestore
+  3. If either fails: redirect to /login (frontend) or 403 (API)
+
+Create useAdminAuth() hook:
+  - Checks auth state
+  - Verifies admin role from Firestore
+  - Shows loading state while checking
+  - Redirects non-admins to /dashboard
+```
+
+**14.2 — API security**
+```
+Every backend API endpoint must:
+  1. Verify Firebase ID token in Authorization header
+  2. Verify admin role for admin endpoints
+  3. Rate limit: 100 requests/minute per IP (use express-rate-limit)
+  4. Input validation: sanitize all user inputs (use express-validator)
+  5. Never return raw Firebase errors to client (sanitize error messages)
+  6. CORS: only allow your domain, not wildcard *
+```
+
+**14.3 — Environment variables check**
+```
+On server startup, verify these env vars exist. Crash with clear error if missing:
+  FIREBASE_PROJECT_ID
+  FIREBASE_PRIVATE_KEY
+  FIREBASE_CLIENT_EMAIL
+  NVIDIA_API_KEY
+  ADMIN_SECRET_TOKEN
+  NODE_ENV
+```
+
+---
+
+## SECTION 15: GENERAL RULES FOR ALL IMPLEMENTATIONS
+
+```
+1. NO MOCK DATA anywhere in the codebase after this implementation
+2. Every empty state must show a proper "no data yet" message — never fake data
+3. Every loading state must show a skeleton or spinner — never flash empty then data
+4. Every error state must show a user-friendly message — never raw error objects
+5. All Firestore reads must use proper unsubscribe on component unmount
+6. All forms must have proper validation before Firebase write
+7. All destructive actions (delete, ban) must have confirmation step
+8. All admin actions must write to /admin_logs
+9. Toast notifications for every user action (success + error)
+10. Responsive design: admin panel must work on tablet and desktop (min 768px)
+11. Dark mode: admin panel theme variables must be respected by ALL new components
+12. TypeScript types: add proper types for all Firestore document structures
+```
+
+---
+
+## WHAT NOT TO BUILD
+
+```
+- Do NOT build payment gateway integration (just record orders manually for now)
+- Do NOT build email sending (use Firestore + in-app notifications only)
+- Do NOT build real-time chat (support is ticket-based, not live chat)
+- Do NOT change the existing UI design language or color scheme
+- Do NOT add new npm packages without checking existing ones first
+```
+
+---
+
+## FINAL CHECKLIST
+
+After implementation, verify each of these works:
+
+```
+Admin Panel:
+□ Add user → appears in list
+□ Edit user credits → reflected in user's dashboard
+□ Delete user → gone from list, auth deleted
+□ Plans: add new plan → appears on pricing page
+□ Orders list shows real data
+□ Credit deduction when image generated
+□ Referrals search bar visible (not white on white)
+□ Referrals show real data
+□ AI tools section shows real usage numbers
+□ Inspiration: add prompt with image → shows on user side
+□ Banner upload → appears on website
+□ Send notification → user sees it in nav bar
+□ Content manager: change page image → updated on website
+□ Blog: create post → appears on /blog
+□ Support: submit form → appears in admin panel
+□ Admin reply → user gets notification
+□ Maintenance toggle → non-admins see maintenance page
+□ Maintenance page has all animations running
+□ Admin logs: every action recorded
+□ Moderation: approve/reject/ban working
+
+Website:
+□ All mock data removed from every page
+□ Blog page shows only real posts
+□ Inspiration hub shows only admin-added prompts
+□ Notification bell shows real unread count
+□ Banner section shows admin-uploaded banners
+□ Contact form saves to Firestore support_tickets
+
+Firebase:
+□ Firestore rules deployed
+□ Storage rules deployed
+□ Non-admin cannot write to admin-only collections
+□ Unauthenticated user cannot read private data
+
+SEO:
+□ Each page has unique title and meta description
+□ /sitemap.xml returns valid XML with all pages
+□ /robots.txt blocks admin routes
+□ Structured data present on homepage and blog posts
+□ All images have alt text
+□ Canonical URLs set on all pages
+```
+
+# ═══════════════════════════════════════════════════════════
+# END OF PROMPT
+# ═══════════════════════════════════════════════════════════
