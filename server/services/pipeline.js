@@ -2,8 +2,11 @@ import axios from "axios";
 
 const REPLICATE_API = "https://api.replicate.com/v1";
 const HF_API = "https://api-inference.huggingface.co/models";
+const NVIDIA_API = "https://integrate.api.nvidia.com/v1";
+
 const token = () => process.env.REPLICATE_API_TOKEN;
 const hfToken = () => process.env.HUGGINGFACE_API_TOKEN;
+const nvidiaToken = () => process.env.NVIDIA_API_KEY;
 
 const ASPECT_RATIO_MAP = {
   "1:1": "1:1",
@@ -11,6 +14,15 @@ const ASPECT_RATIO_MAP = {
   "16:9": "16:9",
   "9:16": "9:16",
   "3:2": "3:2",
+};
+
+// NVIDIA aspect ratio to dimensions mapping
+const NVIDIA_DIMENSIONS = {
+  "1:1": { width: 1024, height: 1024 },
+  "4:5": { width: 896, height: 1120 },
+  "16:9": { width: 1344, height: 768 },
+  "9:16": { width: 768, height: 1344 },
+  "3:2": { width: 1216, height: 832 },
 };
 
 async function sleep(ms) {
@@ -100,10 +112,90 @@ async function generateImageHF(prompt, model = "stabilityai/stable-diffusion-xl-
   }
 }
 
-export async function generateImages(prompt, scenePrompt, count = 3, aspectRatio = "1:1") {
+// NVIDIA NIM API Image Generation - supports multiple models
+async function generateImagesNvidia(prompt, count = 3, aspectRatio = "1:1", model = "stabilityai/stable-diffusion-3-medium") {
+  if (!nvidiaToken()) return null;
+  
+  const dimensions = NVIDIA_DIMENSIONS[aspectRatio] || NVIDIA_DIMENSIONS["1:1"];
+  
+  // NVIDIA NIM supported image models
+  const NVIDIA_MODELS = {
+    "sd3": "stabilityai/stable-diffusion-3-medium",
+    "sdxl": "stabilityai/sdxl-turbo", 
+    "flux": "black-forest-labs/flux-schnell",
+    "playground": "playgroundai/playground-v2.5-1024px-aesthetic",
+  };
+  
+  const modelId = NVIDIA_MODELS[model] || model;
+  
+  return await withRetry(async () => {
+    const imagePromises = Array.from({ length: Math.min(count, 4) }, async () => {
+      try {
+        const res = await axios.post(
+          `${NVIDIA_API}/images/generations`,
+          {
+            model: modelId,
+            prompt: prompt,
+            n: 1,
+            size: `${dimensions.width}x${dimensions.height}`,
+            response_format: "b64_json",
+          },
+          {
+            headers: {
+              "Authorization": `Bearer ${nvidiaToken()}`,
+              "Content-Type": "application/json",
+              "Accept": "application/json",
+            },
+            timeout: 120000,
+          }
+        );
+        
+        if (res.data?.data?.[0]?.b64_json) {
+          return `data:image/png;base64,${res.data.data[0].b64_json}`;
+        }
+        if (res.data?.data?.[0]?.url) {
+          return res.data.data[0].url;
+        }
+        return null;
+      } catch (err) {
+        console.error("NVIDIA single image generation failed:", err.message);
+        return null;
+      }
+    });
+    
+    const results = await Promise.all(imagePromises);
+    const validResults = results.filter(Boolean);
+    
+    if (validResults.length > 0) {
+      console.log(`NVIDIA NIM generated ${validResults.length} image(s)`);
+      return validResults;
+    }
+    return null;
+  }, 2, 2000);
+}
+
+export async function generateImages(prompt, scenePrompt, count = 3, aspectRatio = "1:1", preferredProvider = null) {
   const fullPrompt = `${prompt}${scenePrompt ? `, ${scenePrompt}` : ""}, photorealistic, high quality, commercial photography`;
 
-  if (token()) {
+  // Priority: NVIDIA (if available) -> Replicate -> HuggingFace
+  // User can override with preferredProvider
+  
+  // Try NVIDIA NIM first (if API key exists)
+  if (nvidiaToken() && (preferredProvider === "nvidia" || preferredProvider === null)) {
+    try {
+      console.log("Trying NVIDIA NIM API...");
+      const urls = await generateImagesNvidia(fullPrompt, count, aspectRatio);
+      if (urls && urls.length > 0) {
+        console.log(`NVIDIA NIM generated ${urls.length} image(s)`);
+        return urls;
+      }
+    } catch (err) {
+      console.error("NVIDIA NIM pipeline failed:", err.message);
+    }
+  }
+
+  // Try Replicate
+  if (token() && (preferredProvider === "replicate" || preferredProvider === null)) {
     try {
       const urls = await generateImagesReplicate(prompt, scenePrompt, count, aspectRatio);
       if (urls && urls.length > 0) {
@@ -115,6 +207,7 @@ export async function generateImages(prompt, scenePrompt, count = 3, aspectRatio
     }
   }
 
+  // Fallback to HuggingFace
   try {
     console.log("Trying HuggingFace inference API...");
     const imagePromises = Array.from({ length: Math.min(count, 3) }, (_, i) =>
@@ -131,6 +224,15 @@ export async function generateImages(prompt, scenePrompt, count = 3, aspectRatio
   }
 
   return null;
+}
+
+// Helper to check which providers are available
+export function getAvailableProviders() {
+  return {
+    nvidia: !!nvidiaToken(),
+    replicate: !!token(),
+    huggingface: !!hfToken(),
+  };
 }
 
 export async function removeBackground(imageUrl) {

@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { FieldValue } from "firebase-admin/firestore";
 import OpenAI from "openai";
-import { generateImages, removeBackground, analyzeProduct, buildCatalogShotPrompts } from "../services/pipeline.js";
+import { generateImages, removeBackground, analyzeProduct, buildCatalogShotPrompts, getAvailableProviders } from "../services/pipeline.js";
 import { verifyFirebaseToken, checkCreditAndSuspend, refundCredits } from "../middleware/auth.js";
 import { getAdminDb } from "../config/firebase.js";
 import { generateChatReply, augmentPromptWithGemini } from "../services/gemini.js";
@@ -754,10 +754,29 @@ router.post("/chat", async (req, res) => {
 router.get("/health", (_req, res) => {
   res.json({
     status: "ok",
+    hasNvidiaApi: !!process.env.NVIDIA_API_KEY,
     hasReplicateToken: !!process.env.REPLICATE_API_TOKEN,
     hasReplitAI: !!(process.env.AI_INTEGRATIONS_OPENAI_API_KEY && process.env.AI_INTEGRATIONS_OPENAI_BASE_URL),
     hasGemini: !!process.env.GEMINI_API_KEY,
+    imageProvider: process.env.NVIDIA_API_KEY ? "nvidia" : (process.env.REPLICATE_API_TOKEN ? "replicate" : "huggingface"),
     timestamp: new Date().toISOString(),
+  });
+});
+
+// Get available image generation providers
+router.get("/providers", (_req, res) => {
+  const providers = getAvailableProviders();
+  const priorityOrder = [];
+  
+  if (providers.nvidia) priorityOrder.push({ id: "nvidia", name: "NVIDIA NIM", priority: 1, status: "active" });
+  if (providers.replicate) priorityOrder.push({ id: "replicate", name: "Replicate (FLUX)", priority: 2, status: "active" });
+  if (providers.huggingface) priorityOrder.push({ id: "huggingface", name: "HuggingFace", priority: 3, status: "active" });
+  
+  res.json({
+    providers,
+    priorityOrder,
+    primaryProvider: priorityOrder[0]?.id || "none",
+    fallbackChain: priorityOrder.map(p => p.id),
   });
 });
 

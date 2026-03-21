@@ -22,6 +22,7 @@ interface Settings {
   defaultPlan: string;
   defaultCredits: number;
   replicateApiKey: string;
+  nvidiaApiKey: string;
   maxCreditsPerUser: number;
   aiGenerationEnabled: boolean;
   emailNotifications: boolean;
@@ -36,6 +37,7 @@ const DEFAULT_SETTINGS: Settings = {
   defaultPlan: "free",
   defaultCredits: 3,
   replicateApiKey: "",
+  nvidiaApiKey: "",
   maxCreditsPerUser: 100,
   aiGenerationEnabled: true,
   emailNotifications: true,
@@ -190,12 +192,25 @@ export default function AdminSettingsPage() {
           <Text style={{ color: "#fff", fontWeight: 600, fontSize: 14 }}>API Configuration</Text>
         </div>
         <Form layout="vertical" onFinish={handleSave} initialValues={settings}>
-          <Form.Item name="replicateApiKey" label={<span style={{ color: "rgba(255,255,255,0.55)", fontSize: 12 }}>Replicate API Key</span>}>
-            <Input.Password style={{ background: "#2a2a2a", border: `1px solid #383838` }} placeholder="r8_..." />
-          </Form.Item>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+            <Form.Item name="replicateApiKey" label={<span style={{ color: "rgba(255,255,255,0.55)", fontSize: 12 }}>Replicate API Key</span>} style={{ marginBottom: 12 }}>
+              <Input.Password style={{ background: "#2a2a2a", border: `1px solid #383838` }} placeholder="r8_..." />
+            </Form.Item>
+            <Form.Item name="nvidiaApiKey" label={<span style={{ color: "rgba(255,255,255,0.55)", fontSize: 12 }}>NVIDIA NIM API Key</span>} style={{ marginBottom: 12 }}>
+              <Input.Password style={{ background: "#2a2a2a", border: `1px solid #383838` }} placeholder="nvapi-..." />
+            </Form.Item>
+          </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: -4, marginBottom: 14 }}>
             <ExclamationTriangleIcon style={{ width: 13, height: 13, color: "#f59e0b" }} />
-            <Text style={{ fontSize: 11, color: "rgba(245,158,11,0.7)" }}>Store API keys securely. Changes take effect immediately for all generation requests.</Text>
+            <Text style={{ fontSize: 11, color: "rgba(245,158,11,0.7)" }}>Store API keys securely. NVIDIA NIM is prioritized for image generation when available.</Text>
+          </div>
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 14 }}>
+            <Tag style={{ background: settings.nvidiaApiKey ? "rgba(137,233,0,0.12)" : "rgba(255,255,255,0.05)", border: `1px solid ${settings.nvidiaApiKey ? "rgba(137,233,0,0.3)" : "rgba(255,255,255,0.1)"}`, color: settings.nvidiaApiKey ? "#89E900" : "rgba(255,255,255,0.4)", borderRadius: 6, fontSize: 11, fontWeight: 500 }}>
+              NVIDIA NIM: {settings.nvidiaApiKey ? "Connected" : "Not Set"}
+            </Tag>
+            <Tag style={{ background: settings.replicateApiKey ? "rgba(137,233,0,0.12)" : "rgba(255,255,255,0.05)", border: `1px solid ${settings.replicateApiKey ? "rgba(137,233,0,0.3)" : "rgba(255,255,255,0.1)"}`, color: settings.replicateApiKey ? "#89E900" : "rgba(255,255,255,0.4)", borderRadius: 6, fontSize: 11, fontWeight: 500 }}>
+              Replicate: {settings.replicateApiKey ? "Connected" : "Not Set"}
+            </Tag>
           </div>
           <Button htmlType="submit" loading={saving} style={{ background: "rgba(245,158,11,0.12)", border: `1px solid rgba(245,158,11,0.25)`, color: "#f59e0b", fontWeight: 600, borderRadius: 8, height: 34 }}>
             Update API Keys
