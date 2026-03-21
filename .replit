@@ -48,7 +48,7 @@ outputType = "console"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "node server/index.js"
+args = "npm run server"
 waitForPort = 3001
 
 [[ports]]
