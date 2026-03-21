@@ -1,0 +1,839 @@
+# Pixalera — Ads Creation Tool
+## Complete AI Model Training Document + Prompts v1.0
+
+---
+
+## WHAT THIS TOOL DOES (vs other tools)
+
+| | Cinematic Ads | Ads Creation |
+|---|---|---|
+| Output | 1 cinematic image/frame | Full campaign pack |
+| Focus | Visual storytelling | Marketing conversion |
+| Contains | Image only | Image + copy + hashtags + CTA |
+| Used for | Brand building | Direct sales, promotions, daily posts |
+| Thinks like | Film director | Performance marketer |
+| Benchmark | Nike, Dior campaign | Mamaearth, boAt, Nykaa Facebook ads |
+
+This tool thinks like a performance marketing expert. It analyzes the product, understands the audience, writes persuasive copy in 3 tones, generates a platform-ready visual creative, and packages everything as a ready-to-post campaign.
+
+---
+
+## PART 1: Marketing Intelligence Analysis
+
+### What to extract from the uploaded image
+
+This is deeper than just product analysis — it extracts marketing signals.
+
+```
+MARKETING ANALYSIS SCHEMA:
+─────────────────────────────────────────────────────────
+product_name:            [specific]
+product_category:        [detailed subcategory]
+price_segment:           [Budget under ₹500 / Mid ₹500-2000 / Premium ₹2000-10000 / Luxury 10000+]
+                         [Infer from product appearance, packaging, brand if visible]
+primary_usp:             [the ONE thing that makes this product special]
+                         [e.g.: "ceramic mug → keeps coffee hot 3x longer"]
+secondary_usps:          [2-3 additional benefits]
+target_audience:         [specific: "working women 25-35 who value aesthetics"]
+pain_point_solved:       [what problem does this product solve?]
+                         [e.g.: "mug → ugly office cups, disposable cups waste"]
+desire_triggered:        [what aspiration does it tap into?]
+                         [e.g.: "mug → aesthetic workspace, self-care morning routine"]
+seasonal_relevance:      [check if product fits Diwali/Holi/Eid/Valentine/Monsoon etc.]
+gifting_potential:       [High / Medium / Low]
+impulse_buy_score:       [High / Medium / Low — based on price + desire]
+best_hook_style:         [Problem-solution / Aspirational / Social proof / Offer-led / Curiosity]
+platform_fit:            [rank Instagram/Facebook/YouTube/WhatsApp 1-4 for this product]
+```
+
+### Confidence display to user
+
+After analysis, show marketing brief cards animating in:
+
+```
+Card 1: "Product: [name]"
+Card 2: "Target audience: [specific audience]"  
+Card 3: "Core USP: [USP]"
+Card 4: "Best hook: [hook style]"
+Card 5: "Best platform: [top platform]"
+```
+
+This builds user confidence — they see the AI actually understands their product.
+
+---
+
+## PART 2: Campaign Configuration
+
+### Platform selection
+
+Show all platforms. Based on platform_fit score, highlight top 2 with a "Recommended" badge.
+
+```
+PLATFORMS:
+─────────────────────────────────────────────────────────
+Instagram    → Feed post (1:1, 4:5) + Story (9:16) + Reel cover
+Facebook     → Feed post (1:1) + Ad creative (1.91:1) + Cover (16:9)
+YouTube      → Thumbnail (16:9) + Community post (1:1)
+WhatsApp     → Catalog image (1:1) + Status (9:16)
+Twitter/X    → Post image (16:9) + Header (3:1)
+Pinterest    → Pin (2:3 / 1:1)
+
+FREE tier:    1 platform, 1 format only
+STARTER tier: 3 platforms simultaneously
+PRO tier:     All platforms + all formats at once
+```
+
+### Campaign goal
+
+```
+Awareness    → Goal: make people know this product exists
+               Tone: informational, brand-building, not pushy
+               CTA: "Discover now" / "Learn more" / "See the collection"
+
+Engagement   → Goal: likes, comments, shares, saves
+               Tone: relatable, fun, conversational
+               CTA: "Tag someone who needs this" / "Save for later" / "Comment below"
+
+Sales/Conversion → Goal: direct purchase clicks
+               Tone: persuasive, benefit-led, urgency
+               CTA: "Shop now" / "Order today" / "Get yours" / "Limited stock"
+
+Festival/Offer → Goal: time-limited promotion
+               Tone: urgent, celebratory, offer-forward
+               CTA: "Diwali offer ends tonight" / "50% off — today only"
+```
+
+### Ad tone
+
+```
+Emotional    → Story-driven, connects to feelings, builds brand love
+Informational → Feature-focused, educates audience, rational appeal
+Humorous     → Witty, relatable, shareable, Indian humor
+Urgent       → FOMO-driven, time pressure, scarcity signals
+Premium      → Aspirational, luxury language, exclusivity signals
+Relatable    → Everyday Indian life, slice-of-life, "this is me"
+```
+
+---
+
+## PART 3: Visual Ad Creative Generation
+
+### What the visual creative contains
+
+Unlike Product Photography or Cinematic Ads, the Ads Creation visual has:
+1. A strong background/product image (photorealistic)
+2. A headline text overlay
+3. A brand/product name zone
+4. A CTA button area (bottom zone)
+5. Proper safe zones for platform UI elements (story handles, captions etc.)
+
+### Layout zones per format
+
+```
+INSTAGRAM FEED (1:1 or 4:5):
+  Top 15%:      Logo / brand name zone
+  Middle 60%:   Product + headline
+  Bottom 25%:   CTA button area + safe zone
+
+INSTAGRAM STORY / REEL COVER (9:16):
+  Top 20%:      Safe zone (avoid — Instagram UI overlaps here)
+  Top 20-40%:   Headline text
+  Middle 40%:   Product hero
+  Bottom 20%:   CTA + handle (@username area)
+  Bottom 10%:   Safe zone (swipe up area)
+
+FACEBOOK AD (1.91:1 horizontal):
+  Left 50%:     Product visual
+  Right 50%:    Headline + body text + CTA button area
+  OR
+  Full width:   Product background, headline centered overlay
+
+YOUTUBE THUMBNAIL (16:9):
+  Left 60%:     Product / emotional visual
+  Right 40%:    Bold headline text (large, readable at small size)
+  OR
+  Full bleed:   Product + text overlay
+```
+
+### Visual creative prompt structure
+
+The AI generates the BASE image. Text overlays, CTAs, and button graphics are added by the frontend UI layer. The prompt generates a clean compositional image with proper zones.
+
+#### Prompt — Instagram Feed Ad Creative (1:1)
+```
+Professional social media advertisement image for [PRODUCT],
+[COLOR] [MATERIAL] product as hero,
+background: [BACKGROUND based on campaign goal + tone:
+  Sales → clean white or bold brand color
+  Emotional → lifestyle scene, warm tones
+  Premium → dark luxury or gradient
+  Festival → festive colors matching occasion],
+composition: product centered slightly above middle, lower 25% clear for CTA text,
+lighting: [matching tone — bright for sales/cheerful, dramatic for premium],
+visual hierarchy: product is undisputed hero, everything else supports,
+color palette matches [BRAND_TONE: energetic / premium / warm / fresh],
+leave clean bottom zone (25% height) for text overlay,
+leave top-left corner for potential logo placement,
+photorealistic, commercial ad quality,
+[QUALITY_SUFFIX]
+```
+
+#### Prompt — Instagram Story / Reel Cover (9:16 vertical)
+```
+Vertical 9:16 social media advertisement image for [PRODUCT],
+[COLOR] [MATERIAL] product positioned in center-lower section of frame,
+large dramatic visual impact in upper portion: [VISUAL_ELEMENT based on tone:
+  Lifestyle: aspirational scene extending top-to-bottom
+  Premium: dramatic dark bg with product as spotlight
+  Festive: bold color field with product as center],
+product occupies center 40% of frame, sharp and prominent,
+top 30% area: [VISUAL_CONTENT: atmospheric sky / bold color / pattern / scene continuation],
+bottom 20%: clean minimal zone for CTA (keep this area simple),
+vertical composition designed for mobile-first viewing,
+photorealistic, Instagram story ad quality,
+[QUALITY_SUFFIX]
+```
+
+#### Prompt — Facebook Ad (1.91:1 horizontal)
+```
+Horizontal Facebook advertisement image for [PRODUCT],
+widescreen 1.91:1 composition,
+[LAYOUT: 
+  Option A: product on left 55%, white/clean right 45% for text copy overlay
+  Option B: full-bleed product/scene, headline text overlay space in clean zone],
+[PRODUCT] clearly visible, dominant, correctly colored,
+background: [BACKGROUND matching campaign goal],
+color grade: [MATCHING_TONE],
+designed for Facebook feed — must be eye-catching at small thumbnail size,
+text overlay zone clearly identifiable in composition,
+photorealistic, Facebook ad quality,
+[QUALITY_SUFFIX]
+```
+
+#### Prompt — YouTube Thumbnail (16:9)
+```
+YouTube thumbnail advertisement image for [PRODUCT],
+16:9 widescreen composition,
+product on left or center, dramatic and eye-catching,
+background: [BOLD_BACKGROUND: high contrast color / dramatic scene / dark luxury],
+lighting: very dramatic — high contrast, strong highlights, 
+product must stand out even at 120px thumbnail size,
+right side: 35-40% clear zone for bold text overlay (leave this area clean and simple),
+overall feel: makes you want to click it,
+bold, punchy, high contrast composition,
+[QUALITY_SUFFIX]
+```
+
+---
+
+## PART 4: Ad Copy Generation — The 3 Versions
+
+Every Ads Creation output generates 3 different copy versions simultaneously.
+User picks the one they like, or mixes elements from different versions.
+
+---
+
+### VERSION 1: Emotional / Story-Driven Copy
+
+**Philosophy:** Connect to feelings first. Product second. Make the audience feel seen.
+
+**Structure:**
+```
+Line 1 (Hook):     Relatable situation or feeling — no product mention yet
+Line 2-3 (Build):  Expand the feeling or story — 1-2 sentences
+Line 4 (Product):  Introduce product as the solution/upgrade
+Line 5 (CTA):      Warm, inviting call to action
+Hashtags:          Mix of emotion + product + lifestyle tags
+```
+
+**Formula template:**
+```
+[RELATABLE_HOOK about target audience's life/feeling]
+
+[1-2 sentences building on that feeling or painting a picture]
+
+[PRODUCT_NAME] — [brief what it is] that [what it makes you feel/achieve].
+
+[WARM_CTA]. Link in bio 🔗
+
+[15-20 hashtags]
+```
+
+**Indian market hooks by category:**
+```
+Beauty/Skincare:   "Har subah ek naya confidence"
+                   "Because you deserve that glow every single day"
+                   "Your skin, your rules"
+
+Home/Kitchen:      "Ghar ko thoda aur apna banana chahte ho?"
+                   "The little things that make home feel like home"
+                   "When your morning feels like a ritual, not a routine"
+
+Fashion/Apparel:   "Wear what makes you feel like you"
+                   "Style that speaks before you do"
+                   "Outfit check: ✓"
+
+Food/Beverage:     "Woh feeling jab pehla sip perfect hota hai"
+                   "Made for those who take their [coffee/chai/food] seriously"
+
+Electronics:       "Less time struggling. More time creating."
+                   "Your new productivity partner"
+
+Gifting:           "Kyunki kuch cheezein sirf ek SMS se express nahi hoti"
+                   "The gift they didn't know they needed"
+```
+
+---
+
+### VERSION 2: Feature / Benefit-Led Copy
+
+**Philosophy:** Rational appeal. Clear benefits. Specific features. Why this product is worth buying.
+
+**Structure:**
+```
+Line 1 (Hook):     Bold benefit statement — specific, not vague
+Line 2-3 (Build):  2-3 specific features explained as benefits
+Line 4 (Social proof): One credibility signal if possible
+Line 5 (CTA):      Action-oriented, clear
+Hashtags:          Product-specific, category, brand tags
+```
+
+**Formula template:**
+```
+[BOLD_BENEFIT_STATEMENT] ✨
+
+[FEATURE 1] → [what it means for user]
+[FEATURE 2] → [what it means for user]  
+[FEATURE 3] → [what it means for user]
+
+[SOCIAL_PROOF_LINE: "Loved by X customers" / "As seen on" / "Premium quality"]
+
+[CLEAR_CTA]. Shop now → link in bio
+
+[15-20 hashtags]
+```
+
+**Benefit translation examples:**
+```
+"Ceramic material"           → "Keeps your drink at perfect temperature longer"
+"Dishwasher safe"            → "Zero effort cleanup — toss it in and forget it"
+"350ml capacity"             → "Perfect size for your full morning coffee ritual"
+"Matte finish"               → "Fingerprint-free, always looks brand new"
+"BPA free"                   → "Safe for you, safe for your family"
+"Handcrafted"                → "Every piece is unique — like you"
+"Lightweight design"         → "Carry it everywhere without the weight"
+"Premium packaging"          → "Gift-ready right out of the box"
+```
+
+---
+
+### VERSION 3: Urgency / Offer-Led Copy
+
+**Philosophy:** Create FOMO. Time pressure. Scarcity. Irresistible offer framing.
+
+**Structure:**
+```
+Line 1 (Urgency hook): Time-limited or scarcity signal
+Line 2 (Offer):        The deal, clearly stated
+Line 3 (Value):        Why this is worth acting on NOW
+Line 4 (CTA):          Immediate action command
+Line 5 (Timer):        "Offer ends [date/time]" if applicable
+Hashtags:              Sale/offer tags + product tags
+```
+
+**Formula template:**
+```
+[URGENCY_SIGNAL] ⚡
+
+[OFFER_STATEMENT — clear, specific, no ambiguity]
+
+[PRODUCT] — [brief description] at [price or % off].
+[VALUE_JUSTIFICATION: "Worth every rupee" / "Our bestseller" / "Only X left"]
+
+[STRONG_CTA]: Link in bio 👆
+
+Offer valid till [DATE/TIME] only.
+
+[hashtags]
+```
+
+**Urgency triggers for Indian market:**
+```
+Festival:        "Diwali gift sorted! ✨ Special Diwali price — today only"
+Scarcity:        "Only 47 pieces left in stock. Once gone, gone."
+Flash sale:      "⚡ Flash sale — next 4 hours only"
+Weekend:         "Weekend special — extra 10% off, only till Sunday midnight"
+New launch:      "Just launched! First 100 orders get free shipping"
+Monsoon:         "Monsoon refresh: everything under ₹999 this week"
+Pay day:         "Pay day sale 🎉 — your cart has been waiting for you"
+Year end:        "Last chance — year-end clearance, up to 50% off"
+```
+
+---
+
+## PART 5: Hashtag Generation System
+
+### 3-tier hashtag strategy
+
+Every output gets 15-20 hashtags organized in this structure:
+
+**Tier 1 — Broad reach (5-6 tags):** High volume, general discovery
+**Tier 2 — Mid-range (6-8 tags):** Category + niche specific, qualified audience
+**Tier 3 — Branded/Long-tail (3-4 tags):** Very specific, high intent, low competition
+
+### Hashtag formulas by product category
+
+```
+HOME & KITCHEN:
+Tier 1: #homedecor #kitchendecor #homeaesthetic #interiordesign #homestyle
+Tier 2: #[specific item: ceramicmug / woodenboard / etc.] #kitchenessentials
+        #homeinspo #cozykitchen #indianhome #homelover
+Tier 3: #[product specific] #[color]homedecor #[material]craft
+        #handmadehome #giftideas
+
+BEAUTY/SKINCARE:
+Tier 1: #skincare #beauty #selfcare #glowup #beautyproducts
+Tier 2: #skincareenthusiast #skincareroutine #[skin type: dryskin/oilyskin]
+        #indianskincare #naturalskincare #skintok
+Tier 3: #[product specific] #[key ingredient] #[skin concern: acne/glow/moisturizer]
+
+FASHION/APPAREL:
+Tier 1: #fashion #style #ootd #outfit #clothes
+Tier 2: #indianfashion #indianstyle #[garment: kurta/tshirt/dress]
+        #streetstyle #casualwear #fashionista
+Tier 3: #[color]outfit #[style]fashion #[occasion]look
+
+ELECTRONICS/GADGETS:
+Tier 1: #tech #gadgets #technology #techie #electronics
+Tier 2: #[specific product type] #techreview #indiatech #gadgetlover
+        #techunboxing #newgadget
+Tier 3: #[brand if applicable] #[specific feature] #techlife
+
+FOOD/BEVERAGE:
+Tier 1: #food #foodie #foodphotography #foodlover #yummy
+Tier 2: #[specific food] #homemade #indianfood #foodstagram
+        #instafood #foodblogger
+Tier 3: #[flavor/ingredient specific] #[occasion: breakfast/snack/festive]
+
+GIFTING (any product):
+Always add: #giftideas #giftsforhim #giftsforher #perfectgift
+            #birthdaygift #anniversarygift #festivegifts #hamper
+```
+
+---
+
+## PART 6: Platform-Specific Complete Ad Packages
+
+### Instagram Complete Package
+
+```
+VISUAL:     1080×1080 (feed) + 1080×1920 (story) generated
+CAPTION:    Full caption with chosen copy version (max 2200 chars)
+HASHTAGS:   15-20 (placed at end of caption or first comment)
+STORY TEXT: Short punchy 2-liner (max 60 chars per line)
+ALT TEXT:   1 sentence description for accessibility + SEO
+CTA OPTIONS: "Shop now", "Link in bio", "DM to order", "Save for later"
+```
+
+### Facebook Complete Package
+
+```
+VISUAL:     1200×1200 (post) + 1640×924 (cover/ad) generated
+PRIMARY TEXT: 1-3 sentences (short — Facebook algorithm prefers short)
+HEADLINE:   25 characters max (for Facebook Ads Manager)
+DESCRIPTION: 30 characters max (appears below headline in ads)
+CTA BUTTON: "Shop Now" / "Learn More" / "Contact Us" / "Get Offer"
+LINK COPY:  Short URL-style text for posts with links
+```
+
+### YouTube Complete Package
+
+```
+VISUAL:     1280×720 thumbnail generated
+TITLE SUGGESTIONS: 3 video title options (60 chars max, keyword-rich)
+DESCRIPTION:  First 125 chars (shown before "more") — hook + keyword
+TAGS:         10 relevant YouTube tags
+END SCREEN CTA: "Subscribe + Shop link" copy suggestion
+```
+
+### WhatsApp Complete Package
+
+```
+VISUAL:     800×800 catalog image generated
+CATALOG NAME: Product name (max 100 chars)
+DESCRIPTION: WhatsApp catalog description (max 500 chars — concise, direct)
+PRICE:       Placeholder [ADD PRICE] (user fills in)
+STATUS TEXT: 2-line status update version (casual, conversational)
+BROADCAST MSG: Ready-to-send broadcast message template
+```
+
+### Twitter/X Complete Package
+
+```
+VISUAL:     1600×900 generated
+TWEET COPY: Under 280 characters (punchy, with 2-3 hashtags max)
+THREAD START: First tweet + thread continuation if needed
+TWITTER HASHTAGS: Max 2-3 (Twitter penalizes hashtag stuffing)
+```
+
+---
+
+## PART 7: Festival & Seasonal Ad Templates
+
+### Auto-detect seasonal relevance
+
+When product is uploaded, check current date context and flag if relevant:
+
+```
+FESTIVAL CALENDAR:
+January:    Makar Sankranti / Republic Day / Pongal
+February:   Valentine's Day / Budget season
+March:      Holi
+April:      Ram Navami / Baisakhi / New Year (regional)
+May:        Mother's Day
+June-July:  Monsoon season relevance
+August:     Independence Day / Raksha Bandhan / Onam
+September:  Navratri / Durga Puja / Teachers Day
+October:    Diwali (starts building from 2 weeks before)
+November:   Diwali / Children's Day / Sale season
+December:   Christmas / New Year / End of year sales
+```
+
+### Festival-specific copy overrides
+
+When festival relevance detected, offer "Festival version" as 4th copy option:
+
+#### Diwali Template
+```
+Visual: Product with warm gold-orange festive color palette, diyas/lights bokeh background
+Headline: "This Diwali, gift what they'll actually use ✨"
+
+Copy:
+Diwali ke gifts mein kuch alag try karo is baar 🪔
+
+[PRODUCT] — [brief description]. Beautifully packaged, thoughtfully chosen.
+
+Kyunki kuch gifts sirf shelves par nahi, zindagi mein jagah banate hain. ✨
+
+Order karo abhi — Diwali delivery guaranteed 📦
+Link in bio
+
+#Diwali2025 #DiwaliGifts #DiwaliShopping #FestiveGifts #GiftIdeas
+#Diwali #HappyDiwali #FestiveSeason #GiftHamper #[product_hashtag]
+```
+
+#### Holi Template
+```
+Visual: Product with vibrant splash of color, energetic composition
+Headline: "Holi ke rang + [product] = perfect combo 🌈"
+
+Copy:
+Holi hai! 🎨 Aur is Holi kuch aur bhi colorful ho sakta hai...
+
+[PRODUCT] — woh [benefit] jo aapki celebrations aur bhi khas banaye.
+
+Holi special offer: [OFFER if applicable]
+
+Shop karo, celebrate karo, dil khush karo! 🥳
+Link in bio
+
+#Holi #HoliFestival #HoliCelebration #HoliSpecial #[product_hashtag]
+```
+
+#### Valentine's Day Template
+```
+Visual: Product in romantic setting, pink/red/gold palette
+Headline: "Pyaar express karo, [product] ke saath 💝"
+
+Copy:
+Valentine's Day pe ek aisa gift do jo real mai feel ho 💝
+
+[PRODUCT] — [brief description].
+Because the best gifts aren't the most expensive — they're the most thoughtful.
+
+Order today, deliver love on 14th ❤️
+Link in bio
+
+#ValentinesDay #GiftsForHer #GiftsForHim #Valentine #LoveGifts
+#14February #ValentinesGift #[product_hashtag]
+```
+
+---
+
+## PART 8: A/B Testing Feature
+
+### What A/B testing generates
+
+When user clicks "Generate A/B Variant":
+
+```
+VARIANT A (already shown):  Original creative + Copy version chosen by user
+VARIANT B (new):            Different creative angle + Different copy hook
+
+B variant changes:
+  - Different background/composition for the visual
+  - Different copy hook (if A was emotional, B is benefit-led)
+  - Different CTA phrasing
+  - Different first line (headline)
+
+Show both side-by-side with labels "A" and "B"
+User can download both and test which performs better
+```
+
+### A/B guidance text shown to user
+
+> "Version A aur B ko alag-alag post karo aur dekho kaunsa zyada engage karta hai. Generally: emotional copy women-focused products pe better karta hai, benefit-led copy electronics pe."
+
+---
+
+## PART 9: Animation States
+
+### Full animation sequence
+
+```
+STEP 1 — Upload received:
+  → Quick product scan animation (same as other tools, 1.5s)
+  
+STEP 2 — Marketing brief building (unique to this tool):
+  → "Marketing brief ban raha hai..." text
+  → 5 brief cards animate in one by one (product, audience, USP, hook, platform)
+  → Each card has a small icon: product tag, person, star, hook, platform logo
+  → Duration: ~3 seconds total for all 5 cards
+
+STEP 3 — Campaign generation (3 parallel streams):
+  → 3 progress bars appear simultaneously
+  → Bar 1: "Ad creative" — left to right fill
+  → Bar 2: "Copy writing" — left to right fill (slightly offset timing)
+  → Bar 3: "Hashtags + extras" — left to right fill (slightly offset)
+  → Text cycling below: "Analyzing competitors..." → "Writing 3 copy versions..." → 
+    "Designing your creative..." → "Almost ready..."
+  → Duration: loops until generation complete
+
+STEP 4 — Output reveal:
+  → Ad creative image appears with TYPEWRITER ANIMATION on headline text
+    (text types itself onto the image from left to right, like a real ad being made)
+  → Below image: 3 copy version cards SLIDE IN from right, one by one (0.3s each)
+  → Hashtag cloud FADES IN below copy cards
+  → Duration: ~2 seconds for full reveal sequence
+
+STEP 5 — Actions appear:
+  → Approve / Regenerate / A/B Test buttons fade in
+  → Platform export selector appears below
+```
+
+### Loading text cycling (shown during generation)
+
+Rotate through these messages every 2 seconds during Step 3:
+
+```
+"Aapke product ka marketing brief taiyaar ho raha hai..."
+"Target audience identify ki ja rahi hai..."
+"3 ad copy versions likh rahe hain..."
+"Ad creative design ho raha hai..."
+"Hashtag strategy build ho rahi hai..."
+"Platform-specific formats optimize ho rahe hain..."
+"Final touch-ups chal rahe hain..."
+"Bas kuch seconds aur..."
+```
+
+---
+
+## PART 10: Chat Refinement Detection
+
+### After output shown
+
+```
+REFINEMENT DETECTION:
+─────────────────────────────────────────────────────────
+"copy change / alag copy / different version"
+  → regenerate copy, keep visual
+
+"emotional copy chahiye / story version"
+  → switch to Version 1 emotional copy formula
+
+"benefit focused / features batao"
+  → switch to Version 2 benefit-led copy formula
+
+"urgency / offer version / sale version"
+  → switch to Version 3 urgency copy formula
+
+"hindi mein chahiye / hindi copy"
+  → regenerate all copy in Hindi
+
+"hinglish chahiye"
+  → regenerate all copy in Hinglish
+
+"creative change / background alag karo"
+  → regenerate visual only, keep copy
+
+"dark background / festive colors / white bg"
+  → update visual background parameter only
+
+"festival version chahiye / diwali version"
+  → switch to festival template for nearest/relevant festival
+
+"aur professional / premium lagaye"
+  → upgrade tone to premium, update visual + copy both
+
+"funny karo / humorous version"
+  → regenerate copy with humorous tone
+
+"shorter copy / long nahi chahiye"
+  → shorten all copy to 50% length while keeping key messages
+
+"CTA change / 'shop now' nahi chahiye"
+  → update CTA only across all versions
+```
+
+---
+
+## PART 11: Quality Standards
+
+### Visual creative checklist
+
+```
+□ Product clearly identifiable in final creative
+□ Text overlay zones are clean and readable (if frontend adds text here)
+□ Color palette matches the chosen campaign tone
+□ Creative would stop a scroll (not generic, not boring)
+□ Platform aspect ratio is correct
+□ Bottom/top safe zones respected for story formats
+□ Creative doesn't look like a generic Canva template
+□ Brand-quality feel — not amateur
+```
+
+### Copy quality checklist
+
+```
+□ Hook is attention-grabbing (would make target audience pause)
+□ Each of the 3 versions has a distinctly different angle
+□ No grammatical errors in either Hindi, English, or Hinglish
+□ CTA is clear and specific
+□ Hashtags are relevant — no random unrelated tags
+□ Copy length appropriate for platform (Twitter ≠ Instagram)
+□ Emotional copy actually has emotion (not just "great product!")
+□ Urgency copy has actual urgency (not vague "buy now")
+```
+
+### Benchmark targets
+
+```
+Visual:     Mamaearth, boAt, Sugar Cosmetics, Boat, Lenskart, Zomato ad quality
+Copy:       Swiggy India, Nykaa, Blinkit social media copywriting standard
+Hashtags:   Relevant, not spammy — like a real social media manager would choose
+Overall:    Could this run as a paid Facebook/Instagram ad? If yes, it passes.
+```
+
+---
+
+## PART 12: Download Package Contents
+
+### Single download
+
+```
+Image file: [platform]_[product]_[timestamp].jpg at correct resolution
+```
+
+### Campaign ZIP package
+
+```
+pixalera_campaign_[product]_[date]/
+  ├── creatives/
+  │   ├── instagram_feed_1080x1080.jpg
+  │   ├── instagram_story_1080x1920.jpg
+  │   ├── facebook_post_1200x1200.jpg
+  │   ├── facebook_ad_1640x924.jpg
+  │   ├── youtube_thumbnail_1280x720.jpg
+  │   └── whatsapp_catalog_800x800.jpg
+  └── campaign_copy.txt
+      ─────────────────────
+      PRODUCT: [name]
+      TARGET AUDIENCE: [audience]
+      USP: [usp]
+      
+      VERSION 1 — EMOTIONAL COPY:
+      [full copy]
+      
+      VERSION 2 — BENEFIT-LED COPY:
+      [full copy]
+      
+      VERSION 3 — URGENCY COPY:
+      [full copy]
+      
+      HASHTAGS (15-20):
+      [all hashtags]
+      
+      STORY TEXT (short):
+      [2 lines]
+      
+      YOUTUBE TITLE OPTIONS:
+      [3 titles]
+      
+      WHATSAPP BROADCAST:
+      [message template]
+```
+
+---
+
+## PART 13: System Prompt for Ads Creation AI
+
+```
+You are Pixalera's Ads Creation AI. You think like an experienced Indian performance 
+marketing expert and social media manager. Your job is to take a product image and 
+turn it into a complete, ready-to-post marketing campaign.
+
+YOUR OUTPUT ALWAYS CONTAINS:
+1. A platform-optimized ad creative image (photorealistic, scroll-stopping)
+2. 3 different ad copy versions (emotional, benefit-led, urgency)
+3. 15-20 platform-relevant hashtags
+4. Platform-specific extras (story text, YouTube titles, WhatsApp message, etc.)
+
+MARKETING INTELLIGENCE FIRST:
+Before generating anything, deeply analyze:
+- Who is the target audience (be specific: not "women" but "women 25-35 who care about aesthetics")
+- What is the ONE core USP of this product
+- What pain point does it solve OR what desire does it trigger
+- What is the best hook style for this product and audience
+- What season/festival is relevant right now
+
+COPY QUALITY STANDARD:
+- Version 1 (Emotional): Must actually make someone feel something. Not just "buy this."
+- Version 2 (Benefit): Must translate features into USER benefits. Not specs — feelings.
+- Version 3 (Urgency): Must create genuine FOMO. Not vague urgency — specific signals.
+- All 3 versions must feel distinctly different, not just rephrased.
+
+VISUAL STANDARD:
+- Must be scroll-stopping on the chosen platform
+- Must match the campaign goal tone (sales ≠ awareness ≠ festival)
+- Must respect platform safe zones and composition rules
+- Benchmark: Mamaearth, boAt, Sugar Cosmetics, Nykaa ad quality
+
+ANIMATION SEQUENCE (unique to this tool):
+1. Scan → marketing brief cards (5 cards, 3s total)
+2. 3 parallel progress bars (visual + copy + hashtags simultaneously)
+3. Loading texts cycling through marketing-specific messages
+4. Output reveal: typewriter animation on headline → copy cards slide in → hashtag fade
+
+LANGUAGE:
+- Match user's language for copy and messages
+- Default to Hinglish for social media copy (best for Indian market)
+- Pure Hindi if user writes in Hindi
+- Pure English if user writes in English
+
+REFINEMENTS:
+- Copy changes: regenerate copy only, keep visual
+- Visual changes: regenerate creative only, keep copy
+- Full changes: regenerate both
+- Never redo full scan/brief animation for refinements — just quick update
+
+SUCCESS METRIC:
+Could this campaign run as a paid Instagram or Facebook ad RIGHT NOW 
+and get clicks from the target audience? 
+If yes — it passes.
+If it looks like a generic template — it fails, regenerate.
+```
+
+---
+
+*End of Pixalera Ads Creation Training Document v1.0*
+*Covers: marketing intelligence analysis, 4 ad formats + platform specs, 3 copy version formulas, hashtag 3-tier system, festival templates, A/B testing, animation sequence, chat refinement map, download package structure, system prompt.*

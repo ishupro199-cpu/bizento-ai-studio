@@ -473,6 +473,193 @@ export async function buildCinematicAdsPrompt(params: {
   }
 }
 
+// ── Ads Creation Tool Types ───────────────────────────────────────────────────
+
+export interface AdsCreationPlatformFormat {
+  id: string;
+  label: string;
+  aspectRatio: string;
+}
+
+export interface AdsCreationPlatform {
+  id: string;
+  label: string;
+  icon: string;
+  gradient: string;
+  formats: AdsCreationPlatformFormat[];
+  recommended?: boolean;
+  recommendedRank?: number;
+}
+
+export interface AdsCreationGoal {
+  id: string;
+  label: string;
+  icon: string;
+  desc: string;
+  defaultCTA: string;
+}
+
+export interface AdsCreationTone {
+  id: string;
+  label: string;
+  icon: string;
+  desc: string;
+}
+
+export interface AdsCreationAnalysis {
+  product_name: string;
+  product_category: string;
+  primary_color: string;
+  material: string;
+  price_segment: string;
+  primary_usp: string;
+  secondary_usps: string[];
+  target_audience: string;
+  pain_point_solved: string;
+  desire_triggered: string;
+  gifting_potential: string;
+  impulse_buy_score: string;
+  best_hook_style: string;
+  platform_fit: string[];
+  seasonal_relevance: string | null;
+  brand_feel: string;
+}
+
+export interface AdsCopyVersion1 {
+  style: string;
+  hook: string;
+  body: string;
+  product_line: string;
+  cta: string;
+  hashtags: string[];
+}
+
+export interface AdsCopyVersion2 {
+  style: string;
+  hook: string;
+  features: string[];
+  social_proof: string;
+  cta: string;
+  hashtags: string[];
+}
+
+export interface AdsCopyVersion3 {
+  style: string;
+  urgency_hook: string;
+  offer: string;
+  value: string;
+  cta: string;
+  deadline: string;
+  hashtags: string[];
+}
+
+export interface AdsCopyResult {
+  version1: AdsCopyVersion1;
+  version2: AdsCopyVersion2;
+  version3: AdsCopyVersion3;
+  story_text: string;
+  platform_extras: {
+    headline_25: string;
+    tweet: string;
+    whatsapp_broadcast: string;
+    youtube_titles: string[];
+  };
+}
+
+export interface AdsCreationAnalyzeResponse {
+  success: boolean;
+  analysis: AdsCreationAnalysis;
+  platforms: AdsCreationPlatform[];
+  allPlatforms: AdsCreationPlatform[];
+  campaignGoals: AdsCreationGoal[];
+  adTones: AdsCreationTone[];
+  defaultPlatform: string;
+  defaultFormat: string;
+  defaultGoal: string;
+  defaultTone: string;
+  error?: string;
+}
+
+export interface AdsCreationBuildResponse {
+  success: boolean;
+  imagePrompt: string;
+  platform: string;
+  platformLabel: string;
+  formatId: string;
+  formatLabel: string;
+  aspectRatio: string;
+  goal: string;
+  tone: string;
+  language: string;
+  analysis: AdsCreationAnalysis;
+  copy: AdsCopyResult;
+  imageUrls: string[];
+  hasRealImages: boolean;
+  requiresApiKey: boolean;
+  refinementsApplied: Record<string, boolean>;
+  error?: string;
+}
+
+export async function analyzeForAdsCreation(
+  imageUrl: string | undefined,
+  prompt: string
+): Promise<AdsCreationAnalyzeResponse> {
+  try {
+    const res = await fetch("/api/generate/ads-creation/analyze", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ imageUrl, prompt }),
+    });
+    return await res.json();
+  } catch (err: any) {
+    return {
+      success: false, error: err.message,
+      analysis: {} as AdsCreationAnalysis,
+      platforms: [],
+      allPlatforms: [],
+      campaignGoals: [],
+      adTones: [],
+      defaultPlatform: "instagram",
+      defaultFormat: "feed_square",
+      defaultGoal: "sales",
+      defaultTone: "emotional",
+    };
+  }
+}
+
+export async function buildAdsCreation(params: {
+  imageUrl?: string;
+  prompt: string;
+  platform: string;
+  formatId: string;
+  goal: string;
+  tone: string;
+  language?: string;
+  analysis?: AdsCreationAnalysis | null;
+  refinementText?: string;
+}): Promise<AdsCreationBuildResponse> {
+  try {
+    const res = await fetch("/api/generate/ads-creation/build", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(params),
+    });
+    return await res.json();
+  } catch (err: any) {
+    return {
+      success: false, error: err.message,
+      imagePrompt: "", platform: params.platform, platformLabel: params.platform,
+      formatId: params.formatId, formatLabel: params.formatId,
+      aspectRatio: "1:1", goal: params.goal, tone: params.tone,
+      language: params.language || "hinglish",
+      analysis: params.analysis as AdsCreationAnalysis,
+      copy: {} as AdsCopyResult,
+      imageUrls: [], hasRealImages: false, requiresApiKey: true,
+      refinementsApplied: {},
+    };
+  }
+}
+
 export async function checkApiHealth(): Promise<{
   available: boolean;
   hasReplicateToken: boolean;

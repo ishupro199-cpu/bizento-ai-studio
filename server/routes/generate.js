@@ -26,6 +26,17 @@ import {
   ASPECT_RATIOS,
   CINEMATIC_NEGATIVE_PROMPT,
 } from "../services/cinematicAdsPipeline.js";
+import {
+  analyzeProductForAdsCreation,
+  suggestPlatformsForProduct,
+  buildAdsCreationImagePrompt,
+  generateAdCopy,
+  detectAdsRefinementIntent,
+  AD_PLATFORMS,
+  CAMPAIGN_GOALS,
+  AD_TONES,
+  ADS_NEGATIVE_PROMPT,
+} from "../services/adsCreationPipeline.js";
 
 const router = Router();
 
@@ -612,6 +623,123 @@ router.post("/cinematic-ads/build", async (req, res) => {
     });
   } catch (err) {
     console.error("Cinematic ads build error:", err.message);
+    return res.status(500).json({ error: err.message, success: false });
+  }
+});
+
+// ── ADS CREATION: analyze product for marketing intelligence ──────────────────
+router.post("/ads-creation/analyze", async (req, res) => {
+  const { imageUrl, prompt = "" } = req.body;
+  try {
+    const analysis = await analyzeProductForAdsCreation(imageUrl, prompt);
+    const platforms = suggestPlatformsForProduct(analysis);
+    return res.json({
+      success: true,
+      analysis,
+      platforms,
+      allPlatforms: AD_PLATFORMS,
+      campaignGoals: CAMPAIGN_GOALS,
+      adTones: AD_TONES,
+      defaultPlatform: platforms[0]?.id || "instagram",
+      defaultFormat: platforms[0]?.formats[0]?.id || "feed_square",
+      defaultGoal: "sales",
+      defaultTone: "emotional",
+    });
+  } catch (err) {
+    console.error("Ads creation analyze error:", err.message);
+    return res.status(500).json({ error: err.message, success: false });
+  }
+});
+
+// ── ADS CREATION: build image prompt + copy + hashtags ────────────────────────
+router.post("/ads-creation/build", async (req, res) => {
+  const {
+    imageUrl,
+    prompt = "",
+    platform = "instagram",
+    formatId = "feed_square",
+    goal = "sales",
+    tone = "emotional",
+    language = "hinglish",
+    analysis = null,
+    refinementText = "",
+  } = req.body;
+  try {
+    let productAnalysis = analysis;
+    if (!productAnalysis) {
+      productAnalysis = await analyzeProductForAdsCreation(imageUrl, prompt);
+    }
+
+    let effectivePlatform = platform;
+    let effectiveGoal = goal;
+    let effectiveTone = tone;
+    let effectiveLanguage = language;
+
+    if (refinementText) {
+      const rf = detectAdsRefinementIntent(refinementText);
+      if (rf.switchToHindi) effectiveLanguage = "hindi";
+      if (rf.switchToEnglish) effectiveLanguage = "english";
+      if (rf.switchToHinglish) effectiveLanguage = "hinglish";
+      if (rf.wantPremium) effectiveTone = "premium";
+      if (rf.wantFunny) effectiveTone = "humorous";
+      if (rf.switchToEmotional) effectiveTone = "emotional";
+      if (rf.switchToBenefit) effectiveTone = "informational";
+      if (rf.switchToUrgency) effectiveGoal = "sales";
+      if (rf.wantFestive) effectiveGoal = "festival";
+    }
+
+    const allPlatforms = AD_PLATFORMS;
+    const platformObj = allPlatforms.find(p => p.id === effectivePlatform) || allPlatforms[0];
+    const formatObj = platformObj?.formats?.find(f => f.id === formatId) || platformObj?.formats?.[0];
+
+    const imagePrompt = buildAdsCreationImagePrompt({
+      product: productAnalysis.product_name || prompt,
+      color: productAnalysis.primary_color || "neutral",
+      material: productAnalysis.material || "standard",
+      platform: effectivePlatform,
+      format: formatObj,
+      goal: effectiveGoal,
+      tone: effectiveTone,
+      analysis: productAnalysis,
+    });
+
+    const hasToken = !!process.env.REPLICATE_API_TOKEN;
+
+    const [copyResult, imageUrls] = await Promise.all([
+      generateAdCopy({
+        analysis: productAnalysis,
+        platform: effectivePlatform,
+        goal: effectiveGoal,
+        tone: effectiveTone,
+        language: effectiveLanguage,
+      }),
+      hasToken
+        ? generateImages(imagePrompt, ADS_NEGATIVE_PROMPT, 1).catch(() => [])
+        : Promise.resolve([]),
+    ]);
+
+    const rf = refinementText ? detectAdsRefinementIntent(refinementText) : {};
+
+    return res.json({
+      success: true,
+      imagePrompt,
+      platform: effectivePlatform,
+      platformLabel: platformObj?.label || platform,
+      formatId,
+      formatLabel: formatObj?.label || formatId,
+      aspectRatio: formatObj?.aspectRatio || "1:1",
+      goal: effectiveGoal,
+      tone: effectiveTone,
+      language: effectiveLanguage,
+      analysis: productAnalysis,
+      copy: copyResult,
+      imageUrls,
+      hasRealImages: imageUrls.length > 0,
+      requiresApiKey: !hasToken,
+      refinementsApplied: rf,
+    });
+  } catch (err) {
+    console.error("Ads creation build error:", err.message);
     return res.status(500).json({ error: err.message, success: false });
   }
 });
