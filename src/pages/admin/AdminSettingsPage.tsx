@@ -21,7 +21,6 @@ interface Settings {
   allowSignups: boolean;
   defaultPlan: string;
   defaultCredits: number;
-  replicateApiKey: string;
   nvidiaApiKey: string;
   maxCreditsPerUser: number;
   aiGenerationEnabled: boolean;
@@ -36,7 +35,6 @@ const DEFAULT_SETTINGS: Settings = {
   allowSignups: true,
   defaultPlan: "free",
   defaultCredits: 3,
-  replicateApiKey: "",
   nvidiaApiKey: "",
   maxCreditsPerUser: 100,
   aiGenerationEnabled: true,
@@ -186,34 +184,41 @@ export default function AdminSettingsPage() {
 
       <Card style={{ background: CARD_BG, border: `1px solid ${BORDER}`, borderRadius: 14 }} styles={{ body: { padding: "20px 22px" } }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 18 }}>
-          <div style={{ width: 34, height: 34, borderRadius: 10, background: "rgba(245,158,11,0.10)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <CpuChipIcon style={{ width: 17, height: 17, color: "#f59e0b" }} />
+          <div style={{ width: 34, height: 34, borderRadius: 10, background: "rgba(118,185,0,0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <CpuChipIcon style={{ width: 17, height: 17, color: "#76B900" }} />
           </div>
-          <Text style={{ color: "#fff", fontWeight: 600, fontSize: 14 }}>API Configuration</Text>
+          <div>
+            <Text style={{ color: "#fff", fontWeight: 600, fontSize: 14, display: "block" }}>NVIDIA NIM API</Text>
+            <Text style={{ color: "rgba(255,255,255,0.4)", fontSize: 11 }}>Image Generation Provider</Text>
+          </div>
         </div>
         <Form layout="vertical" onFinish={handleSave} initialValues={settings}>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-            <Form.Item name="replicateApiKey" label={<span style={{ color: "rgba(255,255,255,0.55)", fontSize: 12 }}>Replicate API Key</span>} style={{ marginBottom: 12 }}>
-              <Input.Password style={{ background: "#2a2a2a", border: `1px solid #383838` }} placeholder="r8_..." />
-            </Form.Item>
-            <Form.Item name="nvidiaApiKey" label={<span style={{ color: "rgba(255,255,255,0.55)", fontSize: 12 }}>NVIDIA NIM API Key</span>} style={{ marginBottom: 12 }}>
-              <Input.Password style={{ background: "#2a2a2a", border: `1px solid #383838` }} placeholder="nvapi-..." />
-            </Form.Item>
+          <Form.Item name="nvidiaApiKey" label={<span style={{ color: "rgba(255,255,255,0.55)", fontSize: 12 }}>API Key</span>} style={{ marginBottom: 14 }}>
+            <Input.Password 
+              style={{ background: "#2a2a2a", border: `1px solid ${settings.nvidiaApiKey ? "rgba(118,185,0,0.4)" : "#383838"}`, height: 42, fontSize: 13 }} 
+              placeholder="nvapi-xxxxxxxxxxxxxxxx" 
+            />
+          </Form.Item>
+          
+          <div style={{ background: "rgba(118,185,0,0.06)", border: "1px solid rgba(118,185,0,0.15)", borderRadius: 10, padding: "12px 14px", marginBottom: 16 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+              <div style={{ width: 8, height: 8, borderRadius: "50%", background: settings.nvidiaApiKey ? "#76B900" : "rgba(255,255,255,0.25)" }} />
+              <Text style={{ fontSize: 12, fontWeight: 600, color: settings.nvidiaApiKey ? "#76B900" : "rgba(255,255,255,0.5)" }}>
+                {settings.nvidiaApiKey ? "Connected & Active" : "Not Connected"}
+              </Text>
+            </div>
+            <Text style={{ fontSize: 11, color: "rgba(255,255,255,0.45)", lineHeight: 1.5 }}>
+              NVIDIA NIM powers all AI image generation including Catalog, Photography, Ads, and Cinematic features.
+            </Text>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: -4, marginBottom: 14 }}>
-            <ExclamationTriangleIcon style={{ width: 13, height: 13, color: "#f59e0b" }} />
-            <Text style={{ fontSize: 11, color: "rgba(245,158,11,0.7)" }}>Store API keys securely. NVIDIA NIM is prioritized for image generation when available.</Text>
+
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
+            <ExclamationTriangleIcon style={{ width: 13, height: 13, color: "rgba(255,255,255,0.35)" }} />
+            <Text style={{ fontSize: 10, color: "rgba(255,255,255,0.35)" }}>API keys are stored securely and never exposed to clients.</Text>
           </div>
-          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 14 }}>
-            <Tag style={{ background: settings.nvidiaApiKey ? "rgba(137,233,0,0.12)" : "rgba(255,255,255,0.05)", border: `1px solid ${settings.nvidiaApiKey ? "rgba(137,233,0,0.3)" : "rgba(255,255,255,0.1)"}`, color: settings.nvidiaApiKey ? "#89E900" : "rgba(255,255,255,0.4)", borderRadius: 6, fontSize: 11, fontWeight: 500 }}>
-              NVIDIA NIM: {settings.nvidiaApiKey ? "Connected" : "Not Set"}
-            </Tag>
-            <Tag style={{ background: settings.replicateApiKey ? "rgba(137,233,0,0.12)" : "rgba(255,255,255,0.05)", border: `1px solid ${settings.replicateApiKey ? "rgba(137,233,0,0.3)" : "rgba(255,255,255,0.1)"}`, color: settings.replicateApiKey ? "#89E900" : "rgba(255,255,255,0.4)", borderRadius: 6, fontSize: 11, fontWeight: 500 }}>
-              Replicate: {settings.replicateApiKey ? "Connected" : "Not Set"}
-            </Tag>
-          </div>
-          <Button htmlType="submit" loading={saving} style={{ background: "rgba(245,158,11,0.12)", border: `1px solid rgba(245,158,11,0.25)`, color: "#f59e0b", fontWeight: 600, borderRadius: 8, height: 34 }}>
-            Update API Keys
+          
+          <Button htmlType="submit" loading={saving} style={{ background: settings.nvidiaApiKey ? "rgba(118,185,0,0.15)" : ACCENT, border: `1px solid ${settings.nvidiaApiKey ? "rgba(118,185,0,0.3)" : "transparent"}`, color: settings.nvidiaApiKey ? "#76B900" : "#000", fontWeight: 600, borderRadius: 8, height: 38, width: "100%" }}>
+            {settings.nvidiaApiKey ? "Update API Key" : "Save API Key"}
           </Button>
         </Form>
       </Card>

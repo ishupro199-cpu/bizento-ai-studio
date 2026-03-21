@@ -1,11 +1,7 @@
 import axios from "axios";
 
-const REPLICATE_API = "https://api.replicate.com/v1";
-const HF_API = "https://api-inference.huggingface.co/models";
 const NVIDIA_API = "https://integrate.api.nvidia.com/v1";
 
-const token = () => process.env.REPLICATE_API_TOKEN;
-const hfToken = () => process.env.HUGGINGFACE_API_TOKEN;
 const nvidiaToken = () => process.env.NVIDIA_API_KEY;
 
 const ASPECT_RATIO_MAP = {
@@ -46,71 +42,7 @@ async function withRetry(fn, maxRetries = 3, baseDelayMs = 1500) {
   throw lastErr;
 }
 
-async function waitForPrediction(predictionId, maxWaitMs = 120000) {
-  const start = Date.now();
-  while (Date.now() - start < maxWaitMs) {
-    const res = await axios.get(`${REPLICATE_API}/predictions/${predictionId}`, {
-      headers: { Authorization: `Bearer ${token()}` },
-    });
-    const { status, output, error } = res.data;
-    if (status === "succeeded") return output;
-    if (status === "failed" || status === "canceled") throw new Error(error || "Prediction failed");
-    await sleep(2000);
-  }
-  throw new Error("Generation timed out");
-}
 
-async function generateImagesReplicate(prompt, scenePrompt, count = 3, aspectRatio = "1:1") {
-  if (!token()) return null;
-  const fullPrompt = scenePrompt ? `${prompt}, ${scenePrompt}` : prompt;
-  const mappedRatio = ASPECT_RATIO_MAP[aspectRatio] || "1:1";
-
-  return await withRetry(async () => {
-    const res = await axios.post(
-      `${REPLICATE_API}/models/black-forest-labs/flux-schnell/predictions`,
-      {
-        input: {
-          prompt: fullPrompt,
-          num_outputs: Math.min(count, 4),
-          output_format: "webp",
-          output_quality: 90,
-          aspect_ratio: mappedRatio,
-        },
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${token()}`,
-          "Content-Type": "application/json",
-          Prefer: "wait",
-        },
-        timeout: 120000,
-      }
-    );
-    if (res.data.status === "succeeded") return res.data.output;
-    if (res.data.id) return await waitForPrediction(res.data.id);
-    return null;
-  }, 2, 2000);
-}
-
-async function generateImageHF(prompt, model = "stabilityai/stable-diffusion-xl-base-1.0") {
-  const headers = { "Content-Type": "application/json" };
-  if (hfToken()) headers["Authorization"] = `Bearer ${hfToken()}`;
-  try {
-    const res = await axios.post(
-      `${HF_API}/${model}`,
-      { inputs: prompt, options: { wait_for_model: true } },
-      { headers, responseType: "arraybuffer", timeout: 60000 }
-    );
-    if (res.status === 200) {
-      const base64 = Buffer.from(res.data, "binary").toString("base64");
-      return `data:image/jpeg;base64,${base64}`;
-    }
-    return null;
-  } catch (err) {
-    console.error("HuggingFace generation failed:", err.message);
-    return null;
-  }
-}
 
 // NVIDIA NIM API Image Generation - supports multiple models
 async function generateImagesNvidia(prompt, count = 3, aspectRatio = "1:1", model = "stabilityai/stable-diffusion-3-medium") {
@@ -174,16 +106,13 @@ async function generateImagesNvidia(prompt, count = 3, aspectRatio = "1:1", mode
   }, 2, 2000);
 }
 
-export async function generateImages(prompt, scenePrompt, count = 3, aspectRatio = "1:1", preferredProvider = null) {
+export async function generateImages(prompt, scenePrompt, count = 3, aspectRatio = "1:1") {
   const fullPrompt = `${prompt}${scenePrompt ? `, ${scenePrompt}` : ""}, photorealistic, high quality, commercial photography`;
 
-  // Priority: NVIDIA (if available) -> Replicate -> HuggingFace
-  // User can override with preferredProvider
-  
-  // Try NVIDIA NIM first (if API key exists)
-  if (nvidiaToken() && (preferredProvider === "nvidia" || preferredProvider === null)) {
+  // Use NVIDIA NIM API for image generation
+  if (nvidiaToken()) {
     try {
-      console.log("Trying NVIDIA NIM API...");
+      console.log("Generating images with NVIDIA NIM API...");
       const urls = await generateImagesNvidia(fullPrompt, count, aspectRatio);
       if (urls && urls.length > 0) {
         console.log(`NVIDIA NIM generated ${urls.length} image(s)`);
@@ -192,185 +121,32 @@ export async function generateImages(prompt, scenePrompt, count = 3, aspectRatio
     } catch (err) {
       console.error("NVIDIA NIM pipeline failed:", err.message);
     }
-  }
-
-  // Try Replicate
-  if (token() && (preferredProvider === "replicate" || preferredProvider === null)) {
-    try {
-      const urls = await generateImagesReplicate(prompt, scenePrompt, count, aspectRatio);
-      if (urls && urls.length > 0) {
-        console.log(`Replicate generated ${urls.length} image(s)`);
-        return urls;
-      }
-    } catch (err) {
-      console.error("Replicate pipeline failed:", err.message);
-    }
-  }
-
-  // Fallback to HuggingFace
-  try {
-    console.log("Trying HuggingFace inference API...");
-    const imagePromises = Array.from({ length: Math.min(count, 3) }, (_, i) =>
-      generateImageHF(`${fullPrompt}, variant ${i + 1}`, "stabilityai/stable-diffusion-xl-base-1.0")
-    );
-    const results = await Promise.all(imagePromises);
-    const valid = results.filter(Boolean);
-    if (valid.length > 0) {
-      console.log(`HuggingFace generated ${valid.length} image(s)`);
-      return valid;
-    }
-  } catch (err) {
-    console.error("HuggingFace pipeline failed:", err.message);
+  } else {
+    console.warn("NVIDIA_API_KEY not configured - cannot generate real images");
   }
 
   return null;
 }
 
-// Helper to check which providers are available
+// Helper to check if NVIDIA API is available
 export function getAvailableProviders() {
   return {
     nvidia: !!nvidiaToken(),
-    replicate: !!token(),
-    huggingface: !!hfToken(),
   };
 }
 
 export async function removeBackground(imageUrl) {
-  if (!token()) return null;
-  return await withRetry(async () => {
-    const res = await axios.post(
-      `${REPLICATE_API}/models/851-labs/background-removal/predictions`,
-      { input: { image: imageUrl } },
-      {
-        headers: {
-          Authorization: `Bearer ${token()}`,
-          "Content-Type": "application/json",
-          Prefer: "wait",
-        },
-        timeout: 60000,
-      }
-    );
-    if (res.data.status === "succeeded") return res.data.output;
-    if (res.data.id) return await waitForPrediction(res.data.id);
-    return null;
-  }, 2, 1500).catch(() => null);
+  // Background removal not available without external service
+  // Return original image URL
+  console.log("Background removal: returning original image (service not configured)");
+  return imageUrl;
 }
 
 // Full Product Analysis Schema per training document Part 1
+// Returns default analysis structure (vision analysis requires separate API)
 export async function analyzeProduct(imageUrl) {
-  if (!token()) {
-    return {
-      product_name: "product",
-      product_category: "General Product",
-      product_subcategory: "product",
-      brand_name: "unbranded",
-      primary_color: "neutral",
-      secondary_colors: [],
-      material: "[INFER]",
-      finish: "[INFER]",
-      size_visible: "[INFER]",
-      key_features: [],
-      condition: "New",
-      target_use: "daily use",
-      image_quality: "Good",
-      background_in_photo: "unknown",
-      multiple_items: false,
-      description: "",
-      category: "product",
-      colors: ["neutral"],
-    };
-  }
-
-  return await withRetry(async () => {
-    const res = await axios.post(
-      `${REPLICATE_API}/models/yorickvp/llava-13b/predictions`,
-      {
-        input: {
-          image: imageUrl,
-          prompt: `Analyze this ecommerce product image precisely and extract these details:
-
-1. PRODUCT: Specific product name (e.g. "Ceramic Coffee Mug with Lid" not just "mug")
-2. CATEGORY: One of: Electronics / Apparel / Home & Kitchen / Beauty / Sports / Books / Toys / Footwear / Bags / Jewelry / Food / Other
-3. SUBCATEGORY: Specific type (e.g. "Ceramic Mug", "Running Shoes", "Face Serum")
-4. BRAND: Any brand name or logo visible, or "unbranded"
-5. PRIMARY_COLOR: Exact color (e.g. "Matte Black", "Ivory White", "Forest Green")
-6. SECONDARY_COLORS: Any accent colors, or "none"
-7. MATERIAL: Primary material (e.g. Ceramic, Steel, Cotton, Leather, Plastic)
-8. FINISH: Matte / Glossy / Textured / Brushed / Natural / other
-9. FEATURES: Up to 5 key visible features separated by commas (e.g. handle, lid, logo, spout, zip)
-10. BACKGROUND: white / colored / cluttered / outdoor / lifestyle
-11. IMAGE_QUALITY: Good / Poor lighting / Blurry / Cluttered background
-12. MULTIPLE_ITEMS: yes or no
-
-Reply in EXACTLY this format, one per line:
-PRODUCT: [value]
-CATEGORY: [value]
-SUBCATEGORY: [value]
-BRAND: [value]
-PRIMARY_COLOR: [value]
-SECONDARY_COLORS: [value]
-MATERIAL: [value]
-FINISH: [value]
-FEATURES: [value]
-BACKGROUND: [value]
-IMAGE_QUALITY: [value]
-MULTIPLE_ITEMS: [value]`,
-          max_tokens: 400,
-        },
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${token()}`,
-          "Content-Type": "application/json",
-          Prefer: "wait",
-        },
-        timeout: 90000,
-      }
-    );
-
-    const output = res.data.status === "succeeded"
-      ? res.data.output
-      : res.data.id ? await waitForPrediction(res.data.id) : null;
-    const text = Array.isArray(output) ? output.join("") : output || "";
-
-    const extract = (key) => {
-      const match = text.match(new RegExp(`^${key}:\\s*(.+?)\\s*$`, 'im'));
-      return match ? match[1].trim() : null;
-    };
-
-    const primaryColor = extract("PRIMARY_COLOR") || "neutral";
-    const colorMatch = text.match(/\b(red|blue|green|black|white|gold|silver|brown|pink|purple|yellow|orange|grey|gray|navy|cream|beige)\b/gi);
-    const colors = colorMatch ? [...new Set(colorMatch.map(c => c.toLowerCase()))] : ["neutral"];
-
-    const featuresStr = extract("FEATURES") || "";
-    const key_features = featuresStr && featuresStr.toLowerCase() !== "none"
-      ? featuresStr.split(",").map(f => f.trim()).filter(Boolean)
-      : [];
-
-    const multipleStr = (extract("MULTIPLE_ITEMS") || "no").toLowerCase();
-
-    return {
-      product_name: extract("PRODUCT") || "product",
-      product_category: extract("CATEGORY") || "General Product",
-      product_subcategory: extract("SUBCATEGORY") || extract("PRODUCT") || "product",
-      brand_name: extract("BRAND") || "unbranded",
-      primary_color: primaryColor,
-      secondary_colors: (extract("SECONDARY_COLORS") || "none").toLowerCase() === "none" ? [] : (extract("SECONDARY_COLORS") || "").split(",").map(c => c.trim()),
-      material: extract("MATERIAL") || "[INFER]",
-      finish: extract("FINISH") || "[INFER]",
-      size_visible: "[INFER]",
-      key_features,
-      condition: "New",
-      target_use: "daily use",
-      image_quality: extract("IMAGE_QUALITY") || "Good",
-      background_in_photo: extract("BACKGROUND") || "unknown",
-      multiple_items: multipleStr === "yes",
-      description: text,
-      // Legacy compat
-      category: extract("CATEGORY") || "product",
-      colors,
-    };
-  }, 2, 2000).catch(() => ({
+  // Return default analysis - can be enhanced with vision API later
+  return {
     product_name: "product",
     product_category: "General Product",
     product_subcategory: "product",
@@ -386,10 +162,10 @@ MULTIPLE_ITEMS: [value]`,
     image_quality: "Good",
     background_in_photo: "unknown",
     multiple_items: false,
-    description: "Product image analyzed",
+    description: "",
     category: "product",
     colors: ["neutral"],
-  }));
+  };
 }
 
 // 6 standard catalog shot type prompts per training document Part 2

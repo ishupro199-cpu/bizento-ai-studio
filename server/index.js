@@ -21,9 +21,10 @@ app.get("/api/health", (_req, res) => {
   res.json({
     status: "ok",
     service: "PixaLera AI Pipeline",
-    hasReplicateToken: !!process.env.REPLICATE_API_TOKEN,
+    hasNvidiaApi: !!process.env.NVIDIA_API_KEY,
     hasRazorpay: !!(process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET),
     hasFirebaseAdmin: !!process.env.FIREBASE_SERVICE_ACCOUNT,
+    imageProvider: process.env.NVIDIA_API_KEY ? "nvidia" : "none",
     timestamp: new Date().toISOString(),
   });
 });
@@ -44,9 +45,7 @@ app.use((err, _req, res, _next) => {
 const PORT = process.env.API_PORT || 3001;
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`PixaLera AI Pipeline server running on port ${PORT}`);
-  console.log(`NVIDIA NIM API: ${process.env.NVIDIA_API_KEY ? "✓ configured (primary)" : "✗ not configured"}`);
-  console.log(`Replicate API: ${process.env.REPLICATE_API_TOKEN ? "✓ configured" : "✗ not configured"}`);
-  console.log(`Image Provider: ${process.env.NVIDIA_API_KEY ? "NVIDIA NIM" : (process.env.REPLICATE_API_TOKEN ? "Replicate" : "HuggingFace (free)")}`);
+  console.log(`NVIDIA NIM API: ${process.env.NVIDIA_API_KEY ? "✓ configured" : "✗ not configured"}`);
   console.log(`Razorpay: ${process.env.RAZORPAY_KEY_ID ? "✓ configured" : "✗ not configured"}`);
   console.log(`Firebase Admin: ${process.env.FIREBASE_SERVICE_ACCOUNT ? "✓ configured" : "✗ limited mode"}`);
 });

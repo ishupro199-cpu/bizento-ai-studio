@@ -1436,7 +1436,7 @@ export default function WelcomeDashboard() {
                     ))}
                   </div>
                   {catalogShots.every(s => !s.imageUrl) ? (
-                    <p className="text-[10px] text-amber-400/70 text-right">Preview mode — add NVIDIA_API_KEY or REPLICATE_API_TOKEN for real images</p>
+                    <p className="text-[10px] text-amber-400/70 text-right">Preview mode — add NVIDIA_API_KEY for real images</p>
                   ) : (
                     <div className="flex items-center justify-end gap-2">
                       <button onClick={downloadCatalogZip}
