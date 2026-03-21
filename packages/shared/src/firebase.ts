@@ -1,0 +1,30 @@
+import { initializeApp, getApps } from "firebase/app";
+import { getAuth } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
+import { getStorage } from "firebase/storage";
+import { getDatabase } from "firebase/database";
+import { getAnalytics, isSupported } from "firebase/analytics";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyB_fgFYx0W35VtmUrTkKAtE_YSPtaxw6Pk",
+  authDomain: "pixaleraai.firebaseapp.com",
+  databaseURL: "https://pixaleraai-default-rtdb.firebaseio.com",
+  projectId: "pixaleraai",
+  storageBucket: "pixaleraai.firebasestorage.app",
+  messagingSenderId: "167299328782",
+  appId: "1:167299328782:web:28cb3aef8b46c31d51055f",
+  measurementId: "G-GZ2XT3YXED",
+};
+
+const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+
+export const auth = getAuth(app);
+export const db = getFirestore(app);
+export const storage = getStorage(app);
+export const rtdb = getDatabase(app);
+
+isSupported().then((supported) => {
+  if (supported) getAnalytics(app);
+});
+
+export default app;

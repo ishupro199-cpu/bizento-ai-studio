@@ -1,0 +1,215 @@
+import { useState, useEffect, useCallback } from "react";
+import {
+  collection,
+  query,
+  where,
+  orderBy,
+  onSnapshot,
+  addDoc,
+  deleteDoc,
+  doc,
+  updateDoc,
+  getDoc,
+  setDoc,
+  Timestamp,
+  increment,
+} from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { useAuth } from "@/contexts/AuthContext";
+import type { ModelId } from "@/contexts/AppContext";
+
+export interface FirestoreGeneration {
+  id: string;
+  userId: string;
+  prompt: string;
+  augmentedPrompt: string;
+  tool: string;
+  style: string;
+  model: ModelId;
+  creditsConsumed: number;
+  gradient: string;
+  imageUrls: string[];
+  uploadedImageUrl: string;
+  status: "completed" | "failed";
+  hasRealImages?: boolean;
+  generationTime?: number;
+  catalogAttributes?: Record<string, unknown> | null;
+  createdAt: Date;
+}
+
+export async function updateAdminStats(
+  tool: string,
+  model: ModelId,
+  credits: number,
+  extras?: { generationTime?: number; hasRealImages?: boolean }
+) {
+  try {
+    const today = new Date().toISOString().slice(0, 10);
+    const statsRef = doc(db, "admin", "stats");
+    const update: Record<string, any> = {
+      totalGenerations: increment(1),
+      totalCreditsUsed: increment(credits),
+      flashGenerations: model === "flash" ? increment(1) : increment(0),
+      proGenerations: model === "pro" ? increment(1) : increment(0),
+      [`dailyCounts.${today}`]: increment(1),
+      [`toolUsage.${tool}`]: increment(1),
+    };
+    if (extras?.hasRealImages) {
+      update.realImageGenerations = increment(1);
+    }
+    if (extras?.generationTime) {
+      update.totalGenerationTimeSeconds = increment(extras.generationTime);
+    }
+    await setDoc(statsRef, update, { merge: true });
+  } catch {
+  }
+}
+
+export async function incrementUserCount() {
+  try {
+    const statsRef = doc(db, "admin", "stats");
+    await setDoc(statsRef, { totalUsers: increment(1) }, { merge: true });
+  } catch {
+  }
+}
+
+export function useGenerations() {
+  const { user } = useAuth();
+  const [generations, setGenerations] = useState<FirestoreGeneration[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user) {
+      setGenerations([]);
+      setLoading(false);
+      return;
+    }
+
+    const q = query(
+      collection(db, "generations"),
+      where("userId", "==", user.uid),
+      orderBy("createdAt", "desc")
+    );
+
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const docs = snapshot.docs.map((d) => {
+          const data = d.data();
+          return {
+            id: d.id,
+            userId: data.userId,
+            prompt: data.prompt,
+            augmentedPrompt: data.augmentedPrompt || "",
+            tool: data.tool,
+            style: data.style,
+            model: data.model,
+            creditsConsumed: data.creditsConsumed,
+            gradient: data.gradient,
+            imageUrls: data.imageUrls || [],
+            uploadedImageUrl: data.uploadedImageUrl || "",
+            status: data.status,
+            hasRealImages: data.hasRealImages ?? false,
+            generationTime: data.generationTime,
+            catalogAttributes: data.catalogAttributes ?? null,
+            createdAt:
+              data.createdAt instanceof Timestamp
+                ? data.createdAt.toDate()
+                : new Date(data.createdAt),
+          } as FirestoreGeneration;
+        });
+        setGenerations(docs);
+        setLoading(false);
+      },
+      () => setLoading(false)
+    );
+
+    return unsubscribe;
+  }, [user]);
+
+  const addGeneration = useCallback(
+    async (record: Omit<FirestoreGeneration, "id" | "userId">) => {
+      if (!user) return;
+      const data: Record<string, any> = {
+        ...record,
+        userId: user.uid,
+        createdAt: Timestamp.fromDate(record.createdAt),
+      };
+      Object.keys(data).forEach((k) => {
+        if (data[k] === undefined) delete data[k];
+      });
+      await addDoc(collection(db, "generations"), data);
+    },
+    [user]
+  );
+
+  const removeGeneration = useCallback(async (id: string) => {
+    await deleteDoc(doc(db, "generations", id));
+  }, []);
+
+  return { generations, loading, addGeneration, removeGeneration };
+}
+
+export function useUserProfile() {
+  const { user } = useAuth();
+  const [profile, setProfile] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user) {
+      setProfile(null);
+      setLoading(false);
+      return;
+    }
+
+    const unsubscribe = onSnapshot(
+      doc(db, "users", user.uid),
+      (snapshot) => {
+        if (snapshot.exists()) {
+          setProfile({ id: snapshot.id, ...snapshot.data() });
+        }
+        setLoading(false);
+      },
+      () => setLoading(false)
+    );
+
+    return unsubscribe;
+  }, [user]);
+
+  const updateCredits = useCallback(
+    async (creditsToDeduct: number, model: ModelId) => {
+      if (!user) return;
+      const ref = doc(db, "users", user.uid);
+      const snap = await getDoc(ref);
+      if (!snap.exists()) return;
+      const data = snap.data();
+      await updateDoc(ref, {
+        creditsRemaining: Math.max(0, data.creditsRemaining - creditsToDeduct),
+        creditsUsed: (data.creditsUsed || 0) + creditsToDeduct,
+        flashGenerations:
+          model === "flash"
+            ? (data.flashGenerations || 0) + 1
+            : data.flashGenerations || 0,
+        proGenerations:
+          model === "pro"
+            ? (data.proGenerations || 0) + 1
+            : data.proGenerations || 0,
+      });
+    },
+    [user]
+  );
+
+  const switchPlan = useCallback(
+    async (plan: string, credits: number) => {
+      if (!user) return;
+      await updateDoc(doc(db, "users", user.uid), {
+        plan,
+        creditsRemaining: credits,
+        creditsUsed: 0,
+      });
+    },
+    [user]
+  );
+
+  return { profile, loading, updateCredits, switchPlan };
+}

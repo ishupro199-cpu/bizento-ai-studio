@@ -1,0 +1,402 @@
+# Pixalera — Monorepo Separation + Subdomain Deployment
+## Complete Implementation Prompt v1.0
+
+---
+
+# PART 1: ARCHITECTURE DECISION
+
+## Why Monorepo with Separate Builds (Option C) is Best for You
+
+You already have one project. The monorepo approach means:
+- ONE git repository (no need to manage two repos)
+- TWO completely separate builds and deployments
+- Admin JavaScript code NEVER appears in user site bundle
+- Shared Firebase config in ONE place — no duplication
+- Deploy admin and website independently
+
+Result:
+- `pixalera.in` → user-facing website only
+- `myadmin.pixalera.in` → admin panel only
+- Firebase backend → shared between both
+
+---
+
+# PART 2: THE v0/REPLIT PROMPT
+
+Paste everything below this line into v0 or Replit AI:
+
+---
+
+I have an existing Pixalera project where the user-facing website and admin panel are in the same React codebase. I need to split this into a secure monorepo structure with two separate deployments:
+
+- `pixalera.in` — user-facing website
+- `myadmin.pixalera.in` — admin panel
+
+Do NOT change any existing functionality. Only restructure, secure, and configure for deployment.
+
+## TARGET FOLDER STRUCTURE
+
+Reorganize the existing code into this exact structure:
+
+```
+pixalera/
+  package.json                     (root — monorepo workspaces config)
+  .env.example
+  packages/
+    shared/                        (shared code — Firebase, types, utils)
+      package.json
+      src/
+        firebase/
+          index.js                 (Firebase init — single source of truth)
+        hooks/
+          useAuth.js
+          useFirestore.js
+          useStorage.js
+        types/
+          index.ts                 (all Firestore document types)
+        utils/
+          index.js
+        constants/
+          index.js
+        index.js                   (barrel export)
+
+    website/                       (pixalera.in)
+      package.json
+      vite.config.js
+      vercel.json
+      index.html
+      .env.local                   (website env vars)
+      public/
+        robots.txt
+        sitemap.xml
+        favicon.ico
+        og-image.jpg
+      src/
+        components/                (user components only — NO admin code here)
+        pages/                     (user pages only)
+        hooks/                     (website-specific hooks)
+        styles/
+        App.jsx
+        main.jsx
+
+    admin/                         (myadmin.pixalera.in)
+      package.json
+      vite.config.js
+      vercel.json
+      index.html
+      .env.local                   (admin env vars)
+      public/
+        robots.txt                 (disallow all — block search engines)
+        favicon-admin.ico
+      src/
+        components/                (admin components only — NO user code here)
+        pages/                     (admin pages only)
+        hooks/                     (admin-specific hooks)
+        middleware/
+          requireAdmin.jsx         (auth guard — redirects non-admins)
+        styles/
+        App.jsx
+        main.jsx
+```
+
+---
+
+## STEP 1: ROOT package.json
+
+```json
+{
+  "name": "pixalera-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "packages/shared",
+    "packages/website",
+    "packages/admin"
+  ],
+  "scripts": {
+    "dev:website": "npm run dev --workspace=packages/website",
+    "dev:admin":   "npm run dev --workspace=packages/admin",
+    "dev":         "concurrently \"npm run dev:website\" \"npm run dev:admin\"",
+    "build:website": "npm run build --workspace=packages/website",
+    "build:admin":   "npm run build --workspace=packages/admin",
+    "build:all":   "npm run build:website && npm run build:admin"
+  },
+  "devDependencies": {
+    "concurrently": "^8.0.0"
+  }
+}
+```
+
+---
+
+## STEP 2: SHARED PACKAGE
+
+### packages/shared/package.json
+
+```json
+{
+  "name": "@pixalera/shared",
+  "version": "1.0.0",
+  "private": true,
+  "main": "./src/index.js",
+  "peerDependencies": {
+    "react": "^18.0.0",
+    "firebase": "^10.0.0"
+  }
+}
+```
+
+### packages/shared/src/firebase/index.js
+
+```javascript
+import { initializeApp, getApps } from 'firebase/app';
+import { getAuth } from 'firebase/auth';
+import { getFirestore, enableIndexedDbPersistence } from 'firebase/firestore';
+import { getStorage } from 'firebase/storage';
+
+const firebaseConfig = {
+  apiKey:            import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain:        import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId:         import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket:     import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId:             import.meta.env.VITE_FIREBASE_APP_ID,
+};
+
+const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+
+export const auth    = getAuth(app);
+export const db      = getFirestore(app);
+export const storage = getStorage(app);
+
+export default app;
+```
+
+### packages/shared/src/hooks/useAuth.js
+
+```javascript
+import { useState, useEffect } from 'react';
+import { onAuthStateChanged } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
+import { auth, db } from '../firebase/index.js';
+
+export function useAuth() {
+  const [user, setUser]       = useState(null);
+  const [userDoc, setUserDoc] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        setUser(firebaseUser);
+        const snap = await getDoc(doc(db, 'users', firebaseUser.uid));
+        setUserDoc(snap.exists() ? { uid: snap.id, ...snap.data() } : null);
+      } else {
+        setUser(null);
+        setUserDoc(null);
+      }
+      setLoading(false);
+    });
+    return unsubscribe;
+  }, []);
+
+  return {
+    user,
+    userDoc,
+    loading,
+    isAdmin: userDoc?.role === 'admin',
+    isLoggedIn: !!user,
+  };
+}
+```
+
+### packages/shared/src/types/index.ts
+
+```typescript
+export interface UserDoc {
+  uid: string;
+  email: string;
+  displayName: string;
+  photoURL?: string;
+  plan: 'free' | 'starter' | 'pro';
+  credits: number;
+  role: 'user' | 'admin';
+  referralCode: string;
+  referredBy?: string;
+  isActive: boolean;
+  isBanned: boolean;
+  createdAt: any;
+}
+
+export interface Plan {
+  id: string;
+  name: string;
+  price: number;
+  credits: number;
+  features: string[];
+  isActive: boolean;
+}
+
+export interface BlogPost {
+  id: string;
+  title: string;
+  slug: string;
+  content: string;
+  excerpt: string;
+  coverImageURL: string;
+  author: string;
+  tags: string[];
+  status: 'draft' | 'published';
+  publishedAt: any;
+  createdAt: any;
+}
+
+export interface SupportTicket {
+  id: string;
+  userId?: string;
+  userEmail: string;
+  subject: string;
+  message: string;
+  status: 'open' | 'replied' | 'closed';
+  adminReply?: string;
+  createdAt: any;
+  repliedAt?: any;
+}
+
+export interface Notification {
+  id: string;
+  userId: string;
+  title: string;
+  message: string;
+  type: 'info' | 'success' | 'warning' | 'promotional';
+  isRead: boolean;
+  createdAt: any;
+}
+
+export interface InspirationPrompt {
+  id: string;
+  title: string;
+  prompt: string;
+  imageURL: string;
+  category: string;
+  addedBy: string;
+  isActive: boolean;
+  createdAt: any;
+}
+
+export interface Banner {
+  id: string;
+  imageURL: string;
+  title: string;
+  link: string;
+  isActive: boolean;
+  displayOrder: number;
+  endDate?: any;
+  createdAt: any;
+}
+```
+
+### packages/shared/src/index.js (barrel export)
+
+```javascript
+export * from './firebase/index.js';
+export * from './hooks/useAuth.js';
+export * from './utils/index.js';
+export * from './constants/index.js';
+```
+
+---
+
+## STEP 3: WEBSITE PACKAGE CONFIG
+
+### packages/website/package.json
+
+```json
+{
+  "name": "@pixalera/website",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev":     "vite --port 3000",
+    "build":   "tsc && vite build",
+    "preview": "vite preview --port 3000"
+  },
+  "dependencies": {
+    "@pixalera/shared": "*",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.0.0",
+    "firebase": "^10.0.0",
+    "react-helmet-async": "^1.3.0"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0",
+    "@vitejs/plugin-react": "^4.0.0",
+    "tailwindcss": "^3.0.0",
+    "autoprefixer": "^10.0.0"
+  }
+}
+```
+
+### packages/website/vite.config.js
+
+```javascript
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import path from 'path';
+
+export default defineConfig({
+  plugins: [react()],
+  resolve: {
+    alias: {
+      '@pixalera/shared': path.resolve(__dirname, '../shared/src'),
+      '@': path.resolve(__dirname, './src'),
+    },
+  },
+  build: {
+    outDir: 'dist',
+    sourcemap: false,  // never expose source maps in production
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor:   ['react', 'react-dom', 'react-router-dom'],
+          firebase: ['firebase/app', 'firebase/auth', 'firebase/firestore', 'firebase/storage'],
+        },
+      },
+    },
+  },
+  server: {
+    port: 3000,
+    strictPort: true,
+  },
+  // CRITICAL: Ensure admin code never accidentally gets imported
+  // If any import from admin package is detected, build fails
+  optimizeDeps: {
+    exclude: ['@pixalera/admin'],
+  },
+});
+```
+
+### packages/website/vercel.json
+
+```json
+{
+  "framework": "vite",
+  "buildCommand": "cd ../.. && npm run build:website",
+  "outputDirectory": "packages/website/dist",
+  "installCommand": "npm install",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Content-Type-Options",  "value": "nosniff" },
+        { "key": "X-Frame-Options",          "value": "DENY" },
+        { "key": "X-XSS-Protection",         "value": "1; mode=block" },
+        { "key": "Referrer-Policy",          "value": "strict-origin-when-cross-origin" },
+        { "key": "Permissions-Policy",       "value": "camera=(), microphone=(), geolocation=()" },
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://apis.google.com https://*.firebaseapp.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://*.googleapis.com https://*.gstatic.com https://firebasestorage.googleapis.com; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss:/

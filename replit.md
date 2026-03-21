@@ -4,7 +4,10 @@
 AI-powered product photography and marketing visual generation SaaS. Users upload product photos and generate professional catalog images, cinematic ads, and social media creatives using AI (Replicate). Built with React/Vite frontend + Express backend, Firebase Auth/Firestore, and Razorpay payments.
 
 ## Architecture
-- **Frontend**: React 18 + Vite + TypeScript (port 5000)
+- **Monorepo**: Single repo with 3 packages: `shared`, `website`, `admin`
+- **Website** (`packages/website`): React 18 + Vite + TypeScript (port 5000) — user-facing site + app dashboard
+- **Admin** (`packages/admin`): React 18 + Vite + TypeScript (port 3000) — admin panel only
+- **Shared** (`packages/shared`): Firebase config, AuthContext, types, utils — used by both
 - **UI**: Tailwind CSS + shadcn/ui (Radix UI components) + Ant Design (admin)
 - **Routing**: React Router DOM v6
 - **Auth & DB**: Firebase (Auth, Firestore, Realtime DB, Storage, Analytics)
@@ -13,50 +16,61 @@ AI-powered product photography and marketing visual generation SaaS. Users uploa
 - **AI Backend**: Express.js server (`server/`) on port 3001 — proxied via Vite's `/api` proxy
 - **Payments**: Razorpay (create-order + webhook verify) with 18% GST
 
-## Project Structure
+## Monorepo Structure
 ```
-src/
-  components/
-    app/        # App-specific components (sidebar, navbar, GenerationResults, UpgradeModal, etc.)
-      PhotographyWorkflow.tsx   # PhotoStylePicker + PhotoResult for the Product Photography Tool
-      PlatformOptimization.tsx  # Platform-specific SEO optimization (Amazon, Flipkart, Meesho, Myntra, Instagram)
-      BrainInsights.tsx         # AI reasoning panel
-      SEOPanel.tsx              # SEO copy panel for non-catalog tools
-    ui/         # shadcn/ui component library
-  contexts/     # React contexts (AuthContext, AppContext)
-  hooks/        # Custom hooks (useFirestore, useGenerationState, useAdminStats)
-  layouts/      # AppLayout, AdminLayout
-  lib/
-    firebase.ts         # Firebase config
-    firestore.ts        # Firestore schema helpers (transactions, payments, adminLogs, planExpiry)
-    generationApi.ts    # API client + Photography types (PhotographyAnalysis, PhotographyBuildResponse, etc.)
-    promptAugmentation.ts
-    stylePresets.ts
-  pages/
-    website/    # Public marketing pages (Landing, Features, Pricing, Login, Signup)
-    app/        # Protected app pages (Dashboard = WelcomeDashboard.tsx, CheckoutPage, CreditsPage, PlanPage)
-    admin/      # Admin panel pages (Users, Logs, Billing, Stats)
+packages/
+  shared/                    # Shared code — single source of truth
+    src/
+      firebase.ts            # Firebase config & exports (auth, db, storage, rtdb)
+      authErrors.ts          # Firebase error mapping
+      utils.ts               # cn() utility
+      contexts/AuthContext.tsx  # Auth context (shared between website & admin)
+      types/index.ts         # All Firestore document types
+
+  website/                   # pixalera.in — user-facing site + app dashboard
+    src/
+      App.tsx                # Routes: website pages + /app/* (NO admin routes)
+      components/            # UI + app components (no admin code)
+      pages/website/         # Public marketing pages
+      pages/app/             # Protected app dashboard pages
+      layouts/AppLayout.tsx
+      lib/                   # Stubs re-exporting from @pixalera/shared + local helpers
+
+  admin/                     # myadmin.pixalera.in — admin panel only
+    src/
+      App.tsx                # Routes: /admin/* only
+      pages/admin/           # All admin pages
+      layouts/AdminLayout.tsx
+      middleware/requireAdmin.tsx
+      lib/                   # Stubs re-exporting from @pixalera/shared
+
+src/                         # Legacy root (kept for reference, not actively served)
 server/
-  index.js                    # Express server entry (port 3001, ESM)
-  middleware/auth.js          # Credit guard: pre-deduct, suspend check, plan expiry, feature gating
-  routes/generate.js          # POST /api/generate, /photograph/analyze, /photograph/build-prompt, /chat
-  routes/payment.js           # POST /api/payment/create-order + /verify
-  routes/admin.js             # Admin CRUD
-  routes/notifications.js     # GET /api/notifications + POST/DELETE
-  routes/blogs.js             # GET /api/blogs + POST/PATCH/DELETE
-  config/firebase.js          # Firebase Admin SDK init
-  services/pipeline.js        # Replicate API (flux-schnell, bg-removal, llava-13b) + catalog shot builder
-  services/photographyPipeline.js  # Product Photography Tool: 6 styles, backgrounds, lighting, prompt builder
-  services/gemini.js          # Gemini AI chat + prompt augmentation (gemini-2.5-flash)
-  services/brain.js           # Intent classification (gemini-2.5-flash)
-  services/seoGenerator.js    # 5-platform SEO generation (gemini-2.5-flash)
+  index.js                   # Express server entry (port 3001, ESM)
+  middleware/auth.js         # Credit guard: pre-deduct, suspend check, plan expiry, feature gating
+  routes/generate.js         # POST /api/generate, /photograph/analyze, /photograph/build-prompt, /chat
+  routes/payment.js          # POST /api/payment/create-order + /verify
+  routes/admin.js            # Admin CRUD
+  routes/notifications.js    # GET /api/notifications + POST/DELETE
+  routes/blogs.js            # GET /api/blogs + POST/PATCH/DELETE
+  config/firebase.js         # Firebase Admin SDK init
+  services/pipeline.js       # Replicate API (flux-schnell, bg-removal, llava-13b) + catalog shot builder
+  services/gemini.js         # Gemini AI chat + prompt augmentation (gemini-2.5-flash)
+  services/brain.js          # Intent classification (gemini-2.5-flash)
+  services/seoGenerator.js   # 5-platform SEO generation (gemini-2.5-flash)
 ```
 
 ## Running the App
-- **Dev server** (frontend): `npm run dev` (port 5000, Vite)
-- **AI Pipeline server**: `node server/index.js` (port 3001, Express, ESM)
-- Both run automatically via configured workflows
+- **Website** (user-facing): `npm run dev` or `npm run dev:website` (port 5000, Vite from packages/website)
+- **Admin Panel**: `npm run dev:admin` (port 3000, Vite from packages/admin)
+- **AI Pipeline server**: `npm run server` (port 3001, Express, ESM)
+- All three run automatically via configured workflows
 - Vite proxies all `/api` requests → `localhost:3001`
+
+## Deployment Targets
+- `pixalera.in` → deploy `packages/website` build (`npm run build:website`)
+- `myadmin.pixalera.in` → deploy `packages/admin` build (`npm run build:admin`)
+- Admin bundle is completely separate — no admin JS in the user-facing site
 
 ## Required Environment Secrets
 | Secret | Purpose |

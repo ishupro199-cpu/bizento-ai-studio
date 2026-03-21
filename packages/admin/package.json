@@ -1,0 +1,14 @@
+{
+  "name": "@pixalera/admin",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --port 3000",
+    "build": "tsc && vite build",
+    "preview": "vite preview --port 5001"
+  },
+  "dependencies": {
+    "@pixalera/shared": "*"
+  }
+}
